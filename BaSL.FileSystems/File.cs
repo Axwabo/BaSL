@@ -1,3 +1,10 @@
+using System.IO;
+
 namespace BaSL.FileSystems;
 
-public sealed class File;
+public abstract class File : FileSystemEntry
+{
+
+    public abstract Stream Open();
+
+}
