@@ -1,3 +1,4 @@
 <Solution>
+    <Project Path="BaSL.FileSystems/BaSL.FileSystems.csproj" />
     <Project Path="BaSL.Shell/BaSL.Shell.csproj" />
 </Solution>
