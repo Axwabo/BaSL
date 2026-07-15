@@ -8,14 +8,14 @@ public readonly record struct Path(string Value)
     public static Path Combine(Path left, Path right)
     {
         // TODO: validation and whatnot ughh
-        if (left.Value.EndsWith("/"))
+        if (left.Value.EndsWith("/")||right.Value.StartsWith("/"))
             return left.Value + right.Value;
-        var leftSpan = left.Value.AsSpan();
-        var last = leftSpan.LastIndexOf('/');
-        Span<char> finalSpan = stackalloc char[last + right.Value.Length];
-        leftSpan[..last].CopyTo(finalSpan);
-        right.Value.AsSpan().CopyTo(finalSpan[last..]);
-        return finalSpan.ToString();
+        var length = left.Value.Length;
+        Span<char> span = stackalloc char[length + right.Value.Length + 1];
+        span[length] = '/';
+        left.Value.AsSpan().CopyTo(span);
+        right.Value.AsSpan().CopyTo(span[(length + 1)..]);
+        return span.ToString();
     }
 
     public static implicit operator Path(string value) => new(value);
