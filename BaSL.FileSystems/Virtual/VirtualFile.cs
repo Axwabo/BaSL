@@ -1,14 +1,13 @@
 using System;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace BaSL.FileSystems.Virtual;
 
 internal sealed class VirtualFile : File
 {
 
-    private readonly SemaphoreSlim _semaphore = new(0, 1);
+    private readonly object _access = new();
+    private bool _used;
 
     private byte[] _data = [];
     private int _length;
@@ -19,16 +18,23 @@ internal sealed class VirtualFile : File
 
     public override Stream Open()
     {
-        if (_semaphore.CurrentCount == 1)
-            throw new IOException("Access violation");
-        _semaphore.Wait();
-        return new VirtualFileStream(this, _data, _length);
+        lock (_access)
+        {
+            if (_used)
+                throw new IOException("Access violation");
+            _used = true;
+            return new VirtualFileStream(this, _data, _length);
+        }
     }
 
     internal void Release(byte[] buffer, int length)
     {
-        _data = buffer;
-        _length = length;
+        lock (_access)
+        {
+            _used = false;
+            _data = buffer;
+            _length = length;
+        }
     }
 
 }
