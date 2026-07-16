@@ -19,7 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\BaSL.FileSystems\BaSL.FileSystems.csproj" />
+        <ProjectReference Include="../BaSL.FileSystems/BaSL.FileSystems.csproj" />
     </ItemGroup>
 
 </Project>
