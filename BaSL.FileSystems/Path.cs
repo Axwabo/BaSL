@@ -20,6 +20,14 @@ public readonly record struct Path(string Value)
         return span.ToString();
     }
 
+    public Path ToAbsolutePath(Path basePath)
+    {
+        var baseSpan = basePath.Value.AsSpan();
+        return baseSpan.IsEmpty || Value.AsSpan().StartsWith("/")
+            ? this
+            : Combine(basePath, this);
+    }
+
     public static implicit operator Path(string value) => new(value);
 
     public static implicit operator Path(FileSystemEntryName name) => new(name.Value);
