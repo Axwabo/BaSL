@@ -12,12 +12,19 @@ internal sealed class VirtualFile : File
     private byte[] _data = [];
     private int _length;
 
-    public VirtualFile(Path fullPath) => FullPath = fullPath;
+    public VirtualFile(Path fullPath, Permissions permissions)
+    {
+        FullPath = fullPath;
+        Permissions = permissions;
+    }
 
     public override Path FullPath { get; }
+    public override Permissions Permissions { get; }
 
     public override Stream Open()
     {
+        if (!Permissions.CanRead)
+            throw new IOException("File is not readable");
         lock (_access)
         {
             if (_used)
