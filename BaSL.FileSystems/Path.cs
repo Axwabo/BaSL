@@ -7,18 +7,22 @@ public readonly record struct Path(string Value)
 
     public static Path Combine(Path left, Path right)
     {
+        var leftSpan = left.Value.AsSpan();
+        var rightSpan = right.Value.AsSpan();
         // TODO: validation and whatnot ughh
-        if (left.Value.EndsWith("/")||right.Value.StartsWith("/"))
+        if (leftSpan.EndsWith("/") || rightSpan.StartsWith("/"))
             return left.Value + right.Value;
-        var length = left.Value.Length;
-        Span<char> span = stackalloc char[length + right.Value.Length + 1];
+        var length = leftSpan.Length;
+        Span<char> span = stackalloc char[length + rightSpan.Length + 1];
         span[length] = '/';
-        left.Value.AsSpan().CopyTo(span);
-        right.Value.AsSpan().CopyTo(span[(length + 1)..]);
+        leftSpan.CopyTo(span);
+        rightSpan.CopyTo(span[(length + 1)..]);
         return span.ToString();
     }
 
     public static implicit operator Path(string value) => new(value);
+
+    public static implicit operator Path(FileSystemEntryName name) => new(name.Value);
 
     public static Path operator /(Path left, Path right) => Combine(left, right);
 
