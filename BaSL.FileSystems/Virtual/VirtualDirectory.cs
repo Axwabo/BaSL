@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace BaSL.FileSystems.Virtual;
 
-internal class VirtualDirectory : Directory
+internal sealed class VirtualDirectory : Directory
 {
 
     public VirtualDirectory(Path fullPath) => FullPath = fullPath;
