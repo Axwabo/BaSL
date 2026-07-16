@@ -10,12 +10,9 @@ internal sealed class VirtualFileSystem : FileSystem
     public VirtualFileSystem()
     {
         var root = new VirtualDirectory("/");
-        var usr = root.CreateDirectory("usr");
-        var bin = root.CreateDirectory("bin");
         Root = root;
         Home = Root.CreateDirectory("home").CreateDirectory("user");
-        ((VirtualDirectory) bin).MakeReadOnly();
-        ((VirtualDirectory) usr).MakeReadOnly();
+        root.CreateDirectory("usr").CreateDirectory("bin");
         root.MakeReadOnly();
     }
 

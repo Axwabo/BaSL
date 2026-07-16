@@ -10,6 +10,7 @@ var shell = new Shell
     FileSystem = FileSystem.CreateVirtual(),
     StandardInput = stdin,
     StandardOutput = stdout,
-    StandardError = stderr
+    StandardError = stderr,
+    Arguments = default
 };
 return await shell.ExecuteAsync();

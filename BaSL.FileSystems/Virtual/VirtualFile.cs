@@ -3,7 +3,7 @@ using System.IO;
 
 namespace BaSL.FileSystems.Virtual;
 
-internal sealed class VirtualFile : File
+internal class VirtualFile : File
 {
 
     private readonly object _access = new();
