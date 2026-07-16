@@ -5,13 +5,13 @@ internal sealed class VirtualFileSystem : FileSystem
 
     public override Directory Root { get; }
 
-    public Directory Home { get; }
+    public override Directory Home { get; }
 
     public VirtualFileSystem()
     {
-        var root = new VirtualDirectory("/", Permissions.Read);
+        var root = new VirtualDirectory("/");
         Root = root;
-        Home = Root.CreateDirectory("home", Permissions.Read).CreateDirectory("user");
+        Home = Root.CreateDirectory("home").CreateDirectory("user");
         root.MakeReadOnly();
     }
 

@@ -16,7 +16,7 @@ internal sealed class VirtualDirectory : Directory
             throw new IOException("Directory is immutable");
     }
 
-    public VirtualDirectory(Path fullPath, Permissions permissions)
+    public VirtualDirectory(Path fullPath, Permissions permissions = Permissions.Rw)
     {
         FullPath = fullPath;
         _permissions = permissions;
