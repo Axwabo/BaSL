@@ -10,15 +10,10 @@ public static class FileSystemExtensions
 
         public FileSystemEntry Resolve(Path path)
         {
-            var absolute = path.ToAbsolutePath("/");
-            var span = absolute.Value.AsSpan();
-            var lastIndex = 1;
-            do
-            {
-                var index = span[lastIndex..].IndexOf('/');
-                var segment = span.Slice(lastIndex, index == -1 ? span.Length - lastIndex : index);
-            }
-            while (lastIndex != -1);
+            var directory = fileSystem.Root;
+            foreach (var s in path.Value.Split("/", StringSplitOptions.RemoveEmptyEntries))
+                directory = directory.GetDirectory(s);
+            return directory;
         }
 
     }

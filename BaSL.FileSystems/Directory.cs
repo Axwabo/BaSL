@@ -11,4 +11,6 @@ public abstract class Directory : FileSystemEntry
 
     public abstract File CreateFile(FileSystemEntryName name, Permissions permissions = Permissions.Rw);
 
+    public abstract Directory GetDirectory(FileSystemEntryName name);
+
 }

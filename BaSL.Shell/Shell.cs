@@ -27,6 +27,7 @@ public sealed class Shell
         await using var writer = new StreamWriter(_standardOutput, null!, -1, true);
         foreach (var entry in _fileSystem.Root.EnumerateEntriesRecursive())
             writer.WriteLine(entry.FullPath);
+        writer.WriteLine(_fileSystem.Resolve("/home/user"));
         return 0;
     }
 
