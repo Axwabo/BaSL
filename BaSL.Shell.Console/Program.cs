@@ -14,9 +14,8 @@ Console.SetIn(inReader);
 Console.SetOut(outWriter);
 Console.SetError(errWriter);
 
-var shell = new BaSL.Console
+var shell = new BaSL.Console(FileSystem.CreateVirtual())
 {
-    FileSystem = FileSystem.CreateVirtual(),
     StandardInput = inReader,
     StandardOutput = outWriter,
     StandardError = errWriter

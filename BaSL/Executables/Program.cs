@@ -10,6 +10,8 @@ public abstract class Program
 
     private readonly ExecutableContext _context;
 
+    protected Console Console => _context.Console;
+
     protected FileSystem FileSystem => _context.FileSystem;
 
     protected PipeReader StandardInput => _context.StandardInput;
@@ -18,7 +20,7 @@ public abstract class Program
 
     protected PipeWriter StandardError => _context.StandardError;
 
-    protected ReadOnlySpan<string> Args => _context.Args;
+    protected ReadOnlySpan<string> Args => _context.Args.Span;
 
     protected Program(ExecutableContext context) => _context = context;
 

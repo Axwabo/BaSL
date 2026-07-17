@@ -45,7 +45,7 @@ internal sealed class VirtualDirectory : Directory
         return file;
     }
 
-    public override Directory GetDirectory(FileSystemEntryName name) => (Directory) _entries[name.Value];
+    public override FileSystemEntry GetEntry(FileSystemEntryName name) => _entries[name.Value];
 
     public void MakeReadOnly() => _mode &= ~Mode.Write;
 

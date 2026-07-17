@@ -11,6 +11,10 @@ public abstract class Directory : FileSystemEntry
 
     public abstract File CreateFile(FileSystemEntryName name, Mode mode = Mode.Rw);
 
-    public abstract Directory GetDirectory(FileSystemEntryName name);
+    public abstract FileSystemEntry GetEntry(FileSystemEntryName name);
+
+    public virtual Directory GetDirectory(FileSystemEntryName name) => (Directory) GetEntry(name);
+
+    public virtual File GetFile(FileSystemEntryName name) => (File) GetEntry(name);
 
 }

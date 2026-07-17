@@ -1,31 +1,47 @@
+using System;
 using System.IO;
 using System.IO.Pipelines;
 using System.Threading.Tasks;
 using BaSL.Executables;
 using BaSL.FileSystems;
+using BaSL.FileSystems.Extensions;
+using Directory = BaSL.FileSystems.Directory;
 
 namespace BaSL;
 
 public sealed class Console
 {
 
-    public required FileSystem FileSystem { get; init; }
+    public FileSystem FileSystem { get; }
+
     public required StreamReader StandardInput { get; init; }
+
     public required StreamWriter StandardOutput { get; init; }
+
     public required StreamWriter StandardError { get; init; }
+
+    public Directory CurrentDirectory { get; internal set; }
+
+    public Console(FileSystem fileSystem)
+    {
+        FileSystem = fileSystem;
+        CurrentDirectory = (Directory) fileSystem.Resolve("/usr/bin");
+        CurrentDirectory.CreateFile("echo", Mode.Rwx).MakeExecutable(context => new Echo(context));
+        CurrentDirectory.CreateFile("pwd", Mode.Rwx).MakeExecutable(context => new Pwd(context));
+        CurrentDirectory.CreateFile("cd", Mode.Rwx).MakeExecutable(context => new Cd(context));
+        CurrentDirectory.CreateFile("ls", Mode.Rwx).MakeExecutable(context => new Ls(context));
+    }
 
     public async Task<int> ExecuteAsync()
     {
-        var bin = FileSystem.Root.GetDirectory("usr").GetDirectory("bin");
-        var echo = bin.CreateFile("echo", Mode.Rwx);
-        echo.MakeExecutable(context => new Echo(context).ExecuteAsync());
         var line = await StandardInput.ReadLineAsync();
         var args = line.Split();
+        var program = CurrentDirectory.GetFile(args[0]);
         var stdin = new Pipe();
         var stdout = new Pipe();
         var stderr = new Pipe();
-        var context = new ExecutableContext(FileSystem, stdin.Reader, stdout.Writer, stderr.Writer, args);
-        var process = echo.Execute(context);
+        var context = new ExecutableContext(this, FileSystem, stdin.Reader, stdout.Writer, stderr.Writer, args.AsMemory()[1..]);
+        var process = program.Execute(context);
         var copyStdout = stdout.Reader.CopyToAsync(StandardOutput.BaseStream);
         var copyStdin = stderr.Reader.CopyToAsync(StandardError.BaseStream);
         await process.WaitForExitAsync();

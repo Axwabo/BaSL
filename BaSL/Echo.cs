@@ -13,7 +13,7 @@ public sealed class Echo : Program
 
     public override Task<int> ExecuteAsync()
     {
-        using var writer = new StreamWriter(StandardOutput.AsStream(true));
+        using var writer = new StreamWriter(StandardOutput.AsStream());
         var args = Args;
         for (var i = 0; i < args.Length; i++)
         {
