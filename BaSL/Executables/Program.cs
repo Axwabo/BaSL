@@ -20,7 +20,7 @@ public abstract class Program
 
     protected PipeWriter StandardError => _context.StandardError;
 
-    protected ReadOnlySpan<string> Args => _context.Args.Span;
+    protected ReadOnlyMemory<string> Args => _context.Args;
 
     protected Program(ExecutableContext context) => _context = context;
 

@@ -11,19 +11,19 @@ public sealed class Echo : Program
     {
     }
 
-    public override Task<int> ExecuteAsync()
+    public override async Task<int> ExecuteAsync()
     {
-        using var writer = new StreamWriter(StandardOutput.AsStream());
+        await using var writer = new StreamWriter(StandardOutput.AsStream());
         var args = Args;
         for (var i = 0; i < args.Length; i++)
         {
-            var arg = args[i];
-            writer.Write(arg);
+            var arg = args.Span[i];
+            await writer.WriteAsync(arg);
             if (i != args.Length - 1)
-                writer.Write(' ');
+                await writer.WriteAsync(' ');
         }
 
-        return Task.FromResult(0);
+        return 0;
     }
 
 }
