@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="../BaSL.Shell/BaSL.Shell.csproj" />
+        <ProjectReference Include="../BaSL/BaSL.csproj" />
     </ItemGroup>
 
 </Project>

@@ -1,6 +1,5 @@
 <Solution>
     <Project Path="BaSL.FileSystems.Tests/BaSL.FileSystems.Tests.csproj" />
-    <Project Path="BaSL.FileSystems/BaSL.FileSystems.csproj" />
     <Project Path="BaSL.Shell.Console/BaSL.Shell.Console.csproj" />
-    <Project Path="BaSL.Shell/BaSL.Shell.csproj" />
+    <Project Path="BaSL\BaSL.csproj" />
 </Solution>
