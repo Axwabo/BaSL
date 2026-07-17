@@ -12,18 +12,18 @@ internal class VirtualFile : File
     private byte[] _data = [];
     private int _length;
 
-    public VirtualFile(Path fullPath, Permissions permissions)
+    public VirtualFile(Path fullPath, Mode mode)
     {
         FullPath = fullPath;
-        Permissions = permissions;
+        Mode = mode;
     }
 
     public override Path FullPath { get; }
-    public override Permissions Permissions { get; }
+    public override Mode Mode { get; }
 
     public override Stream Open()
     {
-        if (!Permissions.CanRead)
+        if (!Mode.CanRead)
             throw new IOException("File is not readable");
         lock (_access)
         {
