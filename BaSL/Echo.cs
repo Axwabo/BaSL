@@ -1,4 +1,3 @@
-using System.IO;
 using System.Threading.Tasks;
 using BaSL.Executables;
 
@@ -13,14 +12,13 @@ public sealed class Echo : Program
 
     public override Task<int> ExecuteAsync()
     {
-        var writer = new StreamWriter(StandardOutput);
         var args = Args;
         for (var i = 0; i < args.Length; i++)
         {
             var arg = args[i];
-            writer.Write(arg);
+            StandardOutput.Write(arg);
             if (i != args.Length - 1)
-                writer.Write(' ');
+                StandardOutput.Write(' ');
         }
 
         return Task.FromResult(0);

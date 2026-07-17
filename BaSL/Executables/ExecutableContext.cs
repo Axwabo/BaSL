@@ -7,12 +7,12 @@ public sealed class ExecutableContext
 {
 
     public FileSystem FileSystem { get; }
-    public Stream StandardInput { get; }
-    public Stream StandardOutput { get; }
-    public Stream StandardError { get; }
+    public StreamReader StandardInput { get; }
+    public StreamWriter StandardOutput { get; }
+    public StreamWriter StandardError { get; }
     public string[] Args { get; }
 
-    internal ExecutableContext(FileSystem fileSystem, Stream standardInput, Stream standardOutput, Stream standardError, string[] args)
+    internal ExecutableContext(FileSystem fileSystem, StreamReader standardInput, StreamWriter standardOutput, StreamWriter standardError, string[] args)
     {
         FileSystem = fileSystem;
         StandardInput = standardInput;

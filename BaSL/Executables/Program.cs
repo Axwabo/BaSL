@@ -12,11 +12,11 @@ public abstract class Program
 
     protected FileSystem FileSystem => _context.FileSystem;
 
-    protected Stream StandardInput => _context.StandardInput;
+    protected StreamReader StandardInput => _context.StandardInput;
 
-    protected Stream StandardOutput => _context.StandardOutput;
+    protected StreamWriter StandardOutput => _context.StandardOutput;
 
-    protected Stream StandardError => _context.StandardError;
+    protected StreamWriter StandardError => _context.StandardError;
 
     protected ReadOnlySpan<string> Args => _context.Args;
 

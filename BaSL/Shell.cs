@@ -1,4 +1,3 @@
-using System.IO;
 using System.Threading.Tasks;
 using BaSL.Executables;
 using BaSL.FileSystems;
@@ -17,10 +16,11 @@ public sealed class Shell : Program
         var bin = FileSystem.Root.GetDirectory("usr").GetDirectory("bin");
         var echo = bin.CreateFile("echo", Mode.Rwx);
         echo.MakeExecutable(context => new Echo(context).ExecuteAsync());
-        var line = await new StreamReader(StandardInput).ReadLineAsync();
+        var line = await StandardInput.ReadLineAsync();
         var args = line.Split();
         var context = new ExecutableContext(FileSystem, StandardInput, StandardOutput, StandardError, args);
         await echo.ExecuteAsync(context);
+        await StandardOutput.FlushAsync();
         return 0;
     }
 
