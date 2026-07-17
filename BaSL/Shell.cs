@@ -19,8 +19,8 @@ public sealed class Shell : Program
         var line = await StandardInput.ReadLineAsync();
         var args = line.Split();
         var context = new ExecutableContext(FileSystem, StandardInput, StandardOutput, StandardError, args);
-        await echo.ExecuteAsync(context);
-        await StandardOutput.FlushAsync();
+        var process = echo.Execute(context);
+        await process.WaitForExitAsync();
         return 0;
     }
 
