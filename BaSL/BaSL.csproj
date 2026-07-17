@@ -1,1 +1,6 @@
-﻿<Project Sdk="Microsoft.NET.Sdk" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <ItemGroup>
+        <!-- TODO: remove -->
+        <InternalsVisibleTo Include="BaSL.Shell.Console" />
+    </ItemGroup>
+</Project>

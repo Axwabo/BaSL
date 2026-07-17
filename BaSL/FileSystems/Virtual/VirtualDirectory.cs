@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
 
 namespace BaSL.FileSystems.Virtual;
 
@@ -45,13 +43,6 @@ internal sealed class VirtualDirectory : Directory
         var file = new VirtualFile(FullPath / name, mode);
         _entries.Add(name.Value, file);
         return file;
-    }
-
-    public override IExecutable CreateExecutable(FileSystemEntryName name, Func<FileSystem, Stream, Stream, Stream, ReadOnlyMemory<ReadOnlyMemory<char>>, Task<int>> execute, Mode mode = Mode.Rwx)
-    {
-        var executable = new VirtualExecutable(FullPath / name, mode, execute);
-        _entries.Add(name.Value, executable);
-        return executable;
     }
 
     public override Directory GetDirectory(FileSystemEntryName name) => (Directory) _entries[name.Value];

@@ -1,16 +1,11 @@
-﻿using BaSL.FileSystems;
-using BaSL.Shell;
+﻿using BaSL;
+using BaSL.Executables;
+using BaSL.FileSystems;
 
 await using var stdin = Console.OpenStandardInput();
 await using var stdout = Console.OpenStandardOutput();
 await using var stderr = Console.OpenStandardError();
 
-var shell = new Shell
-{
-    FileSystem = FileSystem.CreateVirtual(),
-    StandardInput = stdin,
-    StandardOutput = stdout,
-    StandardError = stderr,
-    Arguments = default
-};
+var context = new ExecutableContext(FileSystem.CreateVirtual(), stdin, stdout, stderr, args);
+var shell = new Shell(context);
 return await shell.ExecuteAsync();
