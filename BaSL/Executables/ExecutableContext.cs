@@ -1,4 +1,4 @@
-using System.IO;
+using System.IO.Pipelines;
 using BaSL.FileSystems;
 
 namespace BaSL.Executables;
@@ -7,12 +7,12 @@ public sealed class ExecutableContext
 {
 
     public FileSystem FileSystem { get; }
-    public StreamReader StandardInput { get; }
-    public StreamWriter StandardOutput { get; }
-    public StreamWriter StandardError { get; }
+    public PipeReader StandardInput { get; }
+    public PipeWriter StandardOutput { get; }
+    public PipeWriter StandardError { get; }
     public string[] Args { get; }
 
-    internal ExecutableContext(FileSystem fileSystem, StreamReader standardInput, StreamWriter standardOutput, StreamWriter standardError, string[] args)
+    internal ExecutableContext(FileSystem fileSystem, PipeReader standardInput, PipeWriter standardOutput, PipeWriter standardError, string[] args)
     {
         FileSystem = fileSystem;
         StandardInput = standardInput;

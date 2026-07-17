@@ -1,6 +1,4 @@
-﻿using BaSL;
-using BaSL.Executables;
-using BaSL.FileSystems;
+﻿using BaSL.FileSystems;
 
 await using var stdin = Console.OpenStandardInput();
 await using var stdout = Console.OpenStandardOutput();
@@ -16,6 +14,11 @@ Console.SetIn(inReader);
 Console.SetOut(outWriter);
 Console.SetError(errWriter);
 
-var context = new ExecutableContext(FileSystem.CreateVirtual(), inReader, outWriter, errWriter, args);
-var shell = new Shell(context);
+var shell = new BaSL.Console
+{
+    FileSystem = FileSystem.CreateVirtual(),
+    StandardInput = inReader,
+    StandardOutput = outWriter,
+    StandardError = errWriter
+};
 return await shell.ExecuteAsync();

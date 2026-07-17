@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using System.IO.Pipelines;
 using System.Threading.Tasks;
 using BaSL.FileSystems;
 
@@ -12,11 +12,11 @@ public abstract class Program
 
     protected FileSystem FileSystem => _context.FileSystem;
 
-    protected StreamReader StandardInput => _context.StandardInput;
+    protected PipeReader StandardInput => _context.StandardInput;
 
-    protected StreamWriter StandardOutput => _context.StandardOutput;
+    protected PipeWriter StandardOutput => _context.StandardOutput;
 
-    protected StreamWriter StandardError => _context.StandardError;
+    protected PipeWriter StandardError => _context.StandardError;
 
     protected ReadOnlySpan<string> Args => _context.Args;
 
