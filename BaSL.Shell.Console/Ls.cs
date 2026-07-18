@@ -2,7 +2,7 @@ using BaSL.Executables;
 
 namespace BaSL.Shell.Console;
 
-public sealed class Ls : Executables.Program
+public sealed class Ls : App
 {
 
     public Ls(ExecutableContext context) : base(context)

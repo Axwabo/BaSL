@@ -5,7 +5,7 @@ using Path = BaSL.FileSystems.Path;
 
 namespace BaSL.Shell.Console;
 
-public sealed class Cd : Executables.Program
+public sealed class Cd : App
 {
 
     public Cd(ExecutableContext context) : base(context)

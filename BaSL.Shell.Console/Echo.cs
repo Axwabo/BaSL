@@ -2,7 +2,7 @@ using BaSL.Executables;
 
 namespace BaSL.Shell.Console;
 
-public sealed class Echo : Executables.Program
+public sealed class Echo : App
 {
 
     public Echo(ExecutableContext context) : base(context)

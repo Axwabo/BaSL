@@ -1,3 +1,3 @@
 namespace BaSL.Executables;
 
-public delegate Program Executable(ExecutableContext context);
+public delegate App Executable(ExecutableContext context);

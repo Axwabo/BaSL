@@ -6,7 +6,7 @@ using BaSL.FileSystems;
 
 namespace BaSL.Executables;
 
-public abstract class Program
+public abstract class App
 {
 
     private readonly ExecutableContext _context;
@@ -23,7 +23,7 @@ public abstract class Program
 
     protected ReadOnlyMemory<string> Args => _context.Args;
 
-    protected Program(ExecutableContext context)
+    protected App(ExecutableContext context)
     {
         _context = context;
         StandardInput = new StreamReader(context.StandardInput.Reader.AsStream());

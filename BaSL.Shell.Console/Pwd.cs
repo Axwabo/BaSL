@@ -2,7 +2,7 @@ using BaSL.Executables;
 
 namespace BaSL.Shell.Console;
 
-public sealed class Pwd : Executables.Program
+public sealed class Pwd : App
 {
 
     public Pwd(ExecutableContext context) : base(context)

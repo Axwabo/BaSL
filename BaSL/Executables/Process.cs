@@ -15,10 +15,10 @@ public sealed class Process : IDisposable
     }
 
     private readonly ExecutableContext _context;
-    private readonly Program _executable;
+    private readonly App _executable;
     private readonly Task<int> _task;
 
-    private Process(ExecutableContext context, Program executable, Task<int> task)
+    private Process(ExecutableContext context, App executable, Task<int> task)
     {
         _context = context;
         _executable = executable;
