@@ -1,4 +1,5 @@
 using System.IO;
+using System.Threading;
 using BaSL.Executables;
 
 namespace BaSL.FileSystems;
@@ -10,12 +11,12 @@ public abstract class File : FileSystemEntry
 
     public abstract Stream Open();
 
-    public Process Execute(ExecutableContext context)
+    public Process Execute(ExecutableContext context, CancellationToken cancellationToken)
         => !Mode.CanExecute
             ? throw new IOException("Access denied")
             : _executable == null
                 ? throw new IOException("File is not an executable")
-                : new Process(context, _executable);
+                : Process.Start(context, _executable, cancellationToken);
 
     public void MakeExecutable(Executable executable)
     {

@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
 
@@ -12,14 +12,14 @@ public sealed class Ls : Program
     {
     }
 
-    public override async Task<int> ExecuteAsync()
+    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        await using var writer = new StreamWriter(StandardOutput.AsStream());
+        await using var writer = StandardOutput;
         foreach (var entry in Console.CurrentDirectory.EnumerateEntries())
         {
             var memory = entry.FullPath.Value.AsMemory();
             var slash = memory.Span.LastIndexOf('/') + 1;
-            await writer.WriteLineAsync(memory[slash..]);
+            await writer.WriteLineAsync(memory[slash..], cancellationToken);
         }
 
         return 0;

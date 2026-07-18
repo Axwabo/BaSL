@@ -1,4 +1,4 @@
-using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
 
@@ -11,9 +11,9 @@ public sealed class Echo : Program
     {
     }
 
-    public override async Task<int> ExecuteAsync()
+    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        await using var writer = new StreamWriter(StandardOutput.AsStream());
+        var writer = StandardOutput;
         var args = Args;
         for (var i = 0; i < args.Length; i++)
         {

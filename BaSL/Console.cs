@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.IO.Pipelines;
+using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
 using BaSL.FileSystems;
@@ -40,8 +41,8 @@ public sealed class Console
         var stdin = new Pipe();
         var stdout = new Pipe();
         var stderr = new Pipe();
-        var context = new ExecutableContext(this, FileSystem, stdin.Reader, stdout.Writer, stderr.Writer, args.AsMemory()[1..]);
-        var process = program.Execute(context);
+        var context = new ExecutableContext(this, FileSystem, stdin, stdout, stderr, args.AsMemory()[1..]);
+        var process = program.Execute(context, CancellationToken.None);
         var copyStdout = stdout.Reader.CopyToAsync(StandardOutput.BaseStream);
         var copyStdin = stderr.Reader.CopyToAsync(StandardError.BaseStream);
         await process.WaitForExitAsync();

@@ -1,4 +1,4 @@
-using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
 
@@ -11,11 +11,11 @@ public sealed class Pwd : Program
     {
     }
 
-    public override Task<int> ExecuteAsync()
+    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        using var writer = new StreamWriter(StandardOutput.AsStream());
-        writer.WriteLine(Console.CurrentDirectory.FullPath.Value);
-        return Task.FromResult(0);
+        var writer = StandardOutput;
+        await writer.WriteLineAsync(Console.CurrentDirectory.FullPath.Value);
+        return 0;
     }
 
 }

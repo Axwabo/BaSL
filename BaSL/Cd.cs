@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
 using BaSL.FileSystems;
@@ -12,7 +13,7 @@ public sealed class Cd : Program
     {
     }
 
-    public override Task<int> ExecuteAsync()
+    public override Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         if (Args.Length == 0)
             Console.CurrentDirectory = FileSystem.Home;
