@@ -1,43 +1,53 @@
 using System;
 using System.IO;
+using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
+using BaSL.FileSystems;
 
 namespace BaSL.Executables;
 
 public sealed class Process
 {
 
-    private readonly App _app;
+    internal static Process Start(Executable executable, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, CancellationToken cancellationToken)
+        => new(executable, console, fileSystem, args, cancellationToken);
+
     private readonly Task<int> _task;
 
+    private readonly StreamReader _standardInput;
+    private readonly StreamWriter _standardOutput;
+    private readonly StreamWriter _standardError;
     public StreamWriter StandardInput { get; }
     public StreamReader StandardOutput { get; }
     public StreamReader StandardError { get; }
 
-    internal Process(ExecutableContext context, Executable executable, CancellationToken cancellationToken)
+    private Process(Executable executable, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, CancellationToken cancellationToken)
     {
-        StandardInput = new StreamWriter(context.StandardInput.Writer.AsStream()) {AutoFlush = true};
-        StandardOutput = new StreamReader(context.StandardOutput.Reader.AsStream());
-        StandardError = new StreamReader(context.StandardError.Reader.AsStream());
-        _app = executable(context);
-        _task = ExecuteAsync(cancellationToken);
+        var stdin = new Pipe();
+        var stdout = new Pipe();
+        var stderr = new Pipe();
+        (_standardInput, StandardInput) = stdin.CreateStreams();
+        (StandardOutput, _standardOutput) = stdout.CreateStreams();
+        (StandardError, _standardError) = stderr.CreateStreams();
+        _task = ExecuteAsync(executable, new ExecutableContext(console, fileSystem, _standardInput, _standardOutput, _standardError, args), cancellationToken);
     }
 
-    private async Task<int> ExecuteAsync(CancellationToken cancellationToken)
+    private async Task<int> ExecuteAsync(Executable executable, ExecutableContext context, CancellationToken cancellationToken)
     {
         try
         {
-            return await _app.ExecuteAsync(cancellationToken);
+            var app = executable(context);
+            return await app.ExecuteAsync(cancellationToken);
         }
         finally
         {
             await StandardInput.DisposeAsync();
             StandardOutput.Dispose();
             StandardError.Dispose();
-            _app.StandardInput.Dispose();
-            await _app.StandardOutput.DisposeAsync();
-            await _app.StandardError.DisposeAsync();
+            _standardInput.Dispose();
+            await _standardOutput.DisposeAsync();
+            await _standardError.DisposeAsync();
         }
     }
 
@@ -48,5 +58,20 @@ public sealed class Process
             : _task.Result;
 
     public Task<int> WaitForExitAsync() => _task;
+
+}
+
+file static class Extensions
+{
+
+    extension(Pipe pipe)
+    {
+
+        public (StreamReader, StreamWriter) CreateStreams() => (
+            new StreamReader(pipe.Reader.AsStream()),
+            new StreamWriter(pipe.Writer.AsStream()) {AutoFlush = true}
+        );
+
+    }
 
 }

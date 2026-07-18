@@ -15,21 +15,15 @@ public abstract class App
 
     protected FileSystem FileSystem => _context.FileSystem;
 
-    protected internal StreamReader StandardInput { get; }
+    protected internal StreamReader StandardInput => _context.StandardInput;
 
-    protected internal StreamWriter StandardOutput { get; }
+    protected internal StreamWriter StandardOutput => _context.StandardOutput;
 
-    protected internal StreamWriter StandardError { get; }
+    protected internal StreamWriter StandardError => _context.StandardError;
 
     protected ReadOnlyMemory<string> Args => _context.Args;
 
-    protected App(ExecutableContext context)
-    {
-        _context = context;
-        StandardInput = new StreamReader(context.StandardInput.Reader.AsStream());
-        StandardOutput = new StreamWriter(context.StandardOutput.Writer.AsStream()) {AutoFlush = true};
-        StandardError = new StreamWriter(context.StandardError.Writer.AsStream()) {AutoFlush = true};
-    }
+    protected App(ExecutableContext context) => _context = context;
 
     public abstract Task<int> ExecuteAsync(CancellationToken cancellationToken);
 

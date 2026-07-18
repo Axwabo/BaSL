@@ -24,7 +24,7 @@ var shell = new BaSL.Console(CreateFileSystem())
     StandardError = errWriter
 };
 shell.CurrentDirectory = (Directory) shell.FileSystem.Resolve("/usr/bin");
-return await shell.ExecuteAsync();
+return await shell.StartAsync();
 
 FileSystem CreateFileSystem()
 {

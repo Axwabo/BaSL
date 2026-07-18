@@ -1,9 +1,7 @@
 using System;
 using System.IO;
-using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
-using BaSL.Executables;
 using BaSL.FileSystems;
 using Directory = BaSL.FileSystems.Directory;
 
@@ -28,24 +26,16 @@ public sealed class Console
         CurrentDirectory = fileSystem.Root;
     }
 
-    public async Task<int> ExecuteAsync()
+    public async Task<int> StartAsync()
     {
         var line = await StandardInput.ReadLineAsync();
         var args = line.Split();
         var program = CurrentDirectory.GetFile(args[0]);
-        var stdin = new Pipe();
-        var stdout = new Pipe();
-        var stderr = new Pipe();
-        var context = new ExecutableContext(this, FileSystem, stdin, stdout, stderr, args.AsMemory()[1..]);
-        var process = program.Execute(context, CancellationToken.None);
-        var copyStdout = stdout.Reader.CopyToAsync(StandardOutput.BaseStream);
-        var copyStdin = stderr.Reader.CopyToAsync(StandardError.BaseStream);
-        await process.WaitForExitAsync();
+        var process = program.Execute(this, FileSystem, args.AsMemory()[1..], CancellationToken.None);
         await Task.WhenAll(
-            stdout.Writer.CompleteAsync().AsTask(),
-            stderr.Writer.CompleteAsync().AsTask(),
-            copyStdin,
-            copyStdout
+            process.WaitForExitAsync(),
+            process.StandardError.BaseStream.CopyToAsync(StandardError.BaseStream),
+            process.StandardOutput.BaseStream.CopyToAsync(StandardOutput.BaseStream)
         );
         return 0;
     }
