@@ -15,11 +15,11 @@ public abstract class App
 
     protected FileSystem FileSystem => _context.FileSystem;
 
-    protected StreamReader StandardInput { get; }
+    protected internal StreamReader StandardInput { get; }
 
-    protected StreamWriter StandardOutput { get; }
+    protected internal StreamWriter StandardOutput { get; }
 
-    protected StreamWriter StandardError { get; }
+    protected internal StreamWriter StandardError { get; }
 
     protected ReadOnlyMemory<string> Args => _context.Args;
 

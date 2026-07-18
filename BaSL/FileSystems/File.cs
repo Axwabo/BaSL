@@ -16,7 +16,7 @@ public abstract class File : FileSystemEntry
             ? throw new IOException("Access denied")
             : _executable == null
                 ? throw new IOException("File is not an executable")
-                : Process.Start(context, _executable, cancellationToken);
+                : new Process(context, _executable, cancellationToken);
 
     public void MakeExecutable(Executable executable)
     {

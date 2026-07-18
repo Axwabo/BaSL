@@ -1,28 +1,44 @@
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace BaSL.Executables;
 
-public sealed class Process : IDisposable
+public sealed class Process
 {
 
-    internal static Process Start(ExecutableContext context, Executable executable, CancellationToken cancellationToken)
-    {
-        var program = executable(context);
-        var task = program.ExecuteAsync(cancellationToken);
-        return new Process(context, program, task);
-    }
-
-    private readonly ExecutableContext _context;
-    private readonly App _executable;
+    private readonly App _app;
     private readonly Task<int> _task;
 
-    private Process(ExecutableContext context, App executable, Task<int> task)
+    public StreamWriter StandardInput { get; }
+    public StreamReader StandardOutput { get; }
+    public StreamReader StandardError { get; }
+
+    internal Process(ExecutableContext context, Executable executable, CancellationToken cancellationToken)
     {
-        _context = context;
-        _executable = executable;
-        _task = task;
+        StandardInput = new StreamWriter(context.StandardInput.Writer.AsStream()) {AutoFlush = true};
+        StandardOutput = new StreamReader(context.StandardOutput.Reader.AsStream());
+        StandardError = new StreamReader(context.StandardError.Reader.AsStream());
+        _app = executable(context);
+        _task = ExecuteAsync(cancellationToken);
+    }
+
+    private async Task<int> ExecuteAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _app.ExecuteAsync(cancellationToken);
+        }
+        finally
+        {
+            await StandardInput.DisposeAsync();
+            StandardOutput.Dispose();
+            StandardError.Dispose();
+            _app.StandardInput.Dispose();
+            await _app.StandardOutput.DisposeAsync();
+            await _app.StandardError.DisposeAsync();
+        }
     }
 
     public int ExitCode => !_task.IsCompleted
@@ -32,10 +48,5 @@ public sealed class Process : IDisposable
             : _task.Result;
 
     public Task<int> WaitForExitAsync() => _task;
-
-    public void Dispose()
-    {
-        _task.Dispose();
-    }
 
 }
