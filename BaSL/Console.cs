@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
 using BaSL.FileSystems;
-using BaSL.FileSystems.Extensions;
 using Directory = BaSL.FileSystems.Directory;
 
 namespace BaSL;
@@ -26,11 +25,7 @@ public sealed class Console
     public Console(FileSystem fileSystem)
     {
         FileSystem = fileSystem;
-        CurrentDirectory = (Directory) fileSystem.Resolve("/usr/bin");
-        CurrentDirectory.CreateFile("echo", Mode.Rwx).MakeExecutable(context => new Echo(context));
-        CurrentDirectory.CreateFile("pwd", Mode.Rwx).MakeExecutable(context => new Pwd(context));
-        CurrentDirectory.CreateFile("cd", Mode.Rwx).MakeExecutable(context => new Cd(context));
-        CurrentDirectory.CreateFile("ls", Mode.Rwx).MakeExecutable(context => new Ls(context));
+        CurrentDirectory = fileSystem.Root;
     }
 
     public async Task<int> ExecuteAsync()

@@ -1,11 +1,8 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using BaSL.Executables;
 
-namespace BaSL;
+namespace BaSL.Shell.Console;
 
-public sealed class Ls : Program
+public sealed class Ls : Executables.Program
 {
 
     public Ls(ExecutableContext context) : base(context)

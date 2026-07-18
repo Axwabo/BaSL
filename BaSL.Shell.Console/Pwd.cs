@@ -1,10 +1,8 @@
-using System.Threading;
-using System.Threading.Tasks;
 using BaSL.Executables;
 
-namespace BaSL;
+namespace BaSL.Shell.Console;
 
-public sealed class Pwd : Program
+public sealed class Pwd : Executables.Program
 {
 
     public Pwd(ExecutableContext context) : base(context)

@@ -27,8 +27,8 @@ public abstract class Program
     {
         _context = context;
         StandardInput = new StreamReader(context.StandardInput.Reader.AsStream());
-        StandardOutput = new StreamWriter(context.StandardOutput.Writer.AsStream());
-        StandardError = new StreamWriter(context.StandardError.Writer.AsStream());
+        StandardOutput = new StreamWriter(context.StandardOutput.Writer.AsStream()) {AutoFlush = true};
+        StandardError = new StreamWriter(context.StandardError.Writer.AsStream()) {AutoFlush = true};
     }
 
     public abstract Task<int> ExecuteAsync(CancellationToken cancellationToken);

@@ -1,12 +1,11 @@
-using System.Threading;
-using System.Threading.Tasks;
 using BaSL.Executables;
-using BaSL.FileSystems;
 using BaSL.FileSystems.Extensions;
+using Directory = BaSL.FileSystems.Directory;
+using Path = BaSL.FileSystems.Path;
 
-namespace BaSL;
+namespace BaSL.Shell.Console;
 
-public sealed class Cd : Program
+public sealed class Cd : Executables.Program
 {
 
     public Cd(ExecutableContext context) : base(context)
