@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using BaSL.Executables;
 using BaSL.FileSystems;
 using Directory = BaSL.FileSystems.Directory;
 
@@ -30,13 +31,10 @@ public sealed class Console
     {
         var line = await StandardInput.ReadLineAsync();
         var args = line.Split();
+        var context = ExecutableContext.Direct(this, FileSystem, args.AsMemory()[1..], StandardInput, StandardOutput, StandardError);
         var program = CurrentDirectory.GetFile(args[0]);
-        var process = program.Execute(this, FileSystem, args.AsMemory()[1..], CancellationToken.None);
-        await Task.WhenAll(
-            process.WaitForExitAsync(),
-            process.StandardError.BaseStream.CopyToAsync(StandardError.BaseStream),
-            process.StandardOutput.BaseStream.CopyToAsync(StandardOutput.BaseStream)
-        );
+        var process = program.Execute(context, CancellationToken.None);
+        await process.WaitForExitAsync();
         return 0;
     }
 

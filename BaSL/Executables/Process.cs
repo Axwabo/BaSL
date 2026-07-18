@@ -1,17 +1,15 @@
 using System;
 using System.IO;
-using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
-using BaSL.FileSystems;
 
 namespace BaSL.Executables;
 
 public sealed class Process
 {
 
-    internal static Process Start(Executable executable, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, CancellationToken cancellationToken)
-        => new(executable, console, fileSystem, args, cancellationToken);
+    internal static Process Start(Executable executable, ExecutableContext context, CancellationToken cancellationToken)
+        => new(executable, context, cancellationToken);
 
     private readonly Task<int> _task;
 
@@ -22,15 +20,25 @@ public sealed class Process
     public StreamReader StandardOutput { get; }
     public StreamReader StandardError { get; }
 
-    private Process(Executable executable, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, CancellationToken cancellationToken)
+    private Process(Executable executable, ExecutableContext context, CancellationToken cancellationToken)
     {
-        var stdin = new Pipe();
-        var stdout = new Pipe();
-        var stderr = new Pipe();
-        (_standardInput, StandardInput) = stdin.CreateStreams();
-        (StandardOutput, _standardOutput) = stdout.CreateStreams();
-        (StandardError, _standardError) = stderr.CreateStreams();
-        _task = ExecuteAsync(executable, new ExecutableContext(console, fileSystem, _standardInput, _standardOutput, _standardError, args), cancellationToken);
+        _standardInput = context.StandardInput;
+        _standardOutput = context.StandardOutput;
+        _standardError = context.StandardError;
+        if (context is PipedExecutableContext piped)
+        {
+            StandardInput = piped.StandardInputWriter;
+            StandardOutput = piped.StandardOutputReader;
+            StandardError = piped.StandardErrorReader;
+        }
+        else
+        {
+            StandardInput = null!;
+            StandardOutput = null!;
+            StandardError = null!;
+        }
+
+        _task = ExecuteAsync(executable, context, cancellationToken);
     }
 
     private async Task<int> ExecuteAsync(Executable executable, ExecutableContext context, CancellationToken cancellationToken)
@@ -42,12 +50,11 @@ public sealed class Process
         }
         finally
         {
-            await StandardInput.DisposeAsync();
-            StandardOutput.Dispose();
-            StandardError.Dispose();
             _standardInput.Dispose();
             await _standardOutput.DisposeAsync();
             await _standardError.DisposeAsync();
+            if (context is PipedExecutableContext piped)
+                await piped.DisposeAsync();
         }
     }
 
@@ -58,20 +65,5 @@ public sealed class Process
             : _task.Result;
 
     public Task<int> WaitForExitAsync() => _task;
-
-}
-
-file static class Extensions
-{
-
-    extension(Pipe pipe)
-    {
-
-        public (StreamReader, StreamWriter) CreateStreams() => (
-            new StreamReader(pipe.Reader.AsStream()),
-            new StreamWriter(pipe.Writer.AsStream()) {AutoFlush = true}
-        );
-
-    }
 
 }
