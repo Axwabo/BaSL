@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.FileSystems;
+using Directory = BaSL.FileSystems.Directory;
 
 namespace BaSL.Executables;
 
@@ -14,6 +15,8 @@ public abstract class App
     protected Console Console => _context.Console;
 
     protected FileSystem FileSystem => _context.FileSystem;
+
+    protected Directory WorkingDirectory => _context.WorkingDirectory;
 
     protected internal StreamReader StandardInput => _context.StandardInput;
 

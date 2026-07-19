@@ -3,6 +3,7 @@ using System.IO;
 using System.IO.Pipelines;
 using System.Threading.Tasks;
 using BaSL.FileSystems;
+using Directory = BaSL.FileSystems.Directory;
 
 namespace BaSL.Executables;
 
@@ -19,7 +20,7 @@ public class ExecutableContext
     }
 
     internal static ExecutableContext Direct(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, StreamReader standardInput, StreamWriter standardOutput, StreamWriter standardError)
-        => new(console, fileSystem, args, standardInput, standardOutput, standardError);
+        => new(console, fileSystem, console.CurrentDirectory, args, standardInput, standardOutput, standardError);
 
     internal static PipedExecutableContext Piped(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
     {
@@ -29,6 +30,7 @@ public class ExecutableContext
         return new PipedExecutableContext(
             console,
             fileSystem,
+            console.CurrentDirectory,
             args,
             inRead,
             inWrite,
@@ -41,15 +43,17 @@ public class ExecutableContext
 
     internal Console Console { get; }
     internal FileSystem FileSystem { get; }
+    internal Directory WorkingDirectory { get; }
     internal ReadOnlyMemory<string> Args { get; }
     internal StreamReader StandardInput { get; }
     internal StreamWriter StandardOutput { get; }
     internal StreamWriter StandardError { get; }
 
-    private protected ExecutableContext(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, StreamReader standardInput, StreamWriter standardOutput, StreamWriter standardError)
+    private protected ExecutableContext(Console console, FileSystem fileSystem, Directory workingDirectory, ReadOnlyMemory<string> args, StreamReader standardInput, StreamWriter standardOutput, StreamWriter standardError)
     {
         Console = console;
         FileSystem = fileSystem;
+        WorkingDirectory = workingDirectory;
         Args = args;
         StandardInput = standardInput;
         StandardOutput = standardOutput;
@@ -68,6 +72,7 @@ internal sealed class PipedExecutableContext : ExecutableContext, IAsyncDisposab
     public PipedExecutableContext(
         Console console,
         FileSystem fileSystem,
+        Directory workingDirectory,
         ReadOnlyMemory<string> args,
         StreamReader standardInputReader,
         StreamWriter standardInputWriter,
@@ -75,7 +80,7 @@ internal sealed class PipedExecutableContext : ExecutableContext, IAsyncDisposab
         StreamWriter standardOutputWriter,
         StreamReader standardErrorReader,
         StreamWriter standardErrorWriter
-    ) : base(console, fileSystem, args, standardInputReader, standardOutputWriter, standardErrorWriter)
+    ) : base(console, fileSystem, workingDirectory, args, standardInputReader, standardOutputWriter, standardErrorWriter)
     {
         StandardInputWriter = standardInputWriter;
         StandardOutputReader = standardOutputReader;
