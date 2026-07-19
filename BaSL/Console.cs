@@ -36,6 +36,8 @@ public sealed class Console
         {
             await StandardOutput.WriteAsync('#');
             var line = await StandardInput.ReadLineAsync();
+            if (string.IsNullOrEmpty(line))
+                continue;
             if (line.AsSpan().Trim().Equals("exit", StringComparison.OrdinalIgnoreCase))
                 return 0;
             var cts = _cts = new CancellationTokenSource();
