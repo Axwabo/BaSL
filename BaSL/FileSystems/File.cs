@@ -8,11 +8,11 @@ namespace BaSL.FileSystems;
 public abstract class File : FileSystemEntry
 {
 
-    private Executable? _executable;
-
     protected File(FileSystemAccess fileSystemAccess, Path parentDirectory, FileSystemEntryName name) : base(fileSystemAccess, parentDirectory, name)
     {
     }
+
+    internal virtual Executable? Executable { get; set; }
 
     public abstract long SizeBytes { get; }
 
@@ -22,8 +22,8 @@ public abstract class File : FileSystemEntry
     {
         if (!Mode.CanExecute)
             throw new IOException("Access denied");
-        if (_executable != null)
-            return Process.Start(_executable, context, cancellationToken);
+        if (Executable != null)
+            return Process.Start(Executable, context, cancellationToken);
         using var reader = new StreamReader(Open());
         var line = reader.ReadLine();
         if (!line.AsSpan().StartsWith("#!"))
@@ -35,7 +35,7 @@ public abstract class File : FileSystemEntry
     {
         if (!Mode.CanWrite)
             throw new IOException("Access denied");
-        _executable = executable;
+        Executable = executable;
     }
 
 }

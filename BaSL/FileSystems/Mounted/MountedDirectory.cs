@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -6,11 +7,20 @@ namespace BaSL.FileSystems.Mounted;
 internal sealed class MountedDirectory : Directory
 {
 
+    public static MountedDirectory Create(MountedFileSystem mountedFileSystem, Path mountPoint, Directory original)
+        => original is MountedDirectory
+            ? throw new ArgumentException("Cannot double-mount a directory")
+            : new MountedDirectory(new FileSystemAccess(mountedFileSystem), mountPoint, original);
+
     private readonly Dictionary<string, FileSystemEntry> _cachedEntries = [];
 
     private readonly Directory _original;
 
-    public MountedDirectory(FileSystemAccess fileSystemAccess, Path parentDirectory, Directory original)
+    private MountedDirectory(MountedDirectory parent, Directory original) : this(parent.FileSystemAccess, parent.FullPath, original)
+    {
+    }
+
+    private MountedDirectory(FileSystemAccess fileSystemAccess, Path parentDirectory, Directory original)
         : base(fileSystemAccess, parentDirectory, original.Name)
         => _original = original;
 
@@ -30,7 +40,8 @@ internal sealed class MountedDirectory : Directory
 
     private FileSystemEntry Cache(FileSystemEntry entry) => _cachedEntries[entry.Name.Value] = entry switch
     {
-        Directory directory => new MountedDirectory(FileSystemAccess, FullPath, directory),
+        Directory directory => new MountedDirectory(this, directory),
+        File file => MountedFile.Create(this, file),
         _ => throw new IOException($"Invalid filesystem entry {entry}")
     };
 
