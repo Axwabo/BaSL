@@ -16,12 +16,19 @@ public sealed class Process
         try
         {
             var app = executable(context);
-            return await app.ExecuteAsync(cancellationToken);
+            var execute = app.ExecuteAsync(cancellationToken);
+            if (context is not RootExecutableContext root)
+                return await execute;
+            await Task.WhenAll(
+                execute,
+                context.StandardOutputReader.BaseStream.CopyToAsync(root.Output.BaseStream, cancellationToken),
+                context.StandardErrorReader.BaseStream.CopyToAsync(root.Error.BaseStream, cancellationToken)
+            );
+            return execute.Result;
         }
         finally
         {
-            if (context is PipedExecutableContext piped)
-                await piped.DisposeAsync();
+            await context.DisposeAsync();
         }
     }
 
@@ -29,19 +36,9 @@ public sealed class Process
 
     private Process(Executable executable, ExecutableContext context, CancellationToken cancellationToken)
     {
-        if (context is PipedExecutableContext piped)
-        {
-            StandardInput = piped.StandardInputWriter;
-            StandardOutput = piped.StandardOutputReader;
-            StandardError = piped.StandardErrorReader;
-        }
-        else
-        {
-            StandardInput = null!;
-            StandardOutput = null!;
-            StandardError = null!;
-        }
-
+        StandardInput = context.StandardInputWriter;
+        StandardOutput = context.StandardOutputReader;
+        StandardError = context.StandardErrorReader;
         _task = ExecuteAsync(executable, context, cancellationToken);
     }
 

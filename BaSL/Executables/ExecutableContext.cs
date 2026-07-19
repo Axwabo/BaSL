@@ -19,12 +19,12 @@ public class ExecutableContext
         );
     }
 
-    internal static PipedExecutableContext Piped(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
+    internal static ExecutableContext Piped(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
     {
         var (inRead, inWrite) = CreateStreams();
         var (outRead, outWrite) = CreateStreams();
         var (errRead, errWrite) = CreateStreams();
-        return new PipedExecutableContext(
+        return new ExecutableContext(
             console,
             fileSystem,
             console.CurrentDirectory,
@@ -38,31 +38,7 @@ public class ExecutableContext
         );
     }
 
-    private protected ExecutableContext(Console console, FileSystem fileSystem, Directory workingDirectory, ReadOnlyMemory<string> args, StreamReader standardInput, StreamWriter standardOutput, StreamWriter standardError)
-    {
-        Console = console;
-        FileSystem = fileSystem;
-        WorkingDirectory = workingDirectory;
-        Args = args;
-        StandardInput = standardInput;
-        StandardOutput = standardOutput;
-        StandardError = standardError;
-    }
-
-    internal Console Console { get; }
-    internal FileSystem FileSystem { get; }
-    internal Directory WorkingDirectory { get; }
-    internal ReadOnlyMemory<string> Args { get; }
-    internal StreamReader StandardInput { get; }
-    internal StreamWriter StandardOutput { get; }
-    internal StreamWriter StandardError { get; }
-
-}
-
-internal sealed class PipedExecutableContext : ExecutableContext, IAsyncDisposable
-{
-
-    public PipedExecutableContext(
+    private protected ExecutableContext(
         Console console,
         FileSystem fileSystem,
         Directory workingDirectory,
@@ -73,18 +49,32 @@ internal sealed class PipedExecutableContext : ExecutableContext, IAsyncDisposab
         StreamWriter standardOutputWriter,
         StreamReader standardErrorReader,
         StreamWriter standardErrorWriter
-    ) : base(console, fileSystem, workingDirectory, args, standardInputReader, standardOutputWriter, standardErrorWriter)
+    )
     {
+        Console = console;
+        FileSystem = fileSystem;
+        WorkingDirectory = workingDirectory;
+        Args = args;
+        StandardInput = standardInputReader;
+        StandardOutput = standardOutputWriter;
+        StandardError = standardErrorWriter;
         StandardInputWriter = standardInputWriter;
-        StandardOutputReader = standardOutputReader;
         StandardErrorReader = standardErrorReader;
+        StandardOutputReader = standardOutputReader;
     }
 
-    public StreamWriter StandardInputWriter { get; }
-    public StreamReader StandardOutputReader { get; }
-    public StreamReader StandardErrorReader { get; }
+    internal Console Console { get; }
+    internal FileSystem FileSystem { get; }
+    internal Directory WorkingDirectory { get; }
+    internal ReadOnlyMemory<string> Args { get; }
+    internal StreamReader StandardInput { get; }
+    internal StreamWriter StandardOutput { get; }
+    internal StreamWriter StandardError { get; }
+    internal StreamWriter StandardInputWriter { get; }
+    internal StreamReader StandardOutputReader { get; }
+    internal StreamReader StandardErrorReader { get; }
 
-    public async ValueTask DisposeAsync()
+    internal async ValueTask DisposeAsync()
     {
         StandardInput.Dispose();
         await StandardOutput.DisposeAsync();
@@ -93,5 +83,32 @@ internal sealed class PipedExecutableContext : ExecutableContext, IAsyncDisposab
         StandardOutputReader.Dispose();
         StandardErrorReader.Dispose();
     }
+
+}
+
+internal sealed class RootExecutableContext : ExecutableContext
+{
+
+    internal RootExecutableContext(ExecutableContext other, StreamReader input, StreamWriter output, StreamWriter error) : base(
+        other.Console,
+        other.FileSystem,
+        other.WorkingDirectory,
+        other.Args,
+        other.StandardInput,
+        other.StandardInputWriter,
+        other.StandardOutputReader,
+        other.StandardOutput,
+        other.StandardErrorReader,
+        other.StandardError
+    )
+    {
+        Input = input;
+        Output = output;
+        Error = error;
+    }
+
+    public StreamReader Input { get; }
+    public StreamWriter Output { get; }
+    public StreamWriter Error { get; }
 
 }

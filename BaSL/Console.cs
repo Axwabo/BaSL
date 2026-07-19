@@ -36,14 +36,10 @@ public sealed class Console
             if (line.AsSpan().Trim().Equals("exit", StringComparison.OrdinalIgnoreCase))
                 return 0;
             var args = line.Split();
-            var context = ExecutableContext.Piped(this, FileSystem, args.AsMemory()[1..]);
+            var context = new RootExecutableContext(ExecutableContext.Piped(this, FileSystem, args.AsMemory()[1..]), StandardInput, StandardOutput, StandardError);
             var program = CurrentDirectory.GetFile(args[0]);
             var process = program.Execute(context, CancellationToken.None);
-            await Task.WhenAll(
-                process.WaitForExitAsync(),
-                context.StandardOutputReader.BaseStream.CopyToAsync(StandardOutput.BaseStream),
-                context.StandardErrorReader.BaseStream.CopyToAsync(StandardError.BaseStream)
-            );
+            await process.WaitForExitAsync();
         }
     }
 
