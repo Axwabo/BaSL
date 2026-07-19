@@ -1,4 +1,5 @@
 ﻿using BaSL.FileSystems;
+using BaSL.FileSystems.Dev;
 using BaSL.FileSystems.Extensions;
 using BaSL.Shell.Console;
 using Directory = BaSL.FileSystems.Directory;
@@ -38,6 +39,7 @@ FileSystem CreateFileSystem()
     var bin = rootFs.Root.CreateDirectory("usr").CreateDirectory("bin");
     var home = rootFs.Root.CreateDirectory("home");
     ((IMountSupport) home).Mount(userFs, "user");
+    ((IMountSupport) rootFs.Root).Mount(new DevFileSystem(), "dev");
     bin.CreateFile("echo", Mode.Rwx).MakeExecutable(context => new Echo(context));
     bin.CreateFile("pwd", Mode.Rwx).MakeExecutable(context => new Pwd(context));
     bin.CreateFile("cd", Mode.Rwx).MakeExecutable(context => new Cd(context));

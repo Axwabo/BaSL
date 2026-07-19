@@ -1,0 +1,30 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+
+namespace BaSL.FileSystems.Dev;
+
+internal sealed class DevDirectory : Directory
+{
+
+    private readonly Dictionary<string, FileSystemEntry> _files = new();
+
+    public DevDirectory(DevFileSystem fileSystem) : base(new FileSystemAccess(fileSystem), Path.Root, "")
+    {
+        Add("null", Stream.Null);
+        Add("zero", ZeroStream.Instance);
+    }
+
+    public override Mode Mode => Mode.Read;
+
+    private void Add(string name, Stream stream) => _files.Add(name, new DevFile(this, name, stream));
+
+    public override IEnumerable<FileSystemEntry> EnumerateEntries() => _files.Values;
+
+    public override Directory CreateDirectory(FileSystemEntryName name, Mode mode = Mode.Rw) => throw new NotSupportedException();
+
+    public override File CreateFile(FileSystemEntryName name, Mode mode = Mode.Rw) => throw new NotSupportedException();
+
+    public override FileSystemEntry GetEntry(FileSystemEntryName name) => _files[name.Value];
+
+}
