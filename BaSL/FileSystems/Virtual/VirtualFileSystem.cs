@@ -9,7 +9,6 @@ internal sealed class VirtualFileSystem : FileSystem
         Root = root;
         Home = Root.CreateDirectory("home").CreateDirectory("user");
         root.CreateDirectory("usr").CreateDirectory("bin");
-        root.MakeReadOnly();
     }
 
     public override Directory Root { get; }

@@ -2,7 +2,7 @@ using System;
 
 namespace BaSL.FileSystems.Mounted;
 
-public sealed class MountedFileSystem : FileSystem
+internal sealed class MountedFileSystem : FileSystem
 {
 
     internal MountedFileSystem(Directory root, Path mountPoint)
