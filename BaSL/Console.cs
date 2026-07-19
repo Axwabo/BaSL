@@ -11,6 +11,8 @@ namespace BaSL;
 public sealed class Console
 {
 
+    private CancellationTokenSource? _cts;
+
     public Console(FileSystem fileSystem)
     {
         FileSystem = fileSystem;
@@ -35,12 +37,27 @@ public sealed class Console
             var line = await StandardInput.ReadLineAsync();
             if (line.AsSpan().Trim().Equals("exit", StringComparison.OrdinalIgnoreCase))
                 return 0;
-            var args = line.Split();
-            var context = new RootExecutableContext(ExecutableContext.Piped(this, FileSystem, args.AsMemory()[1..]), StandardInput, StandardOutput, StandardError);
-            var program = CurrentDirectory.GetFile(args[0]);
-            var process = program.Execute(context, CancellationToken.None);
-            await process.WaitForExitAsync();
+            var cts = _cts = new CancellationTokenSource();
+            var token = cts.Token;
+            try
+            {
+                var args = line.Split();
+                var context = new RootExecutableContext(ExecutableContext.Piped(this, FileSystem, args.AsMemory()[1..]), StandardInput, StandardOutput, StandardError);
+                var program = CurrentDirectory.GetFile(args[0]);
+                var process = program.Execute(context, token);
+                await process.WaitForExitAsync();
+            }
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            {
+            }
+            finally
+            {
+                cts.Dispose();
+                _cts = null;
+            }
         }
     }
+
+    public void TerminateCurrentProcess() => _cts?.Cancel();
 
 }

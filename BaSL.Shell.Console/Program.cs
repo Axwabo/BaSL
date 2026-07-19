@@ -25,6 +25,11 @@ var console = new BaSL.Console(CreateFileSystem())
     StandardError = errWriter
 };
 console.CurrentDirectory = (Directory) console.FileSystem.Resolve("/usr/bin");
+Console.CancelKeyPress += (_, eventArgs) =>
+{
+    console.TerminateCurrentProcess();
+    eventArgs.Cancel = true;
+};
 return await console.StartAsync();
 
 FileSystem CreateFileSystem()
