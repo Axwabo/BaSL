@@ -45,5 +45,6 @@ FileSystem CreateFileSystem()
     bin.CreateFile("cd", Mode.Rwx).MakeExecutable(context => new Cd(context));
     bin.CreateFile("ls", Mode.Rwx).MakeExecutable(context => new Ls(context));
     bin.CreateFile("cat", Mode.Rwx).MakeExecutable(context => new Cat(context));
+    bin.CreateFile("bytes", Mode.Rwx).MakeExecutable(context => new Bytes(context));
     return rootFs;
 }
