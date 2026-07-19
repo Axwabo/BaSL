@@ -10,21 +10,15 @@ internal sealed class VirtualDirectory : Directory
 
     private Mode _mode;
 
+    public VirtualDirectory(FileSystem fileSystem, Path parentDirectory, FileSystemEntryName name, Mode mode) : base(fileSystem, parentDirectory, name) => _mode = mode;
+
+    public override Mode Mode => _mode;
+
     private void ThrowIfNoAccess()
     {
         if (!_mode.CanWrite)
             throw new IOException("Directory is immutable");
     }
-
-    public VirtualDirectory(Path fullPath, Mode mode = Mode.Rw)
-    {
-        FullPath = fullPath;
-        _mode = mode;
-    }
-
-    public override Path FullPath { get; }
-
-    public override Mode Mode => _mode;
 
     public override IEnumerable<FileSystemEntry> EnumerateEntries() => _entries.Values;
 
@@ -32,7 +26,7 @@ internal sealed class VirtualDirectory : Directory
     {
         ThrowIfNoAccess();
         // TODO: allow files & folders with the same name?
-        var directory = new VirtualDirectory(FullPath / name, mode);
+        var directory = new VirtualDirectory(FileSystem, FullPath, name, mode);
         _entries.Add(name.Value, directory);
         return directory;
     }
@@ -40,7 +34,7 @@ internal sealed class VirtualDirectory : Directory
     public override File CreateFile(FileSystemEntryName name, Mode mode = Mode.Rw)
     {
         ThrowIfNoAccess();
-        var file = new VirtualFile(FullPath / name, mode);
+        var file = new VirtualFile(FileSystem, FullPath, name, mode);
         _entries.Add(name.Value, file);
         return file;
     }

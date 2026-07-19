@@ -5,6 +5,8 @@ namespace BaSL.FileSystems;
 public readonly record struct Path(string Value)
 {
 
+    public static Path Root { get; } = "/";
+
     public static Path Combine(Path left, Path right)
     {
         var leftSpan = left.Value.AsSpan();

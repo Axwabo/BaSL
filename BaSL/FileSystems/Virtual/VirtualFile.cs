@@ -3,23 +3,20 @@ using System.IO;
 
 namespace BaSL.FileSystems.Virtual;
 
-internal class VirtualFile : File
+internal sealed class VirtualFile : File
 {
 
     private readonly object _access = new();
-    private bool _used;
 
     private byte[] _data = [];
     private int _length;
+    private bool _used;
 
-    public VirtualFile(Path fullPath, Mode mode)
-    {
-        FullPath = fullPath;
-        Mode = mode;
-    }
+    public VirtualFile(FileSystem fileSystem, Path parentDirectory, FileSystemEntryName name, Mode mode) : base(fileSystem, parentDirectory, name) => Mode = mode;
 
-    public override Path FullPath { get; }
     public override Mode Mode { get; }
+
+    public override long SizeBytes => _length;
 
     public override Stream Open()
     {

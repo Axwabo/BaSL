@@ -5,6 +5,10 @@ namespace BaSL.FileSystems;
 public abstract class Directory : FileSystemEntry
 {
 
+    protected Directory(FileSystem fileSystem, Path parentDirectory, FileSystemEntryName name) : base(fileSystem, parentDirectory, name)
+    {
+    }
+
     public abstract IEnumerable<FileSystemEntry> EnumerateEntries();
 
     public abstract Directory CreateDirectory(FileSystemEntryName name, Mode mode = Mode.Rw);
