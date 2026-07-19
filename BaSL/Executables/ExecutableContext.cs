@@ -19,9 +19,6 @@ public class ExecutableContext
         );
     }
 
-    internal static ExecutableContext Direct(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, StreamReader standardInput, StreamWriter standardOutput, StreamWriter standardError)
-        => new(console, fileSystem, console.CurrentDirectory, args, standardInput, standardOutput, standardError);
-
     internal static PipedExecutableContext Piped(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
     {
         var (inRead, inWrite) = CreateStreams();
@@ -41,14 +38,6 @@ public class ExecutableContext
         );
     }
 
-    internal Console Console { get; }
-    internal FileSystem FileSystem { get; }
-    internal Directory WorkingDirectory { get; }
-    internal ReadOnlyMemory<string> Args { get; }
-    internal StreamReader StandardInput { get; }
-    internal StreamWriter StandardOutput { get; }
-    internal StreamWriter StandardError { get; }
-
     private protected ExecutableContext(Console console, FileSystem fileSystem, Directory workingDirectory, ReadOnlyMemory<string> args, StreamReader standardInput, StreamWriter standardOutput, StreamWriter standardError)
     {
         Console = console;
@@ -60,14 +49,18 @@ public class ExecutableContext
         StandardError = standardError;
     }
 
+    internal Console Console { get; }
+    internal FileSystem FileSystem { get; }
+    internal Directory WorkingDirectory { get; }
+    internal ReadOnlyMemory<string> Args { get; }
+    internal StreamReader StandardInput { get; }
+    internal StreamWriter StandardOutput { get; }
+    internal StreamWriter StandardError { get; }
+
 }
 
 internal sealed class PipedExecutableContext : ExecutableContext, IAsyncDisposable
 {
-
-    public StreamWriter StandardInputWriter { get; }
-    public StreamReader StandardOutputReader { get; }
-    public StreamReader StandardErrorReader { get; }
 
     public PipedExecutableContext(
         Console console,
@@ -87,8 +80,15 @@ internal sealed class PipedExecutableContext : ExecutableContext, IAsyncDisposab
         StandardErrorReader = standardErrorReader;
     }
 
+    public StreamWriter StandardInputWriter { get; }
+    public StreamReader StandardOutputReader { get; }
+    public StreamReader StandardErrorReader { get; }
+
     public async ValueTask DisposeAsync()
     {
+        StandardInput.Dispose();
+        await StandardOutput.DisposeAsync();
+        await StandardError.DisposeAsync();
         await StandardInputWriter.DisposeAsync();
         StandardOutputReader.Dispose();
         StandardErrorReader.Dispose();

@@ -11,20 +11,24 @@ public sealed class Process
     internal static Process Start(Executable executable, ExecutableContext context, CancellationToken cancellationToken)
         => new(executable, context, cancellationToken);
 
-    private readonly Task<int> _task;
+    private static async Task<int> ExecuteAsync(Executable executable, ExecutableContext context, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var app = executable(context);
+            return await app.ExecuteAsync(cancellationToken);
+        }
+        finally
+        {
+            if (context is PipedExecutableContext piped)
+                await piped.DisposeAsync();
+        }
+    }
 
-    private readonly StreamReader _standardInput;
-    private readonly StreamWriter _standardOutput;
-    private readonly StreamWriter _standardError;
-    public StreamWriter StandardInput { get; }
-    public StreamReader StandardOutput { get; }
-    public StreamReader StandardError { get; }
+    private readonly Task<int> _task;
 
     private Process(Executable executable, ExecutableContext context, CancellationToken cancellationToken)
     {
-        _standardInput = context.StandardInput;
-        _standardOutput = context.StandardOutput;
-        _standardError = context.StandardError;
         if (context is PipedExecutableContext piped)
         {
             StandardInput = piped.StandardInputWriter;
@@ -41,22 +45,9 @@ public sealed class Process
         _task = ExecuteAsync(executable, context, cancellationToken);
     }
 
-    private async Task<int> ExecuteAsync(Executable executable, ExecutableContext context, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var app = executable(context);
-            return await app.ExecuteAsync(cancellationToken);
-        }
-        finally
-        {
-            _standardInput.Dispose();
-            await _standardOutput.DisposeAsync();
-            await _standardError.DisposeAsync();
-            if (context is PipedExecutableContext piped)
-                await piped.DisposeAsync();
-        }
-    }
+    public StreamWriter StandardInput { get; }
+    public StreamReader StandardOutput { get; }
+    public StreamReader StandardError { get; }
 
     public int ExitCode => !_task.IsCompleted
         ? throw new InvalidOperationException("Process has not exited")

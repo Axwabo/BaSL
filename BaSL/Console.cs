@@ -11,6 +11,12 @@ namespace BaSL;
 public sealed class Console
 {
 
+    public Console(FileSystem fileSystem)
+    {
+        FileSystem = fileSystem;
+        CurrentDirectory = fileSystem.Root;
+    }
+
     public FileSystem FileSystem { get; }
 
     public required StreamReader StandardInput { get; init; }
@@ -21,21 +27,24 @@ public sealed class Console
 
     public Directory CurrentDirectory { get; internal set; }
 
-    public Console(FileSystem fileSystem)
-    {
-        FileSystem = fileSystem;
-        CurrentDirectory = fileSystem.Root;
-    }
-
     public async Task<int> StartAsync()
     {
-        var line = await StandardInput.ReadLineAsync();
-        var args = line.Split();
-        var context = ExecutableContext.Direct(this, FileSystem, args.AsMemory()[1..], StandardInput, StandardOutput, StandardError);
-        var program = CurrentDirectory.GetFile(args[0]);
-        var process = program.Execute(context, CancellationToken.None);
-        await process.WaitForExitAsync();
-        return 0;
+        while (true)
+        {
+            await StandardOutput.WriteAsync('#');
+            var line = await StandardInput.ReadLineAsync();
+            if (line.AsSpan().Trim().Equals("exit", StringComparison.OrdinalIgnoreCase))
+                return 0;
+            var args = line.Split();
+            var context = ExecutableContext.Piped(this, FileSystem, args.AsMemory()[1..]);
+            var program = CurrentDirectory.GetFile(args[0]);
+            var process = program.Execute(context, CancellationToken.None);
+            await Task.WhenAll(
+                process.WaitForExitAsync(),
+                context.StandardOutputReader.BaseStream.CopyToAsync(StandardOutput.BaseStream),
+                context.StandardErrorReader.BaseStream.CopyToAsync(StandardError.BaseStream)
+            );
+        }
     }
 
 }
