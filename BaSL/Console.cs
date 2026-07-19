@@ -31,6 +31,7 @@ public sealed class Console
 
     public async Task<int> StartAsync()
     {
+        var binaries = CurrentDirectory;
         while (true)
         {
             await StandardOutput.WriteAsync('#');
@@ -43,7 +44,7 @@ public sealed class Console
             {
                 var args = line.Split();
                 var context = new RootExecutableContext(ExecutableContext.Piped(this, FileSystem, args.AsMemory()[1..]), StandardInput, StandardOutput, StandardError);
-                var program = CurrentDirectory.GetFile(args[0]);
+                var program = binaries.GetFile(args[0]);
                 var process = program.Execute(context, token);
                 await process.WaitForExitAsync();
             }

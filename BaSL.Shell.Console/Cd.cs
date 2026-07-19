@@ -12,10 +12,18 @@ public sealed class Cd : App
     {
     }
 
-    public override Task<int> ExecuteAsync(CancellationToken cancellationToken)
+    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        Console.CurrentDirectory = (Directory) FileSystem.Resolve(Path.Combine(Console.CurrentDirectory.FullPath, Args.Span[0]));
-        return Task.FromResult(0);
+        Path path = Args.Span[0];
+        var final = path.Value.AsSpan().StartsWith('/') ? path : Path.Combine(WorkingDirectory.FullPath, path);
+        if (FileSystem.Resolve(final) is not Directory directory)
+        {
+            await StandardOutput.WriteLineAsync("Not a directory");
+            return 1;
+        }
+
+        Console.CurrentDirectory = directory;
+        return 0;
     }
 
 }
