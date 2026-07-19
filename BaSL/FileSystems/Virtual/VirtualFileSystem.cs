@@ -5,7 +5,7 @@ internal sealed class VirtualFileSystem : FileSystem
 
     public VirtualFileSystem()
     {
-        var root = new VirtualDirectory(this, Path.Root, "", Mode.Rwx);
+        var root = new VirtualDirectory(new FileSystemAccess(this), Path.Root, "", Mode.Rwx);
         Root = root;
         Home = Root.CreateDirectory("home").CreateDirectory("user");
         root.CreateDirectory("usr").CreateDirectory("bin");
@@ -14,6 +14,6 @@ internal sealed class VirtualFileSystem : FileSystem
 
     public override Directory Root { get; }
 
-    public override Directory Home { get; }
+    public Directory Home { get; }
 
 }

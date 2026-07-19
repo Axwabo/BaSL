@@ -10,7 +10,7 @@ public abstract class File : FileSystemEntry
 
     private Executable? _executable;
 
-    protected File(FileSystem fileSystem, Path parentDirectory, FileSystemEntryName name) : base(fileSystem, parentDirectory, name)
+    protected File(FileSystemAccess fileSystemAccess, Path parentDirectory, FileSystemEntryName name) : base(fileSystemAccess, parentDirectory, name)
     {
     }
 

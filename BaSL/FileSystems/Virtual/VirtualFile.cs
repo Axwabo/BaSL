@@ -12,7 +12,7 @@ internal sealed class VirtualFile : File
     private int _length;
     private bool _used;
 
-    public VirtualFile(FileSystem fileSystem, Path parentDirectory, FileSystemEntryName name, Mode mode) : base(fileSystem, parentDirectory, name) => Mode = mode;
+    public VirtualFile(FileSystemAccess fileSystemAccess, Path parentDirectory, FileSystemEntryName name, Mode mode) : base(fileSystemAccess, parentDirectory, name) => Mode = mode;
 
     public override Mode Mode { get; }
 

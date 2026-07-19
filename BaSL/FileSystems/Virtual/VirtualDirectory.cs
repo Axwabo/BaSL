@@ -10,7 +10,7 @@ internal sealed class VirtualDirectory : Directory
 
     private Mode _mode;
 
-    public VirtualDirectory(FileSystem fileSystem, Path parentDirectory, FileSystemEntryName name, Mode mode) : base(fileSystem, parentDirectory, name) => _mode = mode;
+    public VirtualDirectory(FileSystemAccess fileSystemAccess, Path parentDirectory, FileSystemEntryName name, Mode mode) : base(fileSystemAccess, parentDirectory, name) => _mode = mode;
 
     public override Mode Mode => _mode;
 
@@ -26,7 +26,7 @@ internal sealed class VirtualDirectory : Directory
     {
         ThrowIfNoAccess();
         // TODO: allow files & folders with the same name?
-        var directory = new VirtualDirectory(FileSystem, FullPath, name, mode);
+        var directory = new VirtualDirectory(FileSystemAccess, FullPath, name, mode);
         _entries.Add(name.Value, directory);
         return directory;
     }
@@ -34,7 +34,7 @@ internal sealed class VirtualDirectory : Directory
     public override File CreateFile(FileSystemEntryName name, Mode mode = Mode.Rw)
     {
         ThrowIfNoAccess();
-        var file = new VirtualFile(FileSystem, FullPath, name, mode);
+        var file = new VirtualFile(FileSystemAccess, FullPath, name, mode);
         _entries.Add(name.Value, file);
         return file;
     }

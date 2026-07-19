@@ -3,14 +3,16 @@ namespace BaSL.FileSystems;
 public abstract class FileSystemEntry
 {
 
-    protected FileSystemEntry(FileSystem fileSystem, Path parentDirectory, FileSystemEntryName name)
+    private protected FileSystemEntry(FileSystemAccess fileSystemAccess, Path parentDirectory, FileSystemEntryName name)
     {
-        FileSystem = fileSystem;
         FullPath = parentDirectory / name;
+        FileSystemAccess = fileSystemAccess;
         Name = name;
     }
 
-    public FileSystem FileSystem { get; internal set; }
+    protected internal FileSystemAccess FileSystemAccess { get; }
+
+    public FileSystem FileSystem => FileSystemAccess.FileSystem;
 
     public Path FullPath { get; }
 

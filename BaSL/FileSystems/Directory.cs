@@ -5,7 +5,7 @@ namespace BaSL.FileSystems;
 public abstract class Directory : FileSystemEntry
 {
 
-    protected Directory(FileSystem fileSystem, Path parentDirectory, FileSystemEntryName name) : base(fileSystem, parentDirectory, name)
+    protected Directory(FileSystemAccess fileSystemAccess, Path parentDirectory, FileSystemEntryName name) : base(fileSystemAccess, parentDirectory, name)
     {
     }
 
