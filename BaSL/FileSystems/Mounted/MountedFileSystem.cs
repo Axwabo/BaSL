@@ -5,12 +5,12 @@ namespace BaSL.FileSystems.Mounted;
 internal sealed class MountedFileSystem : FileSystem
 {
 
-    internal MountedFileSystem(Directory root, Path mountPoint)
+    internal MountedFileSystem(FileSystem original, Path mountPoint)
     {
-        if (root.FileSystemAccess.FileSystem is MountedFileSystem)
+        if (original is MountedFileSystem)
             throw new ArgumentException("Cannot mount an already-mounted file system");
-        root.FileSystemAccess.FileSystem = this;
-        Root = MountedDirectory.Create(this, mountPoint, root);
+        original.Root.FileSystemAccess.FileSystem = this;
+        Root = MountedDirectory.Create(this, mountPoint, original.Root);
     }
 
     public override Directory Root { get; }

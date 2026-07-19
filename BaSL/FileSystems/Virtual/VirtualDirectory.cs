@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using System.IO;
+using BaSL.FileSystems.Mounted;
 
 namespace BaSL.FileSystems.Virtual;
 
-internal sealed class VirtualDirectory : Directory
+internal sealed class VirtualDirectory : Directory, IMountSupport
 {
 
     private readonly Dictionary<string, FileSystemEntry> _entries = [];
@@ -13,6 +14,16 @@ internal sealed class VirtualDirectory : Directory
     public VirtualDirectory(FileSystemAccess fileSystemAccess, Path parentDirectory, FileSystemEntryName name, Mode mode) : base(fileSystemAccess, parentDirectory, name) => _mode = mode;
 
     public override Mode Mode => _mode;
+
+    public Directory Mount(FileSystem fileSystem, FileSystemEntryName name)
+    {
+        ThrowIfNoAccess();
+        if (_entries.ContainsKey(name.Value))
+            throw new IOException("Name conflict");
+        var mount = new FileSystemMount(FileSystemAccess, FullPath, name, fileSystem);
+        _entries[name.Value] = mount;
+        return mount;
+    }
 
     private void ThrowIfNoAccess()
     {

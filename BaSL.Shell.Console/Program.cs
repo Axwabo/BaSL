@@ -17,22 +17,31 @@ Console.SetIn(inReader);
 Console.SetOut(outWriter);
 Console.SetError(errWriter);
 
-var shell = new BaSL.Console(CreateFileSystem())
+var console = new BaSL.Console(CreateFileSystem())
 {
     StandardInput = inReader,
     StandardOutput = outWriter,
     StandardError = errWriter
 };
-shell.CurrentDirectory = (Directory) shell.FileSystem.Resolve("/usr/bin");
-return await shell.StartAsync();
+console.CurrentDirectory = (Directory) console.FileSystem.Resolve("/usr/bin");
+return await console.StartAsync();
 
 FileSystem CreateFileSystem()
 {
-    var fs = FileSystem.CreateVirtual();
-    var bin = (Directory) fs.Resolve("/usr/bin");
+    var rootFs = FileSystem.CreateVirtual();
+    var userFs = FileSystem.CreateVirtual();
+    using (var writer = new StreamWriter(userFs.Root.CreateFile("amogus.txt").Open()))
+    {
+        writer.WriteLineAsync("Hello World!");
+    }
+
+    var bin = rootFs.Root.CreateDirectory("usr").CreateDirectory("bin");
+    var home = rootFs.Root.CreateDirectory("home");
+    ((IMountSupport) home).Mount(userFs, "user");
     bin.CreateFile("echo", Mode.Rwx).MakeExecutable(context => new Echo(context));
     bin.CreateFile("pwd", Mode.Rwx).MakeExecutable(context => new Pwd(context));
     bin.CreateFile("cd", Mode.Rwx).MakeExecutable(context => new Cd(context));
     bin.CreateFile("ls", Mode.Rwx).MakeExecutable(context => new Ls(context));
-    return fs;
+    bin.CreateFile("cat", Mode.Rwx).MakeExecutable(context => new Cat(context));
+    return rootFs;
 }

@@ -10,10 +10,15 @@ public static class FileSystemExtensions
 
         public FileSystemEntry Resolve(Path path)
         {
-            var directory = fileSystem.Root;
+            FileSystemEntry entry = fileSystem.Root;
             foreach (var s in path.Value.Split("/", StringSplitOptions.RemoveEmptyEntries))
-                directory = directory.GetDirectory(s);
-            return directory;
+            {
+                if (entry is not Directory directory)
+                    break;
+                entry = directory.GetEntry(s);
+            }
+
+            return entry;
         }
 
     }

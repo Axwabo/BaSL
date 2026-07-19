@@ -2,14 +2,17 @@ using System.Collections.Generic;
 
 namespace BaSL.FileSystems.Mounted;
 
-public sealed class FileSystemMount : Directory
+internal sealed class FileSystemMount : Directory
 {
 
     private readonly Directory _root;
 
-    internal FileSystemMount(FileSystemAccess fileSystemAccess, Path parentDirectory, MountedFileSystem mountedFileSystem)
-        : base(fileSystemAccess, parentDirectory, mountedFileSystem.Root.Name)
-        => _root = mountedFileSystem.Root;
+    public FileSystemMount(FileSystemAccess fileSystemAccess, Path parentDirectory, FileSystemEntryName name, FileSystem fileSystemToMount)
+        : base(fileSystemAccess, parentDirectory, name)
+    {
+        var mounted = new MountedFileSystem(fileSystemToMount, FullPath);
+        _root = mounted.Root;
+    }
 
     public override Mode Mode => _root.Mode;
 

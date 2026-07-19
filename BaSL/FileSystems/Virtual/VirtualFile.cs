@@ -54,7 +54,9 @@ file sealed class VirtualFileStream : Stream
     public VirtualFileStream(VirtualFile file, byte[] data, int length)
     {
         _file = file;
-        _stream = new MemoryStream(data, 0, length, true, true);
+        _stream = new MemoryStream();
+        _stream.Write(data.AsSpan(0, length));
+        _stream.Position = 0;
     }
 
     public override bool CanRead => _stream.CanRead;
@@ -84,9 +86,9 @@ file sealed class VirtualFileStream : Stream
     protected override void Dispose(bool disposing)
     {
         GC.SuppressFinalize(this);
-        _stream.Dispose();
         if (disposing) // TODO: ???
             _file.Release(_stream.GetBuffer(), (int) _stream.Length);
+        _stream.Dispose();
     }
 
     ~VirtualFileStream() => Dispose(false);
