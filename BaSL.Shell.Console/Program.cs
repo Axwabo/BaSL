@@ -21,13 +21,12 @@ Console.SetIn(inReader);
 Console.SetOut(outWriter);
 Console.SetError(errWriter);
 
-var console = new BaSL.Console(CreateSystem(), "root")
+var console = new BaSL.Console(CreateSystem(), "user")
 {
     StandardInput = inReader,
     StandardOutput = outWriter,
     StandardError = errWriter
 };
-console.CurrentDirectory = (Directory) console.FileSystem.Resolve("/usr/bin");
 Console.CancelKeyPress += (_, eventArgs) =>
 {
     console.TerminateCurrentProcess();
@@ -40,11 +39,6 @@ OperatingSystem CreateSystem()
     var system = new OperatingSystem();
     var ctx = new UserContext(system.Root);
     var rootFs = system.FileSystem;
-    using (var writer = new StreamWriter(rootFs.Root.CreateFile("amogus.txt").Open(ctx)))
-    {
-        writer.WriteLineAsync("Hello World!");
-    }
-
     var bin = rootFs.Root.CreateDirectory("usr").CreateDirectory("bin");
     ((IMountSupport) rootFs.Root).Mount(new DevFileSystem(system.Root), "dev", system.Root, new Modes(Mode.Rwx, Mode.Rwx, Mode.Read));
     bin.CreateFile("echo", Mode.Rwx).MakeExecutable(ctx, context => new Echo(context));
@@ -53,5 +47,10 @@ OperatingSystem CreateSystem()
     bin.CreateFile("ls", Mode.Rwx).MakeExecutable(ctx, context => new Ls(context));
     bin.CreateFile("cat", Mode.Rwx).MakeExecutable(ctx, context => new Cat(context));
     bin.CreateFile("bytes", Mode.Rwx).MakeExecutable(ctx, context => new Bytes(context));
+
+    var user = system.CreateUser("user");
+    var userHome = (Directory) system.FileSystem.Resolve(user.Home);
+    using var writer = new StreamWriter(userHome.CreateFile("amogus.txt").Open(ctx));
+    writer.WriteLineAsync("Hello World!");
     return system;
 }

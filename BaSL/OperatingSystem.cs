@@ -11,7 +11,11 @@ public sealed class OperatingSystem
 
     public OperatingSystem()
     {
-        Root = new User("root") {IsSuperuser = true};
+        Root = new User("root")
+        {
+            IsSuperuser = true,
+            Home = Path.Root // TODO: probably..?
+        };
         Users["root"] = Root;
         FileSystem = FileSystem.CreateVirtual(Root);
         _homes = (IMountSupport) FileSystem.Root.CreateDirectory("home");
@@ -29,7 +33,8 @@ public sealed class OperatingSystem
         var user = new User(name);
         Users.Add(name, user);
         var userFs = FileSystem.CreateVirtual(user);
-        _homes.Mount(userFs, entryName, user, userFs.Root.Metadata.Modes);
+        var mount = _homes.Mount(userFs, entryName, user, userFs.Root.Metadata.Modes);
+        user.Home = mount.FullPath;
         return user;
     }
 

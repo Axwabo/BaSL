@@ -14,7 +14,7 @@ public static class InodeExtensions
 
         public bool CanExecute(User user) => inode.HasMode(user, Mode.Execute);
 
-        public bool HasMode(User user, Mode mode) => (user == inode.Owner ? inode.Modes.Owner : inode.Modes.Others).Has(mode);
+        public bool HasMode(User user, Mode mode) => user.IsSuperuser || (user == inode.Owner ? inode.Modes.Owner : inode.Modes.Others).Has(mode);
 
     }
 

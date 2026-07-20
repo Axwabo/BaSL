@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
 using BaSL.FileSystems;
+using BaSL.FileSystems.Extensions;
 using BaSL.Users;
 using Directory = BaSL.FileSystems.Directory;
 
@@ -18,7 +19,7 @@ public sealed class Console
     {
         OperatingSystem = operatingSystem;
         UserContext = new UserContext(operatingSystem.Users[username]);
-        CurrentDirectory = FileSystem.Root;
+        CurrentDirectory = (Directory) FileSystem.Resolve(User.Home);
     }
 
     public OperatingSystem OperatingSystem { get; }
@@ -39,7 +40,7 @@ public sealed class Console
 
     public async Task<int> StartAsync()
     {
-        var binaries = CurrentDirectory;
+        var binaries = (Directory) FileSystem.Resolve("/usr/bin");
         while (true)
         {
             await StandardOutput.WriteAsync('#');
