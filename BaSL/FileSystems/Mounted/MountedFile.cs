@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using BaSL.Executables;
+using BaSL.Users;
 
 namespace BaSL.FileSystems.Mounted;
 
@@ -18,8 +19,6 @@ internal sealed class MountedFile : File
         : base(fileSystemAccess, parentDirectory, original.Name, original.Metadata)
         => _original = original;
 
-    public override Mode Mode => _original.Mode;
-
     public override long SizeBytes => _original.SizeBytes;
 
     internal override Executable? Executable
@@ -28,6 +27,6 @@ internal sealed class MountedFile : File
         set => _original.Executable = value;
     }
 
-    public override Stream Open() => _original.Open();
+    public override Stream Open(UserContext context) => _original.Open(context);
 
 }

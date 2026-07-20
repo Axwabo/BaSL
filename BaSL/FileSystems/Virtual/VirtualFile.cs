@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using BaSL.FileSystems.Extensions;
 using BaSL.Users;
 
 namespace BaSL.FileSystems.Virtual;
@@ -17,13 +18,11 @@ internal sealed class VirtualFile : File
     {
     }
 
-    public override Mode Mode { get; }
-
     public override long SizeBytes => _length;
 
-    public override Stream Open()
+    public override Stream Open(UserContext context)
     {
-        if (!Mode.CanRead)
+        if (!Metadata.CanRead(context))
             throw new IOException("File is not readable");
         lock (_access)
         {

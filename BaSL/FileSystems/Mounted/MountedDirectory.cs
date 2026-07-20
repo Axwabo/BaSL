@@ -24,8 +24,6 @@ internal sealed class MountedDirectory : Directory
         : base(fileSystemAccess, parentDirectory, original.Name, original.Metadata)
         => _original = original;
 
-    public override Mode Mode => _original.Mode;
-
     public override IEnumerable<FileSystemEntry> EnumerateEntries()
     {
         foreach (var entry in _original.EnumerateEntries())

@@ -25,8 +25,6 @@ public abstract class FileSystemEntry
 
     public FileSystemEntryName Name { get; }
 
-    public virtual Inode Metadata { get; }
-
-    public abstract Mode Mode { get; }
+    public Inode Metadata { get; }
 
 }

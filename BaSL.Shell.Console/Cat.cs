@@ -20,7 +20,7 @@ public sealed class Cat : App
             return 1;
         }
 
-        await using var stream = file.Open();
+        await using var stream = file.Open(UserContext);
         await stream.CopyToAsync(StandardOutput.BaseStream, cancellationToken);
         return 0;
     }

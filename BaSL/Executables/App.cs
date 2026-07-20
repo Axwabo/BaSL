@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.FileSystems;
+using BaSL.Users;
 using Directory = BaSL.FileSystems.Directory;
 
 namespace BaSL.Executables;
@@ -12,7 +13,11 @@ public abstract class App
 
     private readonly ExecutableContext _context;
 
+    protected App(ExecutableContext context) => _context = context;
+
     protected Console Console => _context.Console;
+
+    protected UserContext UserContext => Console.UserContext;
 
     protected FileSystem FileSystem => _context.FileSystem;
 
@@ -25,8 +30,6 @@ public abstract class App
     protected internal StreamWriter StandardError => _context.StandardError;
 
     protected ReadOnlyMemory<string> Args => _context.Args;
-
-    protected App(ExecutableContext context) => _context = context;
 
     public abstract Task<int> ExecuteAsync(CancellationToken cancellationToken);
 

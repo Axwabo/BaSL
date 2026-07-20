@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
 using BaSL.FileSystems;
+using BaSL.Users;
 using Directory = BaSL.FileSystems.Directory;
 
 namespace BaSL;
@@ -13,13 +14,18 @@ public sealed class Console
 
     private CancellationTokenSource? _cts;
 
-    public Console(OperatingSystem operatingSystem)
+    public Console(OperatingSystem operatingSystem, string username)
     {
         OperatingSystem = operatingSystem;
+        UserContext = new UserContext(operatingSystem.Users[username]);
         CurrentDirectory = FileSystem.Root;
     }
 
     public OperatingSystem OperatingSystem { get; }
+
+    public UserContext UserContext { get; }
+
+    public User User => UserContext.User;
 
     public FileSystem FileSystem => OperatingSystem.FileSystem;
 

@@ -18,8 +18,6 @@ internal sealed class DevDirectory : Directory
         Add("zero", ZeroStream.Instance);
     }
 
-    public override Mode Mode => Mode.Read;
-
     private void Add(string name, Stream stream) => _files.Add(name, new DevFile(this, name, stream));
 
     public override IEnumerable<FileSystemEntry> EnumerateEntries() => _files.Values;

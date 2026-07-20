@@ -2,6 +2,7 @@
 using BaSL.FileSystems.Dev;
 using BaSL.FileSystems.Extensions;
 using BaSL.Shell.Console;
+using BaSL.Users;
 using Console = System.Console;
 using Directory = BaSL.FileSystems.Directory;
 using OperatingSystem = BaSL.OperatingSystem;
@@ -20,7 +21,7 @@ Console.SetIn(inReader);
 Console.SetOut(outWriter);
 Console.SetError(errWriter);
 
-var console = new BaSL.Console(CreateSystem())
+var console = new BaSL.Console(CreateSystem(), "root")
 {
     StandardInput = inReader,
     StandardOutput = outWriter,
@@ -37,22 +38,20 @@ return await console.StartAsync();
 OperatingSystem CreateSystem()
 {
     var system = new OperatingSystem();
+    var ctx = new UserContext(system.Root);
     var rootFs = system.FileSystem;
-    var userFs = FileSystem.CreateVirtual(system.Root);
-    using (var writer = new StreamWriter(userFs.Root.CreateFile("amogus.txt").Open()))
+    using (var writer = new StreamWriter(rootFs.Root.CreateFile("amogus.txt").Open(ctx)))
     {
         writer.WriteLineAsync("Hello World!");
     }
 
     var bin = rootFs.Root.CreateDirectory("usr").CreateDirectory("bin");
-    var home = rootFs.Root.CreateDirectory("home");
-    ((IMountSupport) home).Mount(userFs, "user", TODO, TODO);
     ((IMountSupport) rootFs.Root).Mount(new DevFileSystem(system.Root), "dev", system.Root, new Modes(Mode.Rwx, Mode.Rwx, Mode.Read));
-    bin.CreateFile("echo", Mode.Rwx).MakeExecutable(context => new Echo(context));
-    bin.CreateFile("pwd", Mode.Rwx).MakeExecutable(context => new Pwd(context));
-    bin.CreateFile("cd", Mode.Rwx).MakeExecutable(context => new Cd(context));
-    bin.CreateFile("ls", Mode.Rwx).MakeExecutable(context => new Ls(context));
-    bin.CreateFile("cat", Mode.Rwx).MakeExecutable(context => new Cat(context));
-    bin.CreateFile("bytes", Mode.Rwx).MakeExecutable(context => new Bytes(context));
+    bin.CreateFile("echo", Mode.Rwx).MakeExecutable(ctx, context => new Echo(context));
+    bin.CreateFile("pwd", Mode.Rwx).MakeExecutable(ctx, context => new Pwd(context));
+    bin.CreateFile("cd", Mode.Rwx).MakeExecutable(ctx, context => new Cd(context));
+    bin.CreateFile("ls", Mode.Rwx).MakeExecutable(ctx, context => new Ls(context));
+    bin.CreateFile("cat", Mode.Rwx).MakeExecutable(ctx, context => new Cat(context));
+    bin.CreateFile("bytes", Mode.Rwx).MakeExecutable(ctx, context => new Bytes(context));
     return system;
 }

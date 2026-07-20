@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using BaSL.Executables;
+using BaSL.FileSystems.Extensions;
 using BaSL.Users;
 
 namespace BaSL.FileSystems;
@@ -21,24 +22,24 @@ public abstract class File : FileSystemEntry
 
     public abstract long SizeBytes { get; }
 
-    public abstract Stream Open();
+    public abstract Stream Open(UserContext context);
 
     public Process Execute(ExecutableContext context, CancellationToken cancellationToken)
     {
-        if (!Mode.CanExecute)
+        if (!Metadata.CanExecute(context.Console.User))
             throw new IOException("Access denied");
         if (Executable != null)
             return Process.Start(Executable, context, cancellationToken);
-        using var reader = new StreamReader(Open());
+        using var reader = new StreamReader(Open(context.Console.UserContext));
         var line = reader.ReadLine();
         if (!line.AsSpan().StartsWith("#!"))
             throw new IOException("File is not executable");
         throw new NotImplementedException();
     }
 
-    public void MakeExecutable(Executable executable)
+    public void MakeExecutable(UserContext context, Executable executable)
     {
-        if (!Mode.CanWrite)
+        if (!Metadata.CanWrite(context))
             throw new IOException("Access denied");
         Executable = executable;
     }

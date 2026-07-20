@@ -7,14 +7,12 @@ internal sealed class FileSystemMount : Directory
 
     private readonly Directory _root;
 
-    public FileSystemMount(FileSystemAccess fileSystemAccess, Path parentDirectory, FileSystemEntryName name, FileSystem fileSystemToMount, Inode inode)
-        : base(fileSystemAccess, parentDirectory, name, inode)
+    public FileSystemMount(FileSystemAccess fileSystemAccess, Path parentDirectory, FileSystemEntryName name, FileSystem fileSystemToMount)
+        : base(fileSystemAccess, parentDirectory, name, fileSystemToMount.Root.Metadata)
     {
         var mounted = new MountedFileSystem(fileSystemToMount, FullPath);
         _root = mounted.Root;
     }
-
-    public override Mode Mode => _root.Mode;
 
     public override IEnumerable<FileSystemEntry> EnumerateEntries() => _root.EnumerateEntries();
 

@@ -17,14 +17,12 @@ internal sealed class VirtualDirectory : Directory, IMountSupport
         _mode = modes.Owner;
     }
 
-    public override Mode Mode => _mode;
-
     public Directory Mount(FileSystem fileSystem, FileSystemEntryName name, User owner, Modes modes)
     {
         ThrowIfNoAccess();
         if (_entries.ContainsKey(name.Value))
             throw new IOException("Name conflict");
-        var mount = new FileSystemMount(FileSystemAccess, FullPath, name, fileSystem, new Inode(owner, modes));
+        var mount = new FileSystemMount(FileSystemAccess, FullPath, name, fileSystem);
         _entries[name.Value] = mount;
         return mount;
     }
