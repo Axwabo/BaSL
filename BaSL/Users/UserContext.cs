@@ -9,4 +9,6 @@ public sealed class UserContext
 
     public User User { get; }
 
+    public string Name => User.Username;
+
 }

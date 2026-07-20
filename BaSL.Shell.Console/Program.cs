@@ -1,4 +1,5 @@
-﻿using BaSL.FileSystems;
+﻿using BaSL.Executables;
+using BaSL.FileSystems;
 using BaSL.FileSystems.Dev;
 using BaSL.FileSystems.Extensions;
 using BaSL.Shell.Console;
@@ -41,16 +42,24 @@ OperatingSystem CreateSystem()
     var rootFs = system.FileSystem;
     var bin = rootFs.Root.CreateDirectory("usr").CreateDirectory("bin");
     ((IMountSupport) rootFs.Root).Mount(new DevFileSystem(system.Root), "dev", system.Root, new Modes(Mode.Rwx, Mode.Rwx, Mode.Read));
-    bin.CreateFile("echo", Mode.Rwx).MakeExecutable(ctx, context => new Echo(context));
-    bin.CreateFile("pwd", Mode.Rwx).MakeExecutable(ctx, context => new Pwd(context));
-    bin.CreateFile("cd", Mode.Rwx).MakeExecutable(ctx, context => new Cd(context));
-    bin.CreateFile("ls", Mode.Rwx).MakeExecutable(ctx, context => new Ls(context));
-    bin.CreateFile("cat", Mode.Rwx).MakeExecutable(ctx, context => new Cat(context));
-    bin.CreateFile("bytes", Mode.Rwx).MakeExecutable(ctx, context => new Bytes(context));
+    CreateBinary("echo", context => new Echo(context));
+    CreateBinary("pwd", context => new Pwd(context));
+    CreateBinary("cd", context => new Cd(context));
+    CreateBinary("ls", context => new Ls(context));
+    CreateBinary("cat", context => new Cat(context));
+    CreateBinary("bytes", context => new Bytes(context));
+    CreateBinary("whoami", context => new WhoAmI(context));
 
     var user = system.CreateUser("user");
     var userHome = (Directory) system.FileSystem.Resolve(user.Home);
     using var writer = new StreamWriter(userHome.CreateFile("amogus.txt").Open(ctx));
     writer.WriteLineAsync("Hello World!");
     return system;
+
+    void CreateBinary(FileSystemEntryName name, Executable executable)
+    {
+        var file = bin.CreateFile(name, Mode.Rwx);
+        file.MakeExecutable(ctx, executable);
+        file.Metadata.ChangeMode(file.Metadata.Modes with {Others = Mode.Rx});
+    }
 }
