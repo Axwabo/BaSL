@@ -2,7 +2,9 @@
 using BaSL.FileSystems.Dev;
 using BaSL.FileSystems.Extensions;
 using BaSL.Shell.Console;
+using Console = System.Console;
 using Directory = BaSL.FileSystems.Directory;
+using OperatingSystem = BaSL.OperatingSystem;
 
 await using var stdin = Console.OpenStandardInput();
 await using var stdout = Console.OpenStandardOutput();
@@ -18,7 +20,7 @@ Console.SetIn(inReader);
 Console.SetOut(outWriter);
 Console.SetError(errWriter);
 
-var console = new BaSL.Console(CreateFileSystem())
+var console = new BaSL.Console(CreateSystem())
 {
     StandardInput = inReader,
     StandardOutput = outWriter,
@@ -32,9 +34,10 @@ Console.CancelKeyPress += (_, eventArgs) =>
 };
 return await console.StartAsync();
 
-FileSystem CreateFileSystem()
+OperatingSystem CreateSystem()
 {
-    var rootFs = FileSystem.CreateVirtual();
+    var system = new OperatingSystem();
+    var rootFs = system.FileSystem;
     var userFs = FileSystem.CreateVirtual();
     using (var writer = new StreamWriter(userFs.Root.CreateFile("amogus.txt").Open()))
     {
@@ -51,5 +54,5 @@ FileSystem CreateFileSystem()
     bin.CreateFile("ls", Mode.Rwx).MakeExecutable(context => new Ls(context));
     bin.CreateFile("cat", Mode.Rwx).MakeExecutable(context => new Cat(context));
     bin.CreateFile("bytes", Mode.Rwx).MakeExecutable(context => new Bytes(context));
-    return rootFs;
+    return system;
 }

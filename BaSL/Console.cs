@@ -13,13 +13,15 @@ public sealed class Console
 
     private CancellationTokenSource? _cts;
 
-    public Console(FileSystem fileSystem)
+    public Console(OperatingSystem operatingSystem)
     {
-        FileSystem = fileSystem;
-        CurrentDirectory = fileSystem.Root;
+        OperatingSystem = operatingSystem;
+        CurrentDirectory = FileSystem.Root;
     }
 
-    public FileSystem FileSystem { get; }
+    public OperatingSystem OperatingSystem { get; }
+
+    public FileSystem FileSystem => OperatingSystem.FileSystem;
 
     public required StreamReader StandardInput { get; init; }
 

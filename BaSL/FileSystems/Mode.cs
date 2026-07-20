@@ -2,7 +2,6 @@ using System;
 
 namespace BaSL.FileSystems;
 
-// TODO: 777 or something
 [Flags]
 public enum Mode
 {
@@ -18,13 +17,13 @@ public enum Mode
 
 }
 
-public static class PermissionsExtensions
+public static class ModeExtensions
 {
 
     extension(Mode mode)
     {
 
-        public static Mode Parse(char c) => c switch
+        public static Mode ParseOctal(char c) => c switch
         {
             '0' => Mode.None,
             '1' => Mode.Execute,
@@ -42,6 +41,19 @@ public static class PermissionsExtensions
         public bool CanWrite => mode.Has(Mode.Write);
 
         public bool CanExecute => mode.Has(Mode.Execute);
+
+        public char ToOctal() => mode switch
+        {
+            Mode.None => '0',
+            Mode.Execute => '1',
+            Mode.Write => '2',
+            Mode.Wx => '3',
+            Mode.Read => '4',
+            Mode.Rx => '5',
+            Mode.Rw => '6',
+            Mode.Rwx => '7',
+            _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, "Unknown mode")
+        };
 
         public bool Has(Mode other) => (mode & other) == other;
 
