@@ -1,9 +1,11 @@
+using BaSL.Users;
+
 namespace BaSL.FileSystems.Dev;
 
 public sealed class DevFileSystem : FileSystem
 {
 
-    public DevFileSystem() => Root = new DevDirectory(this);
+    public DevFileSystem(User owner) => Root = new DevDirectory(this, owner);
 
     public override Directory Root { get; }
 

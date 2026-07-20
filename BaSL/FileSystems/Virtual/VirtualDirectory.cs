@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using BaSL.FileSystems.Mounted;
+using BaSL.Users;
 
 namespace BaSL.FileSystems.Virtual;
 
@@ -11,16 +12,19 @@ internal sealed class VirtualDirectory : Directory, IMountSupport
 
     private Mode _mode;
 
-    public VirtualDirectory(FileSystemAccess fileSystemAccess, Path parentDirectory, FileSystemEntryName name, Mode mode) : base(fileSystemAccess, parentDirectory, name) => _mode = mode;
+    public VirtualDirectory(FileSystemAccess fileSystemAccess, Path parentDirectory, FileSystemEntryName name, User owner, Modes modes) : base(fileSystemAccess, parentDirectory, name, owner, modes)
+    {
+        _mode = modes.Owner;
+    }
 
     public override Mode Mode => _mode;
 
-    public Directory Mount(FileSystem fileSystem, FileSystemEntryName name)
+    public Directory Mount(FileSystem fileSystem, FileSystemEntryName name, User owner, Modes modes)
     {
         ThrowIfNoAccess();
         if (_entries.ContainsKey(name.Value))
             throw new IOException("Name conflict");
-        var mount = new FileSystemMount(FileSystemAccess, FullPath, name, fileSystem);
+        var mount = new FileSystemMount(FileSystemAccess, FullPath, name, fileSystem, new Inode(owner, modes));
         _entries[name.Value] = mount;
         return mount;
     }
@@ -37,7 +41,7 @@ internal sealed class VirtualDirectory : Directory, IMountSupport
     {
         ThrowIfNoAccess();
         // TODO: allow files & folders with the same name?
-        var directory = new VirtualDirectory(FileSystemAccess, FullPath, name, mode);
+        var directory = new VirtualDirectory(FileSystemAccess, FullPath, name, Metadata.Owner, Metadata.Modes with {Owner = mode});
         _entries.Add(name.Value, directory);
         return directory;
     }
@@ -45,7 +49,7 @@ internal sealed class VirtualDirectory : Directory, IMountSupport
     public override File CreateFile(FileSystemEntryName name, Mode mode = Mode.Rw)
     {
         ThrowIfNoAccess();
-        var file = new VirtualFile(FileSystemAccess, FullPath, name, mode);
+        var file = new VirtualFile(FileSystemAccess, FullPath, name, Metadata.Owner, Metadata.Modes with {Owner = mode});
         _entries.Add(name.Value, file);
         return file;
     }

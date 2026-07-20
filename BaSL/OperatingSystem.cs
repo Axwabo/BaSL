@@ -8,12 +8,12 @@ public sealed class OperatingSystem
 
     public OperatingSystem()
     {
-        FileSystem = FileSystem.CreateVirtual();
-        Root = new User("root", FileSystem.Root.CreateDirectory("root")) {IsSuperuser = true};
+        Root = new User("root") {IsSuperuser = true};
+        FileSystem = FileSystem.CreateVirtual(Root);
     }
 
-    public FileSystem FileSystem { get; }
-
     internal User Root { get; }
+
+    public FileSystem FileSystem { get; }
 
 }

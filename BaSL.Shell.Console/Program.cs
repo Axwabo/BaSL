@@ -38,7 +38,7 @@ OperatingSystem CreateSystem()
 {
     var system = new OperatingSystem();
     var rootFs = system.FileSystem;
-    var userFs = FileSystem.CreateVirtual();
+    var userFs = FileSystem.CreateVirtual(system.Root);
     using (var writer = new StreamWriter(userFs.Root.CreateFile("amogus.txt").Open()))
     {
         writer.WriteLineAsync("Hello World!");
@@ -46,8 +46,8 @@ OperatingSystem CreateSystem()
 
     var bin = rootFs.Root.CreateDirectory("usr").CreateDirectory("bin");
     var home = rootFs.Root.CreateDirectory("home");
-    ((IMountSupport) home).Mount(userFs, "user");
-    ((IMountSupport) rootFs.Root).Mount(new DevFileSystem(), "dev");
+    ((IMountSupport) home).Mount(userFs, "user", TODO, TODO);
+    ((IMountSupport) rootFs.Root).Mount(new DevFileSystem(system.Root), "dev", system.Root, new Modes(Mode.Rwx, Mode.Rwx, Mode.Read));
     bin.CreateFile("echo", Mode.Rwx).MakeExecutable(context => new Echo(context));
     bin.CreateFile("pwd", Mode.Rwx).MakeExecutable(context => new Pwd(context));
     bin.CreateFile("cd", Mode.Rwx).MakeExecutable(context => new Cd(context));

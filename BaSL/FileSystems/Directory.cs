@@ -1,11 +1,16 @@
 using System.Collections.Generic;
+using BaSL.Users;
 
 namespace BaSL.FileSystems;
 
 public abstract class Directory : FileSystemEntry
 {
 
-    protected Directory(FileSystemAccess fileSystemAccess, Path parentDirectory, FileSystemEntryName name) : base(fileSystemAccess, parentDirectory, name)
+    private protected Directory(FileSystemAccess fileSystemAccess, Path parentDirectory, FileSystemEntryName name, Inode node) : base(fileSystemAccess, parentDirectory, name, node)
+    {
+    }
+
+    protected Directory(FileSystemAccess fileSystemAccess, Path parentDirectory, FileSystemEntryName name, User owner, Modes modes) : base(fileSystemAccess, parentDirectory, name, owner, modes)
     {
     }
 

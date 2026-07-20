@@ -1,15 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using BaSL.Users;
 
 namespace BaSL.FileSystems.Dev;
 
 internal sealed class DevDirectory : Directory
 {
 
+    private static readonly Modes Modes = new(Mode.Read, 0, Mode.Read);
+
     private readonly Dictionary<string, FileSystemEntry> _files = new();
 
-    public DevDirectory(DevFileSystem fileSystem) : base(new FileSystemAccess(fileSystem), Path.Root, "")
+    public DevDirectory(DevFileSystem fileSystem, User owner) : base(new FileSystemAccess(fileSystem), Path.Root, "", new Inode(owner, Modes) {IsFrozen = true})
     {
         Add("null", Stream.Null);
         Add("zero", ZeroStream.Instance);

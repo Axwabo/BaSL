@@ -15,7 +15,7 @@ internal sealed class MountedFile : File
     private readonly File _original;
 
     private MountedFile(FileSystemAccess fileSystemAccess, Path parentDirectory, File original)
-        : base(fileSystemAccess, parentDirectory, original.Name)
+        : base(fileSystemAccess, parentDirectory, original.Name, original.Metadata)
         => _original = original;
 
     public override Mode Mode => _original.Mode;

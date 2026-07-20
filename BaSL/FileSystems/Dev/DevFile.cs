@@ -9,7 +9,7 @@ internal sealed class DevFile : File
     private readonly Stream _stream;
 
     public DevFile(DevDirectory directory, FileSystemEntryName name, Stream stream)
-        : base(directory.FileSystemAccess, directory.FullPath, name)
+        : base(directory.FileSystemAccess, directory.FullPath, name, directory.Metadata)
         => _stream = stream;
 
     public override Mode Mode => Mode.Rw;

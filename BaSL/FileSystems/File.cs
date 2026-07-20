@@ -2,13 +2,18 @@ using System;
 using System.IO;
 using System.Threading;
 using BaSL.Executables;
+using BaSL.Users;
 
 namespace BaSL.FileSystems;
 
 public abstract class File : FileSystemEntry
 {
 
-    protected File(FileSystemAccess fileSystemAccess, Path parentDirectory, FileSystemEntryName name) : base(fileSystemAccess, parentDirectory, name)
+    private protected File(FileSystemAccess fileSystemAccess, Path parentDirectory, FileSystemEntryName name, Inode inode) : base(fileSystemAccess, parentDirectory, name, inode)
+    {
+    }
+
+    protected File(FileSystemAccess fileSystemAccess, Path parentDirectory, FileSystemEntryName name, User owner, Modes modes) : base(fileSystemAccess, parentDirectory, name, owner, modes)
     {
     }
 

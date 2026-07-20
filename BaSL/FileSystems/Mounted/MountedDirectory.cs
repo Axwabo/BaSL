@@ -21,7 +21,7 @@ internal sealed class MountedDirectory : Directory
     }
 
     private MountedDirectory(FileSystemAccess fileSystemAccess, Path parentDirectory, Directory original)
-        : base(fileSystemAccess, parentDirectory, original.Name)
+        : base(fileSystemAccess, parentDirectory, original.Name, original.Metadata)
         => _original = original;
 
     public override Mode Mode => _original.Mode;

@@ -3,7 +3,7 @@ namespace BaSL.FileSystems.Tests;
 public sealed class VfsTest
 {
 
-    private readonly FileSystem _fs = FileSystem.CreateVirtual();
+    private readonly FileSystem _fs = new OperatingSystem().FileSystem;
 
     [Fact]
     public void CreateDirectoryInRootThrows() => Assert.Throws<IOException>(() => _fs.Root.CreateDirectory("amogus"));
