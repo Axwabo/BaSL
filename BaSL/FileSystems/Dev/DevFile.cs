@@ -23,6 +23,6 @@ internal sealed class DevFile : File
         set { }
     }
 
-    public override Stream Open(UserContext context) => _stream;
+    public override Stream Open(UserContext context, OpenMode mode) => _stream;
 
 }

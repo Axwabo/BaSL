@@ -22,7 +22,7 @@ public abstract class File : FileSystemEntry
 
     public abstract long SizeBytes { get; }
 
-    public abstract Stream Open(UserContext context);
+    public abstract Stream Open(UserContext context, OpenMode mode);
 
     public Process Execute(ExecutableContext context, CancellationToken cancellationToken)
     {
@@ -30,7 +30,7 @@ public abstract class File : FileSystemEntry
             throw new IOException("Access denied");
         if (Executable != null)
             return Process.Start(Executable, context, cancellationToken);
-        using var reader = new StreamReader(Open(context.Console.UserContext));
+        using var reader = new StreamReader(Open(context.Console.UserContext, OpenMode.Read));
         var line = reader.ReadLine();
         if (!line.AsSpan().StartsWith("#!"))
             throw new IOException("File is not executable");

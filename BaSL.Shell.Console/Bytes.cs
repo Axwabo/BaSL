@@ -1,4 +1,5 @@
 using BaSL.Executables;
+using BaSL.FileSystems;
 using BaSL.FileSystems.Extensions;
 using File = BaSL.FileSystems.File;
 
@@ -20,7 +21,7 @@ public sealed class Bytes : App
             return 1;
         }
 
-        await using var stream = file.Open(UserContext);
+        await using var stream = file.Open(UserContext, OpenMode.Read);
         var buffer = new byte[32];
         var read = await stream.ReadAsync(buffer, cancellationToken);
         foreach (var b in buffer.AsSpan(0, read))

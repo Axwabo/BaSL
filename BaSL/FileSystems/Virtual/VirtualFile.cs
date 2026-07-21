@@ -20,10 +20,12 @@ internal sealed class VirtualFile : File
 
     public override long SizeBytes => _length;
 
-    public override Stream Open(UserContext context)
+    public override Stream Open(UserContext context, OpenMode mode)
     {
         if (!Metadata.CanRead(context))
             throw new IOException("File is not readable");
+        if (mode == OpenMode.ReadWrite && !Metadata.CanWrite(context))
+            throw new IOException("File is not writable");
         lock (_access)
         {
             if (_used)

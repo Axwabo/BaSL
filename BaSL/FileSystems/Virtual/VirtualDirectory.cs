@@ -10,11 +10,8 @@ internal sealed class VirtualDirectory : Directory, IMountSupport
 
     private readonly Dictionary<string, FileSystemEntry> _entries = [];
 
-    private Mode _mode;
-
     public VirtualDirectory(FileSystemAccess fileSystemAccess, Path parentDirectory, FileSystemEntryName name, User owner, Modes modes) : base(fileSystemAccess, parentDirectory, name, owner, modes)
     {
-        _mode = modes.Owner;
     }
 
     public Directory Mount(FileSystem fileSystem, FileSystemEntryName name, User owner, Modes modes)
@@ -29,7 +26,7 @@ internal sealed class VirtualDirectory : Directory, IMountSupport
 
     private void ThrowIfNoAccess()
     {
-        if (!_mode.CanWrite)
+        if (!Metadata.OwnerMode.CanWrite)
             throw new IOException("Directory is immutable");
     }
 
@@ -53,7 +50,5 @@ internal sealed class VirtualDirectory : Directory, IMountSupport
     }
 
     public override FileSystemEntry GetEntry(FileSystemEntryName name) => _entries[name.Value];
-
-    public void MakeReadOnly() => _mode &= ~Mode.Write;
 
 }

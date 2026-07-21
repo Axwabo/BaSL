@@ -1,4 +1,5 @@
 using BaSL.Executables;
+using BaSL.FileSystems;
 using BaSL.FileSystems.Extensions;
 using File = BaSL.FileSystems.File;
 
@@ -20,7 +21,7 @@ public sealed class Cat : App
             return 1;
         }
 
-        await using var stream = file.Open(UserContext);
+        await using var stream = file.Open(UserContext, OpenMode.Read);
         await stream.CopyToAsync(StandardOutput.BaseStream, cancellationToken);
         return 0;
     }

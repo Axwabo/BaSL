@@ -27,6 +27,6 @@ internal sealed class MountedFile : File
         set => _original.Executable = value;
     }
 
-    public override Stream Open(UserContext context) => _original.Open(context);
+    public override Stream Open(UserContext context, OpenMode mode) => _original.Open(context, mode);
 
 }
