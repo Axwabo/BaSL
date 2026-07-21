@@ -32,7 +32,8 @@ internal sealed class VirtualDirectory : Directory, IMountSupport
     {
         if (!Metadata.OwnerMode.CanWrite)
             return CreateEntryError.AccessDenied;
-        // TODO: allow files & folders with the same name?
+        if (_entries.ContainsKey(name.Value))
+            return CreateEntryError.NameCollision;
         var directory = new VirtualDirectory(FileSystemAccess, FullPath, name, Metadata.Owner, Metadata.Modes with {Owner = mode});
         _entries.Add(name.Value, directory);
         return directory;
@@ -42,11 +43,14 @@ internal sealed class VirtualDirectory : Directory, IMountSupport
     {
         if (!Metadata.OwnerMode.CanWrite)
             return CreateEntryError.AccessDenied;
+        if (_entries.ContainsKey(name.Value))
+            return CreateEntryError.NameCollision;
         var file = new VirtualFile(FileSystemAccess, FullPath, name, Metadata.Owner, Metadata.Modes with {Owner = mode});
         _entries.Add(name.Value, file);
         return file;
     }
 
-    public override GetEntryResult GetEntry(FileSystemEntryName name) => _entries[name.Value];
+    public override GetEntryResult GetEntry(FileSystemEntryName name)
+        => _entries.TryGetValue(name.Value, out var entry) ? entry : GetEntryError.NotFound;
 
 }

@@ -26,6 +26,6 @@ internal sealed class DevDirectory : Directory
 
     public override CreateFileResult CreateFile(FileSystemEntryName name, Mode mode = Mode.Rw) => CreateEntryError.ImmutableFileSystem;
 
-    public override GetEntryResult GetEntry(FileSystemEntryName name) => _files[name.Value];
+    public override GetEntryResult GetEntry(FileSystemEntryName name) => _files.TryGetValue(name.Value, out var file) ? file : GetEntryError.NotFound;
 
 }
