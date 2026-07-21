@@ -51,7 +51,7 @@ OperatingSystem CreateSystem()
 
     var user = system.CreateUser("user");
     var userHome = system.FileSystem.ResolveDirectory(user.Home).Value!;
-    using var writer = new StreamWriter(userHome.CreateFile("amogus.txt").Value!.Open(ctx, OpenMode.ReadWrite));
+    using var writer = new StreamWriter(userHome.CreateFile("amogus.txt").Value!.Open(ctx, OpenMode.ReadWrite).Value!);
     writer.WriteLineAsync("Hello World!");
     return system;
 

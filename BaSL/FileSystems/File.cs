@@ -23,15 +23,18 @@ public abstract class File : FileSystemEntry
 
     public abstract long SizeBytes { get; }
 
-    public abstract Stream Open(UserContext context, OpenMode mode);
+    public abstract OpenFileResult Open(UserContext context, OpenMode mode);
 
-    public Result<Process, OpenFileError> Execute(ExecutableContext context, CancellationToken cancellationToken)
+    public ExecuteFileResult Execute(ExecutableContext context, CancellationToken cancellationToken)
     {
         if (!Metadata.CanExecute(context.Console.User))
             return OpenFileError.AccessDenied;
         if (Executable != null)
             return Process.Start(Executable, context, cancellationToken);
-        using var reader = new StreamReader(Open(context.Console.UserContext, OpenMode.Read));
+        var openResult = Open(context.Console.UserContext, OpenMode.Read);
+        if (!openResult.Success)
+            return openResult.Error;
+        using var reader = new StreamReader(openResult.Value);
         var line = reader.ReadLine();
         // TODO
         if (!line.AsSpan().StartsWith("#!"))

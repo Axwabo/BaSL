@@ -20,8 +20,14 @@ public sealed class Bytes : App
             return 1;
         }
 
-        var file = entry.Value;
-        await using var stream = file.Open(UserContext, OpenMode.Read);
+        var open = entry.Value.Open(UserContext, OpenMode.Read);
+        if (!open.Success)
+        {
+            await StandardError.WriteLineAsync(open.Error.Message);
+            return 1;
+        }
+
+        await using var stream = open.Value;
         var buffer = new byte[32];
         var read = await stream.ReadAsync(buffer, cancellationToken);
         foreach (var b in buffer.AsSpan(0, read))

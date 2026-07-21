@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using BaSL.FileSystems.Errors;
 using BaSL.FileSystems.Extensions;
 using BaSL.Users;
 
@@ -20,16 +21,14 @@ internal sealed class VirtualFile : File
 
     public override long SizeBytes => _length;
 
-    public override Stream Open(UserContext context, OpenMode mode)
+    public override OpenFileResult Open(UserContext context, OpenMode mode)
     {
-        if (!Metadata.CanRead(context))
-            throw new IOException("File is not readable");
-        if (mode == OpenMode.ReadWrite && !Metadata.CanWrite(context))
-            throw new IOException("File is not writable");
+        if (!Metadata.CanRead(context) || mode == OpenMode.ReadWrite && !Metadata.CanWrite(context))
+            return OpenFileError.AccessDenied;
         lock (_access)
         {
             if (_used)
-                throw new IOException("Access violation");
+                return OpenFileError.AccessViolation;
             _used = true;
             return new VirtualFileStream(this, _data, _length);
         }

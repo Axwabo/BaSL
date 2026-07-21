@@ -13,16 +13,27 @@ public sealed class Cat : App
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        var entry = FileSystem.ResolveFile(Args.Span[0]);
-        if (!entry.Success)
+        for (var i = 0; i < Args.Span.Length; i++)
         {
-            await StandardError.WriteLineAsync(entry.Error.Message);
-            return 1;
+            var arg = Args.Span[i];
+            var entry = FileSystem.ResolveFile(arg);
+            if (!entry.Success)
+            {
+                await StandardError.WriteLineAsync(entry.Error.Message);
+                return 1;
+            }
+
+            var open = entry.Value.Open(UserContext, OpenMode.Read);
+            if (!open.Success)
+            {
+                await StandardError.WriteLineAsync(open.Error.Message);
+                return 1;
+            }
+
+            await using var stream = open.Value;
+            await stream.CopyToAsync(StandardOutput.BaseStream, cancellationToken);
         }
 
-        var file = entry.Value;
-        await using var stream = file.Open(UserContext, OpenMode.Read);
-        await stream.CopyToAsync(StandardOutput.BaseStream, cancellationToken);
         return 0;
     }
 
