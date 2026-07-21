@@ -13,9 +13,8 @@ public sealed class Cat : App
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        for (var i = 0; i < Args.Span.Length; i++)
+        foreach (var arg in Args)
         {
-            var arg = Args.Span[i];
             var entry = FileSystem.ResolveFile(arg);
             if (!entry.Success)
             {
