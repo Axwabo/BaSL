@@ -15,9 +15,9 @@ internal sealed class VirtualDirectory : Directory, IMountSupport
     {
     }
 
-    public CreateDirectoryResult Mount(FileSystem fileSystem, FileSystemEntryName name, User owner, Modes modes)
+    public CreateDirectoryResult Mount(UserContext context, FileSystem fileSystem, FileSystemEntryName name)
     {
-        if (!Metadata.CanWrite(owner))
+        if (!Metadata.CanWrite(context))
             return CreateEntryError.AccessDenied;
         if (_entries.ContainsKey(name.Value))
             return CreateEntryError.NameCollision;

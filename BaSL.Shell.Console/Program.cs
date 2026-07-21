@@ -40,7 +40,7 @@ OperatingSystem CreateSystem()
     var ctx = new UserContext(system.Root);
     var rootFs = system.FileSystem;
     var bin = rootFs.Root.CreateDirectory("usr").Value!.CreateDirectory("bin").Value!;
-    ((IMountSupport) rootFs.Root).Mount(new DevFileSystem(system.Root), "dev", system.Root, new Modes(Mode.Rwx, Mode.Rwx, Mode.Read));
+    ((IMountSupport) rootFs.Root).Mount(ctx, new DevFileSystem(system.Root), "dev");
     CreateBinary("echo", context => new Echo(context));
     CreateBinary("pwd", context => new Pwd(context));
     CreateBinary("cd", context => new Cd(context));

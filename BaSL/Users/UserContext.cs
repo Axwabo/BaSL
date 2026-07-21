@@ -1,6 +1,6 @@
 namespace BaSL.Users;
 
-public sealed class UserContext
+public readonly record struct UserContext
 {
 
     public static implicit operator User(UserContext context) => context.User;

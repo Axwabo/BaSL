@@ -33,7 +33,7 @@ public sealed class OperatingSystem
         var user = new User(name);
         Users.Add(name, user);
         var userFs = FileSystem.CreateVirtual(user);
-        var mount = _homes.Mount(userFs, entryName, user, userFs.Root.Metadata.Modes).Value!;
+        var mount = _homes.Mount(new UserContext(Root), userFs, entryName).Value!;
         user.Home = mount.FullPath;
         return user;
     }
