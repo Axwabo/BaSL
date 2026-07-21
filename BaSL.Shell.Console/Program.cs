@@ -36,7 +36,7 @@ return await console.StartAsync();
 
 OperatingSystem CreateSystem()
 {
-    var system = new OperatingSystem();
+    var system = new OperatingSystem {Hostname = "OwOS"};
     var ctx = new UserContext(system.Root);
     var rootFs = system.FileSystem;
     var bin = rootFs.Root.CreateDirectory("usr").Value!.CreateDirectory("bin").Value!;

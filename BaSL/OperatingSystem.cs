@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using BaSL.FileSystems;
 using BaSL.Users;
@@ -26,6 +27,8 @@ public sealed class OperatingSystem
     internal Dictionary<string, User> Users { get; } = [];
 
     public FileSystem FileSystem { get; }
+
+    public string Hostname { get; set; } = Guid.NewGuid().ToString("N").ToUpper();
 
     public User CreateUser(string name)
     {

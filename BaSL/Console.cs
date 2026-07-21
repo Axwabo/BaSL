@@ -41,10 +41,9 @@ public sealed class Console
     public async Task<int> StartAsync()
     {
         var binaries = FileSystem.ResolveDirectory("/usr/bin").Value!;
-        var prefix = User.IsSuperuser ? "# " : "$ ";
         while (true)
         {
-            await StandardOutput.WriteAsync(prefix);
+            await StandardOutput.WriteAsync($"{User.Username}@{OperatingSystem.Hostname}{(User.IsSuperuser ? "# " : "$ ")}");
             var line = await StandardInput.ReadLineAsync();
             if (string.IsNullOrEmpty(line))
                 continue;
