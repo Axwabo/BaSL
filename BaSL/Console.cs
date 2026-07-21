@@ -57,8 +57,11 @@ public sealed class Console
                 var args = line.Split();
                 var context = new RootExecutableContext(ExecutableContext.Piped(this, FileSystem, args.AsMemory()[1..]), StandardInput, StandardOutput, StandardError);
                 var program = binaries.GetFile(args[0]);
-                var process = program.Execute(context, token);
-                await process.WaitForExitAsync();
+                var result = program.Execute(context, token);
+                if (result is {Success: true, Value: var process})
+                    await process.WaitForExitAsync();
+                else
+                    await StandardOutput.WriteLineAsync(result.Error.Message); // TODO: fix sync
             }
             catch (OperationCanceledException) when (token.IsCancellationRequested)
             {

@@ -60,6 +60,6 @@ OperatingSystem CreateSystem()
     {
         var file = bin.CreateFile(name, Mode.Rwx);
         file.MakeExecutable(ctx, executable);
-        file.Metadata.ChangeMode(file.Metadata.Modes with {Others = Mode.Rx});
+        file.Metadata.ChangeMode(file.Metadata.Modes with {Others = Mode.Read});
     }
 }
