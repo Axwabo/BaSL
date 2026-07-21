@@ -5,7 +5,6 @@ using BaSL.FileSystems.Extensions;
 using BaSL.Shell.Console;
 using BaSL.Users;
 using Console = System.Console;
-using Directory = BaSL.FileSystems.Directory;
 using OperatingSystem = BaSL.OperatingSystem;
 
 await using var stdin = Console.OpenStandardInput();
@@ -51,7 +50,7 @@ OperatingSystem CreateSystem()
     CreateBinary("whoami", context => new WhoAmI(context));
 
     var user = system.CreateUser("user");
-    var userHome = (Directory) system.FileSystem.Resolve(user.Home);
+    var userHome = system.FileSystem.ResolveDirectory(user.Home).Value!;
     using var writer = new StreamWriter(userHome.CreateFile("amogus.txt").Value!.Open(ctx, OpenMode.ReadWrite));
     writer.WriteLineAsync("Hello World!");
     return system;

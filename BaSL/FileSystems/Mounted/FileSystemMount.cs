@@ -20,10 +20,10 @@ internal sealed class FileSystemMount : Directory
 
     public override CreateFileResult CreateFile(FileSystemEntryName name, Mode mode = Mode.Rw) => _root.CreateFile(name, mode);
 
-    public override FileSystemEntry GetEntry(FileSystemEntryName name) => _root.GetEntry(name);
+    public override GetEntryResult GetEntry(FileSystemEntryName name) => _root.GetEntry(name);
 
-    public override Directory GetDirectory(FileSystemEntryName name) => _root.GetDirectory(name);
+    public override GetDirectoryResult GetDirectory(FileSystemEntryName name) => _root.GetDirectory(name);
 
-    public override File GetFile(FileSystemEntryName name) => _root.GetFile(name);
+    public override GetFileResult GetFile(FileSystemEntryName name) => _root.GetFile(name);
 
 }

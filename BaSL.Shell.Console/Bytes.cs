@@ -1,7 +1,6 @@
 using BaSL.Executables;
 using BaSL.FileSystems;
 using BaSL.FileSystems.Extensions;
-using File = BaSL.FileSystems.File;
 
 namespace BaSL.Shell.Console;
 
@@ -14,13 +13,14 @@ public sealed class Bytes : App
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        var entry = FileSystem.Resolve(Args.Span[0]);
-        if (entry is not File file)
+        var entry = FileSystem.ResolveFile(Args.Span[0]);
+        if (!entry.Success)
         {
-            await StandardError.WriteLineAsync("Not a file");
+            await StandardError.WriteLineAsync(entry.Error.Message);
             return 1;
         }
 
+        var file = entry.Value;
         await using var stream = file.Open(UserContext, OpenMode.Read);
         var buffer = new byte[32];
         var read = await stream.ReadAsync(buffer, cancellationToken);

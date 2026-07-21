@@ -55,9 +55,12 @@ internal sealed class MountedDirectory : Directory
         return result.Success ? (File) Cache(result.Value) : result;
     }
 
-    public override FileSystemEntry GetEntry(FileSystemEntryName name)
-        => _cachedEntries.TryGetValue(name.Value, out var cached)
-            ? cached
-            : Cache(_original.GetEntry(name));
+    public override GetEntryResult GetEntry(FileSystemEntryName name)
+    {
+        if (_cachedEntries.TryGetValue(name.Value, out var cached))
+            return cached;
+        var result = _original.GetEntry(name);
+        return result.Success ? Cache(result.Value) : result;
+    }
 
 }

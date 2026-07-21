@@ -1,6 +1,5 @@
 using BaSL.Executables;
 using BaSL.FileSystems.Extensions;
-using Directory = BaSL.FileSystems.Directory;
 using Path = BaSL.FileSystems.Path;
 
 namespace BaSL.Shell.Console;
@@ -16,13 +15,14 @@ public sealed class Cd : App
     {
         Path path = Args.Span[0];
         var final = path.Value.AsSpan().StartsWith('/') ? path : Path.Combine(WorkingDirectory.FullPath, path);
-        if (FileSystem.Resolve(final) is not Directory directory)
+        var result = FileSystem.ResolveDirectory(final);
+        if (!result.Success)
         {
-            await StandardOutput.WriteLineAsync("Not a directory");
+            await StandardOutput.WriteLineAsync(result.Error.Message);
             return 1;
         }
 
-        Console.CurrentDirectory = directory;
+        Console.CurrentDirectory = result.Value;
         return 0;
     }
 

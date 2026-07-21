@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using BaSL.FileSystems.Errors;
+using BaSL.FileSystems.Extensions;
 using BaSL.Users;
 
 namespace BaSL.FileSystems;
@@ -20,10 +22,15 @@ public abstract class Directory : FileSystemEntry
 
     public abstract CreateFileResult CreateFile(FileSystemEntryName name, Mode mode = Mode.Rw);
 
-    public abstract FileSystemEntry GetEntry(FileSystemEntryName name);
+    public abstract GetEntryResult GetEntry(FileSystemEntryName name);
 
-    public virtual Directory GetDirectory(FileSystemEntryName name) => (Directory) GetEntry(name);
+    public virtual GetDirectoryResult GetDirectory(FileSystemEntryName name) => ResultExtensions.AsDirectory(GetEntry(name));
 
-    public virtual File GetFile(FileSystemEntryName name) => (File) GetEntry(name);
+    public virtual GetFileResult GetFile(FileSystemEntryName name) => GetEntry(name) switch
+    {
+        {Success: false, Error: var error} => error,
+        {Value: File file} => file,
+        _ => GetEntryError.NotAFile
+    };
 
 }

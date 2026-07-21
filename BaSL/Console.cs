@@ -19,7 +19,7 @@ public sealed class Console
     {
         OperatingSystem = operatingSystem;
         UserContext = new UserContext(operatingSystem.Users[username]);
-        CurrentDirectory = (Directory) FileSystem.Resolve(User.Home);
+        CurrentDirectory = FileSystem.ResolveDirectory(User.Home).Value!;
     }
 
     public OperatingSystem OperatingSystem { get; }
@@ -40,7 +40,7 @@ public sealed class Console
 
     public async Task<int> StartAsync()
     {
-        var binaries = (Directory) FileSystem.Resolve("/usr/bin");
+        var binaries = FileSystem.ResolveDirectory("/usr/bin").Value!;
         var prefix = User.IsSuperuser ? "# " : "$ ";
         while (true)
         {
@@ -56,12 +56,18 @@ public sealed class Console
             {
                 var args = line.Split();
                 var context = new RootExecutableContext(ExecutableContext.Piped(this, FileSystem, args.AsMemory()[1..]), StandardInput, StandardOutput, StandardError);
-                var program = binaries.GetFile(args[0]);
-                var result = program.Execute(context, token);
-                if (result is {Success: true, Value: var process})
+                var fileResult = binaries.GetFile(args[0]);
+                if (!fileResult.Success)
+                {
+                    await StandardOutput.WriteLineAsync(fileResult.Error.Message);
+                    continue;
+                }
+
+                var executeResult = fileResult.Value.Execute(context, token);
+                if (executeResult is {Success: true, Value: var process})
                     await process.WaitForExitAsync();
                 else
-                    await StandardOutput.WriteLineAsync(result.Error.Message); // TODO: fix sync
+                    await StandardOutput.WriteLineAsync(executeResult.Error.Message); // TODO: fix sync
             }
             catch (OperationCanceledException) when (token.IsCancellationRequested)
             {

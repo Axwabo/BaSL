@@ -1,6 +1,5 @@
 using BaSL.Executables;
 using BaSL.FileSystems.Extensions;
-using Directory = BaSL.FileSystems.Directory;
 
 namespace BaSL.Shell.Console;
 
@@ -13,13 +12,14 @@ public sealed class Ls : App
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        var list = Args.Length == 0 ? WorkingDirectory : FileSystem.Resolve(Args.Span[0]);
-        if (list is not Directory directory)
+        var result = Args.Length == 0 ? WorkingDirectory : FileSystem.ResolveDirectory(Args.Span[0]);
+        if (!result.Success)
         {
-            await StandardError.WriteLineAsync("Not a directory");
+            await StandardError.WriteLineAsync(result.Error.Message);
             return 1;
         }
 
+        var directory = result.Value;
         await using var writer = StandardOutput;
         foreach (var entry in directory.EnumerateEntries())
         {

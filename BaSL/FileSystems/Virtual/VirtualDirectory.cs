@@ -47,6 +47,6 @@ internal sealed class VirtualDirectory : Directory, IMountSupport
         return file;
     }
 
-    public override FileSystemEntry GetEntry(FileSystemEntryName name) => _entries[name.Value];
+    public override GetEntryResult GetEntry(FileSystemEntryName name) => _entries[name.Value];
 
 }
