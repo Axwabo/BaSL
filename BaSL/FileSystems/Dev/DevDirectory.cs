@@ -1,6 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
+using BaSL.FileSystems.Errors;
 using BaSL.Users;
 
 namespace BaSL.FileSystems.Dev;
@@ -22,9 +22,9 @@ internal sealed class DevDirectory : Directory
 
     public override IEnumerable<FileSystemEntry> EnumerateEntries() => _files.Values;
 
-    public override Directory CreateDirectory(FileSystemEntryName name, Mode mode = Mode.Rw) => throw new NotSupportedException();
+    public override CreateDirectoryResult CreateDirectory(FileSystemEntryName name, Mode mode = Mode.Rw) => CreateEntryError.ImmutableFileSystem;
 
-    public override File CreateFile(FileSystemEntryName name, Mode mode = Mode.Rw) => throw new NotSupportedException();
+    public override CreateFileResult CreateFile(FileSystemEntryName name, Mode mode = Mode.Rw) => CreateEntryError.ImmutableFileSystem;
 
     public override FileSystemEntry GetEntry(FileSystemEntryName name) => _files[name.Value];
 

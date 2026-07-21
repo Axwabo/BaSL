@@ -1,5 +1,6 @@
 using System.Collections.Generic;
-using System.IO;
+using BaSL.FileSystems.Errors;
+using BaSL.FileSystems.Extensions;
 using BaSL.FileSystems.Mounted;
 using BaSL.Users;
 
@@ -14,36 +15,33 @@ internal sealed class VirtualDirectory : Directory, IMountSupport
     {
     }
 
-    public Directory Mount(FileSystem fileSystem, FileSystemEntryName name, User owner, Modes modes)
+    public CreateDirectoryResult Mount(FileSystem fileSystem, FileSystemEntryName name, User owner, Modes modes)
     {
-        ThrowIfNoAccess();
+        if (!Metadata.CanWrite(owner))
+            return CreateEntryError.AccessDenied;
         if (_entries.ContainsKey(name.Value))
-            throw new IOException("Name conflict");
+            return CreateEntryError.NameCollision;
         var mount = new FileSystemMount(FileSystemAccess, FullPath, name, fileSystem);
         _entries[name.Value] = mount;
         return mount;
     }
 
-    private void ThrowIfNoAccess()
-    {
-        if (!Metadata.OwnerMode.CanWrite)
-            throw new IOException("Directory is immutable");
-    }
-
     public override IEnumerable<FileSystemEntry> EnumerateEntries() => _entries.Values;
 
-    public override Directory CreateDirectory(FileSystemEntryName name, Mode mode = Mode.Rw)
+    public override CreateDirectoryResult CreateDirectory(FileSystemEntryName name, Mode mode = Mode.Rw)
     {
-        ThrowIfNoAccess();
+        if (!Metadata.OwnerMode.CanWrite)
+            return CreateEntryError.AccessDenied;
         // TODO: allow files & folders with the same name?
         var directory = new VirtualDirectory(FileSystemAccess, FullPath, name, Metadata.Owner, Metadata.Modes with {Owner = mode});
         _entries.Add(name.Value, directory);
         return directory;
     }
 
-    public override File CreateFile(FileSystemEntryName name, Mode mode = Mode.Rw)
+    public override CreateFileResult CreateFile(FileSystemEntryName name, Mode mode = Mode.Rw)
     {
-        ThrowIfNoAccess();
+        if (!Metadata.OwnerMode.CanWrite)
+            return CreateEntryError.AccessDenied;
         var file = new VirtualFile(FileSystemAccess, FullPath, name, Metadata.Owner, Metadata.Modes with {Owner = mode});
         _entries.Add(name.Value, file);
         return file;

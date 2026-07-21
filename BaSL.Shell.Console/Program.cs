@@ -40,7 +40,7 @@ OperatingSystem CreateSystem()
     var system = new OperatingSystem();
     var ctx = new UserContext(system.Root);
     var rootFs = system.FileSystem;
-    var bin = rootFs.Root.CreateDirectory("usr").CreateDirectory("bin");
+    var bin = rootFs.Root.CreateDirectory("usr").Value!.CreateDirectory("bin").Value!;
     ((IMountSupport) rootFs.Root).Mount(new DevFileSystem(system.Root), "dev", system.Root, new Modes(Mode.Rwx, Mode.Rwx, Mode.Read));
     CreateBinary("echo", context => new Echo(context));
     CreateBinary("pwd", context => new Pwd(context));
@@ -52,14 +52,14 @@ OperatingSystem CreateSystem()
 
     var user = system.CreateUser("user");
     var userHome = (Directory) system.FileSystem.Resolve(user.Home);
-    using var writer = new StreamWriter(userHome.CreateFile("amogus.txt").Open(ctx, OpenMode.ReadWrite));
+    using var writer = new StreamWriter(userHome.CreateFile("amogus.txt").Value!.Open(ctx, OpenMode.ReadWrite));
     writer.WriteLineAsync("Hello World!");
     return system;
 
     void CreateBinary(FileSystemEntryName name, Executable executable)
     {
-        var file = bin.CreateFile(name, Mode.Rwx);
+        var file = bin.CreateFile(name, Mode.Rwx).Value!;
         file.MakeExecutable(ctx, executable);
-        file.Metadata.ChangeMode(file.Metadata.Modes with {Others = Mode.Read});
+        file.Metadata.ChangeMode(file.Metadata.Modes with {Others = Mode.Rx});
     }
 }

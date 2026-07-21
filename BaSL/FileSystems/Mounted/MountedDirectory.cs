@@ -43,11 +43,17 @@ internal sealed class MountedDirectory : Directory
         _ => throw new IOException($"Invalid filesystem entry {entry}")
     };
 
-    public override Directory CreateDirectory(FileSystemEntryName name, Mode mode = Mode.Rw)
-        => (Directory) Cache(_original.CreateDirectory(name, mode));
+    public override CreateDirectoryResult CreateDirectory(FileSystemEntryName name, Mode mode = Mode.Rw)
+    {
+        var result = _original.CreateDirectory(name, mode);
+        return result.Success ? (Directory) Cache(result.Value) : result;
+    }
 
-    public override File CreateFile(FileSystemEntryName name, Mode mode = Mode.Rw)
-        => (File) Cache(_original.CreateFile(name, mode));
+    public override CreateFileResult CreateFile(FileSystemEntryName name, Mode mode = Mode.Rw)
+    {
+        var result = _original.CreateFile(name, mode);
+        return result.Success ? (File) Cache(result.Value) : result;
+    }
 
     public override FileSystemEntry GetEntry(FileSystemEntryName name)
         => _cachedEntries.TryGetValue(name.Value, out var cached)

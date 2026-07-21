@@ -5,6 +5,6 @@ namespace BaSL.FileSystems;
 internal interface IMountSupport
 {
 
-    Directory Mount(FileSystem fileSystem, FileSystemEntryName name, User owner, Modes modes);
+    CreateDirectoryResult Mount(FileSystem fileSystem, FileSystemEntryName name, User owner, Modes modes);
 
 }
