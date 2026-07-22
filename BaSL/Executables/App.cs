@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using BaSL.Executables.Pipes;
 using BaSL.FileSystems;
 using BaSL.Users;
 using Directory = BaSL.FileSystems.Directory;
@@ -24,7 +23,7 @@ public abstract class App
 
     protected Directory WorkingDirectory => Context.WorkingDirectory;
 
-    protected internal AsyncStreamReader StandardInput => Context.SourceInput;
+    protected internal StreamReader StandardInput => Context.SourceInput;
 
     protected internal StreamWriter StandardOutput => Context.SourceOutput;
 

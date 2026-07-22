@@ -27,7 +27,6 @@ public sealed class BaShell : App
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        StandardInput.ReadLine();
         while (true)
         {
             await StandardOutput.WriteAsync($"{User.Username}@{Console.OperatingSystem.Hostname}:{FormatCurrentDirectory()}{(User.IsSuperuser ? "# " : "$ ")}");

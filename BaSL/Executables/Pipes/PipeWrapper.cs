@@ -13,13 +13,13 @@ internal sealed class PipeWrapper : IAsyncDisposable
 
     public PipeWrapper()
     {
-        Reader = new AsyncStreamReader(new ReaderStream(this, _pipe));
+        Reader = new StreamReader(new ReaderStream(this, _pipe));
         Writer = new StreamWriter(new WriterStream(this, _pipe)) {AutoFlush = true};
     }
 
     internal CancellationTokenSource Cts { get; } = new();
 
-    public AsyncStreamReader Reader { get; }
+    public StreamReader Reader { get; }
 
     public StreamWriter Writer { get; }
 
