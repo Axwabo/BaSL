@@ -13,7 +13,7 @@ public sealed class Cd : App
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        Path path = Args.Span[0];
+        var path = Args.Length == 0 ? UserContext.User.Home : Args.Span[0];
         var final = path.Value.AsSpan().StartsWith('/') ? path : Path.Combine(WorkingDirectory.FullPath, path);
         var result = FileSystem.ResolveDirectory(final);
         if (!result.Success)

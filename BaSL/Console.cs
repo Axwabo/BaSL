@@ -43,7 +43,7 @@ public sealed class Console
         var binaries = FileSystem.ResolveDirectory("/usr/bin").Value!;
         while (true)
         {
-            await StandardOutput.WriteAsync($"{User.Username}@{OperatingSystem.Hostname}{(User.IsSuperuser ? "# " : "$ ")}");
+            await StandardOutput.WriteAsync($"{User.Username}@{OperatingSystem.Hostname}:{FormatCurrentDirectory()}{(User.IsSuperuser ? "# " : "$ ")}");
             var line = await StandardInput.ReadLineAsync();
             if (string.IsNullOrEmpty(line))
                 continue;
@@ -77,6 +77,18 @@ public sealed class Console
                 _cts = null;
             }
         }
+    }
+
+    private string FormatCurrentDirectory()
+    {
+        var path = CurrentDirectory.FullPath.Value.AsSpan();
+        var home = User.Home.Value.AsSpan();
+        if (!path.StartsWith(home))
+            return CurrentDirectory.FullPath.Value;
+        Span<char> span = stackalloc char[path.Length - home.Length + 1];
+        span[0] = '~';
+        path[home.Length..].CopyTo(span[1..]);
+        return span.ToString();
     }
 
     public void TerminateCurrentProcess() => _cts?.Cancel();
