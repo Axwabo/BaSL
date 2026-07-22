@@ -74,7 +74,7 @@ public class ExecutableContext
     internal StreamReader StandardOutputReader { get; }
     internal StreamReader StandardErrorReader { get; }
 
-    internal async ValueTask DisposeAsync()
+    protected internal virtual async ValueTask DisposeAsync()
     {
         StandardInput.Dispose();
         await StandardOutput.DisposeAsync();
@@ -94,21 +94,21 @@ internal sealed class RootExecutableContext : ExecutableContext
         other.FileSystem,
         other.WorkingDirectory,
         other.Args,
-        other.StandardInput,
+        input,
         other.StandardInputWriter,
         other.StandardOutputReader,
-        other.StandardOutput,
+        output,
         other.StandardErrorReader,
-        other.StandardError
+        error
     )
     {
-        Input = input;
-        Output = output;
-        Error = error;
     }
 
-    public StreamReader Input { get; }
-    public StreamWriter Output { get; }
-    public StreamWriter Error { get; }
+    protected internal override async ValueTask DisposeAsync()
+    {
+        await StandardInputWriter.DisposeAsync();
+        StandardOutputReader.Dispose();
+        StandardErrorReader.Dispose();
+    }
 
 }

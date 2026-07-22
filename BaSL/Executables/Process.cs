@@ -19,13 +19,10 @@ public sealed class Process
         try
         {
             var app = executable(context);
-            var execute = app.ExecuteAsync(cancellationToken);
-            if (context is not RootExecutableContext root)
-                return await execute;
-            copyIn = context.StandardInput.BaseStream.CopyToAsync(root.Input.BaseStream, cancellationToken);
-            copyOut = context.StandardOutputReader.BaseStream.CopyToAsync(root.Output.BaseStream, cancellationToken);
-            copyErr = context.StandardErrorReader.BaseStream.CopyToAsync(root.Error.BaseStream, cancellationToken);
-            return await execute;
+            copyIn = context.StandardInput.BaseStream.CopyToAsync(context.StandardInputWriter.BaseStream, cancellationToken);
+            copyOut = context.StandardOutputReader.BaseStream.CopyToAsync(context.StandardOutput.BaseStream, cancellationToken);
+            copyErr = context.StandardErrorReader.BaseStream.CopyToAsync(context.StandardError.BaseStream, cancellationToken);
+            return await app.ExecuteAsync(cancellationToken);
         }
         finally
         {
