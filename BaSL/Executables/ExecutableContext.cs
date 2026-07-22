@@ -7,7 +7,7 @@ using Directory = BaSL.FileSystems.Directory;
 
 namespace BaSL.Executables;
 
-public class ExecutableContext
+public sealed class ExecutableContext
 {
 
     internal static ExecutableContext Root(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, StreamReader standardInput, StreamWriter standardOutput, StreamWriter standardError)
@@ -16,71 +16,82 @@ public class ExecutableContext
         var outPipe = new PipeWrapper();
         var errPipe = new PipeWrapper();
         return new ExecutableContext(
-            inPipe,
-            outPipe,
-            errPipe,
             console,
             fileSystem,
             console.CurrentDirectory,
             args,
             standardInput,
-            inPipe.Reader,
-            outPipe.Writer,
             standardOutput,
-            outPipe.Writer,
-            standardError
-        );
+            standardError,
+            inPipe.Writer,
+            outPipe.Reader,
+            errPipe.Reader
+        )
+        {
+            Final = true,
+            StandardInput = inPipe,
+            StandardOutput = outPipe,
+            StandardError = errPipe
+        };
     }
 
-    private protected ExecutableContext(
-        PipeWrapper standardInput,
-        PipeWrapper standardOutput,
-        PipeWrapper standardError,
+    internal static ExecutableContext Piped(Console console, FileSystem fileSystem)
+
+    private ExecutableContext(
         Console console,
         FileSystem fileSystem,
         Directory workingDirectory,
         ReadOnlyMemory<string> args,
-        StreamReader consumerInputReader,
-        StreamWriter producerInput,
-        StreamReader producerOutput,
-        StreamWriter consumerOutputWriter,
-        StreamReader producerError,
-        StreamWriter consumerErrorWriter
+        StreamReader sourceInput,
+        StreamWriter sourceOutput,
+        StreamWriter sourceError,
+        StreamWriter destinationInput,
+        StreamReader destinationOutput,
+        StreamReader destinationError
     )
     {
         Console = console;
         FileSystem = fileSystem;
         WorkingDirectory = workingDirectory;
         Args = args;
-        ConsumerInput = consumerInputReader;
-        ConsumerOutput = consumerOutputWriter;
-        ConsumerError = consumerErrorWriter;
-        StandardInput = standardInput;
-        ProducerInput = producerInput;
-        ProducerError = producerError;
-        ProducerOutput = producerOutput;
+        SourceInput = sourceInput;
+        SourceOutput = sourceOutput;
+        SourceError = sourceError;
+        DestinationInput = destinationInput;
+        DestinationError = destinationError;
+        DestinationOutput = destinationOutput;
     }
 
-    private protected PipeWrapper? StandardInput { get; }
+    private bool Final { get; set; }
+    private PipeWrapper? StandardInput { get; init; }
+    private PipeWrapper? StandardOutput { get; init; }
+    private PipeWrapper? StandardError { get; init; }
     internal Console Console { get; }
     internal FileSystem FileSystem { get; }
     internal Directory WorkingDirectory { get; }
     internal ReadOnlyMemory<string> Args { get; }
-    internal StreamReader ConsumerInput { get; }
-    internal StreamWriter ConsumerOutput { get; }
-    internal StreamWriter ConsumerError { get; }
-    internal StreamWriter ProducerInput { get; }
-    internal StreamReader ProducerOutput { get; }
-    internal StreamReader ProducerError { get; }
+    internal StreamReader SourceInput { get; private set; }
+    internal StreamWriter SourceOutput { get; private set; }
+    internal StreamWriter SourceError { get; private set; }
+    internal StreamWriter DestinationInput { get; }
+    internal StreamReader DestinationOutput { get; }
+    internal StreamReader DestinationError { get; }
 
-    internal async ValueTask DisposeAsync()
+    private void Connect(ExecutableContext source)
     {
-        ConsumerInput.Dispose();
-        await ConsumerOutput.DisposeAsync();
-        await ConsumerError.DisposeAsync();
-        await ProducerInput.DisposeAsync();
-        ProducerOutput.Dispose();
-        ProducerError.Dispose();
+        if (Final)
+            return;
+        Final = true;
+        if (source.StandardInput != null)
+            SourceInput = source.StandardInput.Reader;
+        if (source.StandardOutput != null)
+            SourceOutput = source.StandardOutput.Writer;
+        if (source.StandardError != null)
+            SourceError = source.StandardError.Writer;
+    }
+
+    internal async Task CopyAsync()
+    {
     }
 
 }

@@ -13,21 +13,16 @@ public sealed class Process
 
     private static async Task<int> ExecuteAsync(Executable executable, ExecutableContext context, CancellationToken cancellationToken)
     {
-        var copyIn = Task.CompletedTask;
-        var copyOut = Task.CompletedTask;
-        var copyErr = Task.CompletedTask;
+        var copy = Task.CompletedTask;
         try
         {
             var app = executable(context);
-            copyIn = context.ConsumerInput.BaseStream.CopyToAsync(context.ProducerInput.BaseStream, cancellationToken);
-            copyOut = context.ProducerOutput.BaseStream.CopyToAsync(context.ConsumerOutput.BaseStream, cancellationToken);
-            copyErr = context.ProducerError.BaseStream.CopyToAsync(context.ConsumerError.BaseStream, cancellationToken);
+            copy = context.CopyAsync();
             return await app.ExecuteAsync(cancellationToken);
         }
         finally
         {
-            await context.DisposeAsync();
-            await Task.WhenAll(copyIn, copyOut, copyErr);
+            await copy;
         }
     }
 
@@ -35,9 +30,9 @@ public sealed class Process
 
     private Process(Executable executable, ExecutableContext context, CancellationToken cancellationToken)
     {
-        StandardInput = context.ProducerInput;
-        StandardOutput = context.ProducerOutput;
-        StandardError = context.ProducerError;
+        StandardInput = context.DestinationInput;
+        StandardOutput = context.DestinationOutput;
+        StandardError = context.DestinationError;
         _task = ExecuteAsync(executable, context, cancellationToken);
     }
 
