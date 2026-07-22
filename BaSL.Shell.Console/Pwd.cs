@@ -11,8 +11,7 @@ public sealed class Pwd : App
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        var writer = StandardOutput;
-        await writer.WriteLineAsync(WorkingDirectory.FullPath.Value);
+        await StandardOutput.WriteLineAsync(WorkingDirectory.FullPath.Value);
         return 0;
     }
 

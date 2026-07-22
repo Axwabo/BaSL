@@ -23,11 +23,11 @@ public abstract class App
 
     protected Directory WorkingDirectory => _context.WorkingDirectory;
 
-    protected internal StreamReader StandardInput => _context.StandardInput;
+    protected internal StreamReader StandardInput => _context.ConsumerInput;
 
-    protected internal StreamWriter StandardOutput => _context.StandardOutput;
+    protected internal StreamWriter StandardOutput => _context.ConsumerOutput;
 
-    protected internal StreamWriter StandardError => _context.StandardError;
+    protected internal StreamWriter StandardError => _context.ConsumerError;
 
     protected ReadOnlyMemory<string> Args => _context.Args;
 

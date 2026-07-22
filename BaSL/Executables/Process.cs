@@ -19,9 +19,9 @@ public sealed class Process
         try
         {
             var app = executable(context);
-            copyIn = context.StandardInput.BaseStream.CopyToAsync(context.StandardInputWriter.BaseStream, cancellationToken);
-            copyOut = context.StandardOutputReader.BaseStream.CopyToAsync(context.StandardOutput.BaseStream, cancellationToken);
-            copyErr = context.StandardErrorReader.BaseStream.CopyToAsync(context.StandardError.BaseStream, cancellationToken);
+            copyIn = context.ConsumerInput.BaseStream.CopyToAsync(context.ProducerInput.BaseStream, cancellationToken);
+            copyOut = context.ProducerOutput.BaseStream.CopyToAsync(context.ConsumerOutput.BaseStream, cancellationToken);
+            copyErr = context.ProducerError.BaseStream.CopyToAsync(context.ConsumerError.BaseStream, cancellationToken);
             return await app.ExecuteAsync(cancellationToken);
         }
         finally
@@ -35,9 +35,9 @@ public sealed class Process
 
     private Process(Executable executable, ExecutableContext context, CancellationToken cancellationToken)
     {
-        StandardInput = context.StandardInputWriter;
-        StandardOutput = context.StandardOutputReader;
-        StandardError = context.StandardErrorReader;
+        StandardInput = context.ProducerInput;
+        StandardOutput = context.ProducerOutput;
+        StandardError = context.ProducerError;
         _task = ExecuteAsync(executable, context, cancellationToken);
     }
 

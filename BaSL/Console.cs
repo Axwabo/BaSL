@@ -40,7 +40,7 @@ public sealed class Console
 
     public async Task<int> StartAsync()
     {
-        var context = new RootExecutableContext(ExecutableContext.Piped(this, FileSystem, ReadOnlyMemory<string>.Empty), StandardInput, StandardOutput, StandardError);
+        var context = ExecutableContext.Root(this, FileSystem, ReadOnlyMemory<string>.Empty, StandardInput, StandardOutput, StandardError);
         _shell = new BaShell(context);
         return await _shell.ExecuteAsync(CancellationToken.None);
     }

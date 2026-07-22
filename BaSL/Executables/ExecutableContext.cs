@@ -10,105 +10,77 @@ namespace BaSL.Executables;
 public class ExecutableContext
 {
 
-    private static (StreamReader, StreamWriter) CreateStreams()
+    internal static ExecutableContext Root(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, StreamReader standardInput, StreamWriter standardOutput, StreamWriter standardError)
     {
-        var pipe = new PipeWrapper();
-        return (
-            new StreamReader(pipe.Reader),
-            new StreamWriter(pipe.Writer) {AutoFlush = true}
-        );
-    }
-
-    internal static ExecutableContext Piped(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
-    {
-        var (inRead, inWrite) = CreateStreams();
-        var (outRead, outWrite) = CreateStreams();
-        var (errRead, errWrite) = CreateStreams();
+        var inPipe = new PipeWrapper();
+        var outPipe = new PipeWrapper();
+        var errPipe = new PipeWrapper();
         return new ExecutableContext(
+            inPipe,
+            outPipe,
+            errPipe,
             console,
             fileSystem,
             console.CurrentDirectory,
             args,
-            inRead,
-            inWrite,
-            outRead,
-            outWrite,
-            errRead,
-            errWrite
+            standardInput,
+            inPipe.Reader,
+            outPipe.Writer,
+            standardOutput,
+            outPipe.Writer,
+            standardError
         );
     }
 
     private protected ExecutableContext(
+        PipeWrapper standardInput,
+        PipeWrapper standardOutput,
+        PipeWrapper standardError,
         Console console,
         FileSystem fileSystem,
         Directory workingDirectory,
         ReadOnlyMemory<string> args,
-        StreamReader standardInputReader,
-        StreamWriter standardInputWriter,
-        StreamReader standardOutputReader,
-        StreamWriter standardOutputWriter,
-        StreamReader standardErrorReader,
-        StreamWriter standardErrorWriter
+        StreamReader consumerInputReader,
+        StreamWriter producerInput,
+        StreamReader producerOutput,
+        StreamWriter consumerOutputWriter,
+        StreamReader producerError,
+        StreamWriter consumerErrorWriter
     )
     {
         Console = console;
         FileSystem = fileSystem;
         WorkingDirectory = workingDirectory;
         Args = args;
-        StandardInput = standardInputReader;
-        StandardOutput = standardOutputWriter;
-        StandardError = standardErrorWriter;
-        StandardInputWriter = standardInputWriter;
-        StandardErrorReader = standardErrorReader;
-        StandardOutputReader = standardOutputReader;
+        ConsumerInput = consumerInputReader;
+        ConsumerOutput = consumerOutputWriter;
+        ConsumerError = consumerErrorWriter;
+        StandardInput = standardInput;
+        ProducerInput = producerInput;
+        ProducerError = producerError;
+        ProducerOutput = producerOutput;
     }
 
+    private protected PipeWrapper? StandardInput { get; }
     internal Console Console { get; }
     internal FileSystem FileSystem { get; }
     internal Directory WorkingDirectory { get; }
     internal ReadOnlyMemory<string> Args { get; }
-    internal StreamReader StandardInput { get; }
-    internal StreamWriter StandardOutput { get; }
-    internal StreamWriter StandardError { get; }
-    internal StreamWriter StandardInputWriter { get; }
-    internal StreamReader StandardOutputReader { get; }
-    internal StreamReader StandardErrorReader { get; }
+    internal StreamReader ConsumerInput { get; }
+    internal StreamWriter ConsumerOutput { get; }
+    internal StreamWriter ConsumerError { get; }
+    internal StreamWriter ProducerInput { get; }
+    internal StreamReader ProducerOutput { get; }
+    internal StreamReader ProducerError { get; }
 
-    protected internal virtual async ValueTask DisposeAsync()
+    internal async ValueTask DisposeAsync()
     {
-        StandardInput.Dispose();
-        await StandardOutput.DisposeAsync();
-        await StandardError.DisposeAsync();
-        await StandardInputWriter.DisposeAsync();
-        StandardOutputReader.Dispose();
-        StandardErrorReader.Dispose();
-    }
-
-}
-
-internal sealed class RootExecutableContext : ExecutableContext
-{
-
-    internal RootExecutableContext(ExecutableContext other, StreamReader input, StreamWriter output, StreamWriter error) : base(
-        other.Console,
-        other.FileSystem,
-        other.WorkingDirectory,
-        other.Args,
-        input,
-        other.StandardInputWriter,
-        other.StandardOutputReader,
-        output,
-        other.StandardErrorReader,
-        error
-    )
-    {
-    }
-
-    protected internal override async ValueTask DisposeAsync()
-    {
-        await StandardInputWriter.DisposeAsync();
-        StandardOutputReader.Dispose();
-        StandardErrorReader.Dispose();
+        ConsumerInput.Dispose();
+        await ConsumerOutput.DisposeAsync();
+        await ConsumerError.DisposeAsync();
+        await ProducerInput.DisposeAsync();
+        ProducerOutput.Dispose();
+        ProducerError.Dispose();
     }
 
 }
