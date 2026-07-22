@@ -1,0 +1,98 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using BaSL.Executables;
+using BaSL.FileSystems;
+using BaSL.FileSystems.Errors;
+using BaSL.FileSystems.Extensions;
+using BaSL.Users;
+
+namespace BaSL;
+
+public sealed class Shell : App
+{
+
+    private CancellationTokenSource? _cts;
+
+    public Shell(ExecutableContext context) : base(context)
+    {
+        foreach (var kvp in context.Console.User.Environment)
+            ExportedVariables[kvp.Key] = kvp.Value;
+    }
+
+    public Dictionary<string, string> ExportedVariables { get; } = [];
+
+    private User User => Console.User;
+
+    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            await StandardOutput.WriteAsync($"{User.Username}@{Console.OperatingSystem.Hostname}:{FormatCurrentDirectory()}{(User.IsSuperuser ? "# " : "$ ")}");
+            var line = await StandardInput.ReadLineAsync();
+            if (string.IsNullOrEmpty(line))
+                continue;
+            if (line.AsSpan().Trim().Equals("exit", StringComparison.OrdinalIgnoreCase))
+                return 0;
+            var cts = _cts = new CancellationTokenSource();
+            var token = cts.Token;
+            try
+            {
+                var args = line.Split();
+                var context = new RootExecutableContext(ExecutableContext.Piped(Console, FileSystem, args.AsMemory()[1..]), StandardInput, StandardOutput, StandardError);
+                var fileResult = ResolveFromPath(args[0]);
+                if (!fileResult.Success)
+                {
+                    await StandardOutput.WriteLineAsync(fileResult.Error.Message);
+                    continue;
+                }
+
+                var executeResult = fileResult.Value.Execute(context, token);
+                if (executeResult is {Success: true, Value: var process})
+                    await process.WaitForExitAsync();
+                else
+                    await StandardOutput.WriteLineAsync(executeResult.Error.Message); // TODO: fix sync
+            }
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            {
+            }
+            finally
+            {
+                cts.Dispose();
+                _cts = null;
+            }
+        }
+    }
+
+    private GetFileResult ResolveFromPath(FileSystemEntryName arg)
+    {
+        var path = ExportedVariables.GetValueOrDefault("PATH", "").Split(':');
+        foreach (var directoryPath in path)
+        {
+            var directory = FileSystem.ResolveDirectory(directoryPath);
+            if (!directory.Success)
+                continue;
+            var file = directory.Value.GetFile(arg);
+            if (file.Success)
+                return file;
+        }
+
+        return GetEntryError.NotFound;
+    }
+
+    private string FormatCurrentDirectory()
+    {
+        var path = Console.CurrentDirectory.FullPath.Value.AsSpan();
+        var home = User.Home.Value.AsSpan();
+        if (!path.StartsWith(home))
+            return Console.CurrentDirectory.FullPath.Value;
+        Span<char> span = stackalloc char[path.Length - home.Length + 1];
+        span[0] = '~';
+        path[home.Length..].CopyTo(span[1..]);
+        return span.ToString();
+    }
+
+    public void Cancel() => _cts?.Cancel();
+
+}

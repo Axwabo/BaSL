@@ -13,7 +13,7 @@ namespace BaSL;
 public sealed class Console
 {
 
-    private CancellationTokenSource? _cts;
+    private Shell? _shell;
 
     public Console(OperatingSystem operatingSystem, string username)
     {
@@ -40,57 +40,11 @@ public sealed class Console
 
     public async Task<int> StartAsync()
     {
-        var binaries = FileSystem.ResolveDirectory("/usr/bin").Value!;
-        while (true)
-        {
-            await StandardOutput.WriteAsync($"{User.Username}@{OperatingSystem.Hostname}:{FormatCurrentDirectory()}{(User.IsSuperuser ? "# " : "$ ")}");
-            var line = await StandardInput.ReadLineAsync();
-            if (string.IsNullOrEmpty(line))
-                continue;
-            if (line.AsSpan().Trim().Equals("exit", StringComparison.OrdinalIgnoreCase))
-                return 0;
-            var cts = _cts = new CancellationTokenSource();
-            var token = cts.Token;
-            try
-            {
-                var args = line.Split();
-                var context = new RootExecutableContext(ExecutableContext.Piped(this, FileSystem, args.AsMemory()[1..]), StandardInput, StandardOutput, StandardError);
-                var fileResult = binaries.GetFile(args[0]);
-                if (!fileResult.Success)
-                {
-                    await StandardOutput.WriteLineAsync(fileResult.Error.Message);
-                    continue;
-                }
-
-                var executeResult = fileResult.Value.Execute(context, token);
-                if (executeResult is {Success: true, Value: var process})
-                    await process.WaitForExitAsync();
-                else
-                    await StandardOutput.WriteLineAsync(executeResult.Error.Message); // TODO: fix sync
-            }
-            catch (OperationCanceledException) when (token.IsCancellationRequested)
-            {
-            }
-            finally
-            {
-                cts.Dispose();
-                _cts = null;
-            }
-        }
+        var context = new RootExecutableContext(ExecutableContext.Piped(this, FileSystem, ReadOnlyMemory<string>.Empty), StandardInput, StandardOutput, StandardError);
+        _shell = new Shell(context);
+        return await _shell.ExecuteAsync(CancellationToken.None);
     }
 
-    private string FormatCurrentDirectory()
-    {
-        var path = CurrentDirectory.FullPath.Value.AsSpan();
-        var home = User.Home.Value.AsSpan();
-        if (!path.StartsWith(home))
-            return CurrentDirectory.FullPath.Value;
-        Span<char> span = stackalloc char[path.Length - home.Length + 1];
-        span[0] = '~';
-        path[home.Length..].CopyTo(span[1..]);
-        return span.ToString();
-    }
-
-    public void TerminateCurrentProcess() => _cts?.Cancel();
+    public void TerminateCurrentProcess() => _shell?.Cancel();
 
 }

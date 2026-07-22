@@ -15,7 +15,11 @@ public sealed class OperatingSystem
         Root = new User("root")
         {
             IsSuperuser = true,
-            Home = Path.Root // TODO: probably..?
+            Home = Path.Root, // TODO: probably..?
+            Environment =
+            {
+                {"PATH", "/usr/bin"}
+            }
         };
         Users["root"] = Root;
         FileSystem = FileSystem.CreateVirtual(Root);
@@ -33,7 +37,13 @@ public sealed class OperatingSystem
     public User CreateUser(string name)
     {
         FileSystemEntryName entryName = name;
-        var user = new User(name);
+        var user = new User(name)
+        {
+            Environment =
+            {
+                {"PATH", "/usr/bin"}
+            }
+        };
         Users.Add(name, user);
         var userFs = FileSystem.CreateVirtual(user);
         var mount = _homes.Mount(new UserContext(Root), userFs, entryName).Value!;
