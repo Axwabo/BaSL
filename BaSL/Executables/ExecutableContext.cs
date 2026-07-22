@@ -62,9 +62,16 @@ public sealed class ExecutableContext
     internal StreamReader DestinationError { get; }
 
     internal async Task CopyAsync() => await Task.WhenAll(
-        SourceInput.BaseStream is ReaderStream ? SourceInput.BaseStream.CopyToAsync(DestinationOutput.BaseStream) : Task.CompletedTask,
+        SourceInput.BaseStream is ReaderStream ? SourceInput.BaseStream.CopyToAsync(DestinationInput.BaseStream) : Task.CompletedTask,
         DestinationOutput.BaseStream.CopyToAsync(SourceOutput.BaseStream),
         DestinationError.BaseStream.CopyToAsync(SourceError.BaseStream)
     );
+
+    internal async ValueTask DisposeAsync()
+    {
+        await StandardInput.DisposeAsync();
+        await StandardOutput.DisposeAsync();
+        await StandardError.DisposeAsync();
+    }
 
 }

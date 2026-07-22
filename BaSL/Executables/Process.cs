@@ -22,6 +22,7 @@ public sealed class Process
         }
         finally
         {
+            await context.DisposeAsync();
             await copy;
         }
     }
