@@ -54,7 +54,7 @@ public sealed class ExecutableContext
     internal FileSystem FileSystem { get; }
     internal Directory WorkingDirectory { get; }
     internal ReadOnlyMemory<string> Args { get; }
-    internal StreamReader SourceInput { get; private init; }
+    internal AsyncStreamReader SourceInput { get; private init; }
     internal StreamWriter SourceOutput { get; private init; }
     internal StreamWriter SourceError { get; private init; }
     internal StreamWriter DestinationInput { get; }
