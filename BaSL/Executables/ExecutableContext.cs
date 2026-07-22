@@ -1,7 +1,7 @@
 using System;
 using System.IO;
-using System.IO.Pipelines;
 using System.Threading.Tasks;
+using BaSL.Executables.Pipes;
 using BaSL.FileSystems;
 using Directory = BaSL.FileSystems.Directory;
 
@@ -12,10 +12,10 @@ public class ExecutableContext
 
     private static (StreamReader, StreamWriter) CreateStreams()
     {
-        var pipe = new Pipe();
+        var pipe = new PipeWrapper();
         return (
-            new StreamReader(pipe.Reader.AsStream()),
-            new StreamWriter(pipe.Writer.AsStream()) {AutoFlush = true}
+            new StreamReader(pipe.Reader),
+            new StreamWriter(pipe.Writer) {AutoFlush = true}
         );
     }
 
