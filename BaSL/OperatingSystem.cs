@@ -18,7 +18,7 @@ public sealed class OperatingSystem
             Home = Path.Root, // TODO: probably..?
             Environment =
             {
-                {"PATH", "/usr/bin"}
+                {"PATH", Path.Binaries.Value}
             }
         };
         Users["root"] = Root;
@@ -41,7 +41,7 @@ public sealed class OperatingSystem
         {
             Environment =
             {
-                {"PATH", "/usr/bin"}
+                {"PATH", Path.Binaries.Value}
             }
         };
         Users.Add(name, user);

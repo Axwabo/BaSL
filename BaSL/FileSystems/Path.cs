@@ -5,8 +5,6 @@ namespace BaSL.FileSystems;
 public readonly record struct Path(string Value)
 {
 
-    public static Path Root { get; } = "/";
-
     public static Path Combine(Path left, Path right)
     {
         var leftSpan = left.Value.AsSpan();
@@ -22,6 +20,16 @@ public readonly record struct Path(string Value)
         return span.ToString();
     }
 
+    public static implicit operator Path(string value) => new(value);
+
+    public static implicit operator Path(FileSystemEntryName name) => new(name.Value);
+
+    public static Path operator /(Path left, Path right) => Combine(left, right);
+
+    public static Path Root { get; } = "/";
+
+    public static Path Binaries { get; } = "/usr/bin";
+
     public Path ToAbsolutePath(Path basePath)
     {
         var baseSpan = basePath.Value.AsSpan();
@@ -29,11 +37,5 @@ public readonly record struct Path(string Value)
             ? this
             : Combine(basePath, this);
     }
-
-    public static implicit operator Path(string value) => new(value);
-
-    public static implicit operator Path(FileSystemEntryName name) => new(name.Value);
-
-    public static Path operator /(Path left, Path right) => Combine(left, right);
 
 }

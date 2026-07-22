@@ -10,12 +10,12 @@ using BaSL.Users;
 
 namespace BaSL;
 
-public sealed class Shell : App
+public sealed class BaShell : App
 {
 
     private CancellationTokenSource? _cts;
 
-    public Shell(ExecutableContext context) : base(context)
+    public BaShell(ExecutableContext context) : base(context)
     {
         foreach (var kvp in context.Console.User.Environment)
             ExportedVariables[kvp.Key] = kvp.Value;
@@ -40,7 +40,7 @@ public sealed class Shell : App
             try
             {
                 var args = line.Split();
-                var context = new RootExecutableContext(ExecutableContext.Piped(Console, FileSystem, args.AsMemory()[1..]), StandardInput, StandardOutput, StandardError);
+                var context = ExecutableContext.Piped(Console, FileSystem, args.AsMemory()[1..]);
                 var fileResult = ResolveFromPath(args[0]);
                 if (!fileResult.Success)
                 {

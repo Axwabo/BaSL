@@ -13,7 +13,7 @@ namespace BaSL;
 public sealed class Console
 {
 
-    private Shell? _shell;
+    private BaShell? _shell;
 
     public Console(OperatingSystem operatingSystem, string username)
     {
@@ -41,7 +41,7 @@ public sealed class Console
     public async Task<int> StartAsync()
     {
         var context = new RootExecutableContext(ExecutableContext.Piped(this, FileSystem, ReadOnlyMemory<string>.Empty), StandardInput, StandardOutput, StandardError);
-        _shell = new Shell(context);
+        _shell = new BaShell(context);
         return await _shell.ExecuteAsync(CancellationToken.None);
     }
 
