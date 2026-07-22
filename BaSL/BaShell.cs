@@ -40,7 +40,7 @@ public sealed class BaShell : App
             try
             {
                 var args = line.Split();
-                var context = ExecutableContext.Piped(Console, FileSystem, args.AsMemory()[1..]);
+                var context = ExecutableContext.Piped(Context, Console, FileSystem, args.AsMemory()[1..]);
                 var fileResult = ResolveFromPath(args[0]);
                 if (!fileResult.Success)
                 {

@@ -11,87 +11,60 @@ public sealed class ExecutableContext
 {
 
     internal static ExecutableContext Root(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, StreamReader standardInput, StreamWriter standardOutput, StreamWriter standardError)
-    {
-        var inPipe = new PipeWrapper();
-        var outPipe = new PipeWrapper();
-        var errPipe = new PipeWrapper();
-        return new ExecutableContext(
-            console,
-            fileSystem,
-            console.CurrentDirectory,
-            args,
-            standardInput,
-            standardOutput,
-            standardError,
-            inPipe.Writer,
-            outPipe.Reader,
-            errPipe.Reader
-        )
+        => new(console, fileSystem, console.CurrentDirectory, args)
         {
-            Final = true,
-            StandardInput = inPipe,
-            StandardOutput = outPipe,
-            StandardError = errPipe
+            SourceInput = standardInput,
+            SourceOutput = standardOutput,
+            SourceError = standardError
         };
-    }
 
-    internal static ExecutableContext Piped(Console console, FileSystem fileSystem)
+    internal static ExecutableContext Piped(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args) => new(console, fileSystem, console.CurrentDirectory, args)
+    {
+        SourceInput = source.StandardInput.Reader,
+        SourceOutput = source.StandardOutput.Writer,
+        SourceError = source.StandardError.Writer
+    };
 
     private ExecutableContext(
         Console console,
         FileSystem fileSystem,
         Directory workingDirectory,
-        ReadOnlyMemory<string> args,
-        StreamReader sourceInput,
-        StreamWriter sourceOutput,
-        StreamWriter sourceError,
-        StreamWriter destinationInput,
-        StreamReader destinationOutput,
-        StreamReader destinationError
+        ReadOnlyMemory<string> args
     )
     {
+        StandardInput = new PipeWrapper();
+        StandardOutput = new PipeWrapper();
+        StandardError = new PipeWrapper();
         Console = console;
         FileSystem = fileSystem;
         WorkingDirectory = workingDirectory;
         Args = args;
-        SourceInput = sourceInput;
-        SourceOutput = sourceOutput;
-        SourceError = sourceError;
-        DestinationInput = destinationInput;
-        DestinationError = destinationError;
-        DestinationOutput = destinationOutput;
+        SourceInput = StandardInput.Reader;
+        SourceOutput = StandardOutput.Writer;
+        SourceError = StandardError.Writer;
+        DestinationInput = StandardInput.Writer;
+        DestinationError = StandardOutput.Reader;
+        DestinationOutput = StandardError.Reader;
     }
 
-    private bool Final { get; set; }
-    private PipeWrapper? StandardInput { get; init; }
-    private PipeWrapper? StandardOutput { get; init; }
-    private PipeWrapper? StandardError { get; init; }
+    private PipeWrapper StandardInput { get; }
+    private PipeWrapper StandardOutput { get; }
+    private PipeWrapper StandardError { get; }
     internal Console Console { get; }
     internal FileSystem FileSystem { get; }
     internal Directory WorkingDirectory { get; }
     internal ReadOnlyMemory<string> Args { get; }
-    internal StreamReader SourceInput { get; private set; }
-    internal StreamWriter SourceOutput { get; private set; }
-    internal StreamWriter SourceError { get; private set; }
+    internal StreamReader SourceInput { get; private init; }
+    internal StreamWriter SourceOutput { get; private init; }
+    internal StreamWriter SourceError { get; private init; }
     internal StreamWriter DestinationInput { get; }
     internal StreamReader DestinationOutput { get; }
     internal StreamReader DestinationError { get; }
 
-    private void Connect(ExecutableContext source)
-    {
-        if (Final)
-            return;
-        Final = true;
-        if (source.StandardInput != null)
-            SourceInput = source.StandardInput.Reader;
-        if (source.StandardOutput != null)
-            SourceOutput = source.StandardOutput.Writer;
-        if (source.StandardError != null)
-            SourceError = source.StandardError.Writer;
-    }
-
-    internal async Task CopyAsync()
-    {
-    }
+    internal async Task CopyAsync() => await Task.WhenAll(
+        SourceInput.BaseStream is ReaderStream ? SourceInput.BaseStream.CopyToAsync(DestinationOutput.BaseStream) : Task.CompletedTask,
+        DestinationOutput.BaseStream.CopyToAsync(SourceOutput.BaseStream),
+        DestinationError.BaseStream.CopyToAsync(SourceError.BaseStream)
+    );
 
 }

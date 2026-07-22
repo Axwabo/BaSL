@@ -11,25 +11,25 @@ namespace BaSL.Executables;
 public abstract class App
 {
 
-    private readonly ExecutableContext _context;
+    private protected readonly ExecutableContext Context;
 
-    protected App(ExecutableContext context) => _context = context;
+    protected App(ExecutableContext context) => Context = context;
 
-    protected Console Console => _context.Console;
+    protected Console Console => Context.Console;
 
     protected UserContext UserContext => Console.UserContext;
 
-    protected FileSystem FileSystem => _context.FileSystem;
+    protected FileSystem FileSystem => Context.FileSystem;
 
-    protected Directory WorkingDirectory => _context.WorkingDirectory;
+    protected Directory WorkingDirectory => Context.WorkingDirectory;
 
-    protected internal StreamReader StandardInput => _context.SourceInput;
+    protected internal StreamReader StandardInput => Context.SourceInput;
 
-    protected internal StreamWriter StandardOutput => _context.SourceOutput;
+    protected internal StreamWriter StandardOutput => Context.SourceOutput;
 
-    protected internal StreamWriter StandardError => _context.SourceError;
+    protected internal StreamWriter StandardError => Context.SourceError;
 
-    protected ReadOnlyMemory<string> Args => _context.Args;
+    protected ReadOnlyMemory<string> Args => Context.Args;
 
     public abstract Task<int> ExecuteAsync(CancellationToken cancellationToken);
 
