@@ -17,7 +17,7 @@ internal sealed class PipeWrapper
         Writer = new WriterStream(this, _pipe);
     }
 
-    public bool Completed { get; internal set; }
+    internal CancellationTokenSource Cts { get; } = new();
 
     public Stream Reader { get; }
 
@@ -54,11 +54,26 @@ file sealed class ReaderStream : Stream
 
     public override void Flush() => _stream.Flush();
 
-    public override int Read(byte[] buffer, int offset, int count) => _wrapper.Completed ? 0 : _stream.Read(buffer, offset, count);
+    public override int Read(byte[] buffer, int offset, int count) => _stream.Read(buffer, offset, count);
 
     public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) => _stream.ReadAsync(buffer, offset, count, cancellationToken);
 
     public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default) => _stream.ReadAsync(buffer, cancellationToken);
+
+    public override void CopyTo(Stream destination, int bufferSize) => _stream.CopyTo(destination, bufferSize);
+
+    public override async Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken)
+    {
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _wrapper.Cts.Token);
+        var token = cts.Token;
+        try
+        {
+            await _stream.CopyToAsync(destination, bufferSize, token);
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        {
+        }
+    }
 
     public override long Seek(long offset, SeekOrigin origin) => _stream.Seek(offset, origin);
 
@@ -111,7 +126,8 @@ file sealed class WriterStream : Stream
 
     protected override void Dispose(bool disposing)
     {
-        _wrapper.Completed = true;
+        _wrapper.Cts.Cancel();
+        _wrapper.Cts.Dispose();
         base.Dispose(disposing);
     }
 

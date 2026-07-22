@@ -13,22 +13,22 @@ public sealed class Process
 
     private static async Task<int> ExecuteAsync(Executable executable, ExecutableContext context, CancellationToken cancellationToken)
     {
+        var copyOut = Task.CompletedTask;
+        var copyErr = Task.CompletedTask;
         try
         {
             var app = executable(context);
             var execute = app.ExecuteAsync(cancellationToken);
             if (context is not RootExecutableContext root)
                 return await execute;
-            await Task.WhenAll(
-                execute,
-                context.StandardOutputReader.BaseStream.CopyToAsync(root.Output.BaseStream, cancellationToken),
-                context.StandardErrorReader.BaseStream.CopyToAsync(root.Error.BaseStream, cancellationToken)
-            );
-            return execute.Result;
+            copyOut = context.StandardOutputReader.BaseStream.CopyToAsync(root.Output.BaseStream, cancellationToken);
+            copyErr = context.StandardErrorReader.BaseStream.CopyToAsync(root.Error.BaseStream, cancellationToken);
+            return await execute;
         }
         finally
         {
             await context.DisposeAsync();
+            await Task.WhenAll(copyOut, copyErr);
         }
     }
 
