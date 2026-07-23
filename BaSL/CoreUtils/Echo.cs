@@ -22,6 +22,7 @@ public sealed class Echo : App
                 await StandardOutput.WriteAsync(' ');
         }
 
+        await StandardOutput.WriteLineAsync();
         return 0;
     }
 

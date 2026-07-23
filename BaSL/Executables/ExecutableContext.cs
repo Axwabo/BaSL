@@ -25,6 +25,8 @@ public sealed class ExecutableContext
         SourceError = source.StandardError.Writer
     };
 
+    private bool _disposed;
+
     private ExecutableContext(
         Console console,
         FileSystem fileSystem,
@@ -61,14 +63,24 @@ public sealed class ExecutableContext
     internal StreamReader DestinationOutput { get; }
     internal StreamReader DestinationError { get; }
 
-    internal async Task CopyAsync() => await Task.WhenAll(
-        SourceInput.BaseStream is ReaderStream ? SourceInput.BaseStream.CopyToAsync(DestinationInput.BaseStream, StandardInput.CancellationToken) : Task.CompletedTask,
-        DestinationOutput.BaseStream.CopyToAsync(SourceOutput.BaseStream, StandardOutput.CancellationToken),
-        DestinationError.BaseStream.CopyToAsync(SourceError.BaseStream, StandardError.CancellationToken)
-    );
+    internal async Task CopyAsync()
+    {
+        try
+        {
+            await Task.WhenAll(
+                SourceInput.BaseStream is ReaderStream ? SourceInput.BaseStream.CopyToAsync(DestinationInput.BaseStream, StandardInput.CancellationToken) : Task.CompletedTask,
+                DestinationOutput.BaseStream.CopyToAsync(SourceOutput.BaseStream, StandardOutput.CancellationToken),
+                DestinationError.BaseStream.CopyToAsync(SourceError.BaseStream, StandardError.CancellationToken)
+            );
+        }
+        catch (OperationCanceledException) when (_disposed)
+        {
+        }
+    }
 
     internal async ValueTask DisposeAsync()
     {
+        _disposed = true;
         await StandardInput.DisposeAsync();
         await StandardOutput.DisposeAsync();
         await StandardError.DisposeAsync();
