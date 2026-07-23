@@ -20,9 +20,7 @@ public sealed class ExecutableContext
 
     internal static ExecutableContext Piped(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args) => new(console, fileSystem, console.CurrentDirectory, args)
     {
-        SourceInput = source.StandardInput.Reader,
-        SourceOutput = source.StandardOutput.Writer,
-        SourceError = source.StandardError.Writer
+        Parent = source
     };
 
     private bool _disposed;
@@ -49,6 +47,7 @@ public sealed class ExecutableContext
         DestinationError = StandardError.Reader;
     }
 
+    private ExecutableContext? Parent { get; init; }
     internal PipeWrapper StandardInput { get; }
     internal PipeWrapper StandardOutput { get; }
     internal PipeWrapper StandardError { get; }
@@ -69,9 +68,11 @@ public sealed class ExecutableContext
         {
             await /*Task.WhenAll(
                 SourceInput.BaseStream is ReaderStream ? SourceInput.BaseStream.CopyToAsync(DestinationInput.BaseStream, StandardInput.CancellationToken) : Task.CompletedTask,*/
-                DestinationOutput.BaseStream.CopyToAsync(SourceOutput.BaseStream, StandardOutput.CancellationToken) /*,
-                DestinationError.BaseStream.CopyToAsync(SourceError.BaseStream, StandardError.CancellationToken)
-            )*/;
+                (Parent != null
+                    ? DestinationOutput.BaseStream.CopyToAsync(Parent.SourceOutput.BaseStream, StandardOutput.CancellationToken)
+                    : DestinationOutput.BaseStream.CopyToAsync(SourceOutput.BaseStream, StandardOutput.CancellationToken)) /*,
+                    DestinationError.BaseStream.CopyToAsync(SourceError.BaseStream, StandardError.CancellationToken)
+                )*/;
         }
         catch (OperationCanceledException) when (_disposed)
         {
