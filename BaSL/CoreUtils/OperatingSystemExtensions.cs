@@ -19,6 +19,7 @@ public static class OperatingSystemExtensions
         CreateBinary("cat", context => new Cat(context));
         CreateBinary("bytes", context => new Bytes(context));
         CreateBinary("whoami", context => new WhoAmI(context));
+        CreateBinary("sleep", context => new Sleep(context));
         return Task.CompletedTask;
 
         void CreateBinary(FileSystemEntryName name, Executable executable)
