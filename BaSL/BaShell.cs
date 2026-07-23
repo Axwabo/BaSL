@@ -66,9 +66,10 @@ public sealed class BaShell : App
 
         var copy = context.CopyAsync();
         await process.WaitForExitAsync();
-        context.SourceInput.Dispose();
-        await context.SourceOutput.DisposeAsync();
-        await context.SourceError.DisposeAsync();
+        context.SourceOutput.Dispose();
+        // context.SourceInput.Dispose();
+        // await context.SourceOutput.DisposeAsync();
+        // await context.SourceError.DisposeAsync();
         return copy;
     }
 

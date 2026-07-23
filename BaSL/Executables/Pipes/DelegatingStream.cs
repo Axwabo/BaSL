@@ -30,8 +30,6 @@ internal abstract class DelegatingStream : Stream
 
     public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state) => _stream.BeginWrite(buffer, offset, count, callback, state);
 
-    public override void Close() => Dispose(true);
-
     public override void CopyTo(Stream destination, int bufferSize) => _stream.CopyTo(destination, bufferSize);
 
     public override Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken) => _stream.CopyToAsync(destination, bufferSize, cancellationToken);
