@@ -23,10 +23,17 @@ public sealed class ExecutableContext
         Parent = source
     };
 
-    private Task? _copyErr;
-
-    private Task? _copyIn;
-    private Task? _copyOut;
+    private static async Task CopyAsync(StreamReader source, StreamWriter destination, PipeWrapper cancellation)
+    {
+        try
+        {
+            await source.BaseStream.CopyToAsync(destination.BaseStream, cancellation.CancellationToken);
+        }
+        catch (InvalidOperationException)
+        {
+            // "Reading is not allowed after reader was completed." NERD EMOJI
+        }
+    }
 
     private bool _disposed;
 
@@ -60,55 +67,28 @@ public sealed class ExecutableContext
     internal FileSystem FileSystem { get; }
     internal Directory WorkingDirectory { get; }
     internal ReadOnlyMemory<string> Args { get; }
-
-    internal StreamReader SourceInput
-    {
-        get
-        {
-            _copyIn ??= CopyAsync(Parent?.SourceInput, DestinationInput, StandardInput);
-            return field;
-        }
-        private init;
-    }
-
-    internal StreamWriter SourceOutput
-    {
-        get
-        {
-            _copyOut ??= CopyAsync(DestinationOutput, Parent?.SourceOutput, StandardOutput);
-            return field;
-        }
-        private init;
-    }
-
-    internal StreamWriter SourceError
-    {
-        get
-        {
-            _copyErr ??= CopyAsync(DestinationError, Parent?.SourceError, StandardError);
-            return field;
-        }
-        private init;
-    }
-
+    internal StreamReader SourceInput { get; private init; }
+    internal StreamWriter SourceOutput { get; private init; }
+    internal StreamWriter SourceError { get; private init; }
     internal StreamWriter DestinationInput { get; }
     internal StreamReader DestinationOutput { get; }
     internal StreamReader DestinationError { get; }
 
-    private async Task CopyAsync(StreamReader? source, StreamWriter? destination, PipeWrapper cancellation)
+    internal async Task CopyAsync()
     {
-        if (source == null || destination == null)
+        if (Parent == null)
             return;
         try
         {
-            await source.BaseStream.CopyToAsync(destination.BaseStream, cancellation.CancellationToken);
+            // TODO: stdin is blocked until enter
+            await Task.WhenAll(
+                CopyAsync(Parent.SourceInput, DestinationInput, StandardInput),
+                CopyAsync(DestinationOutput, Parent.SourceOutput, StandardOutput),
+                CopyAsync(DestinationError, Parent.SourceError, StandardError)
+            );
         }
         catch (OperationCanceledException) when (_disposed)
         {
-        }
-        catch (InvalidOperationException)
-        {
-            // "Reading is not allowed after reader was completed." NERD EMOJI
         }
     }
 
@@ -118,11 +98,6 @@ public sealed class ExecutableContext
         await StandardInput.DisposeAsync();
         await StandardOutput.DisposeAsync();
         await StandardError.DisposeAsync();
-        await Task.WhenAll(
-            _copyIn ?? Task.CompletedTask,
-            _copyOut ?? Task.CompletedTask,
-            _copyErr ?? Task.CompletedTask
-        );
     }
 
 }
