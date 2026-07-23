@@ -10,19 +10,15 @@ namespace BaSL.Executables;
 public sealed class ExecutableContext
 {
 
-    internal static ExecutableContext Root(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, StreamReader standardInput, StreamWriter standardOutput, StreamWriter standardError)
-        => new(console, fileSystem, console.CurrentDirectory, args)
-        {
-            SourceInput = standardInput,
-            SourceOutput = standardOutput,
-            SourceError = standardError
-        };
+    internal static ExecutableContext Root(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
+        => new(console, fileSystem, console.CurrentDirectory, args);
 
     internal static ExecutableContext Piped(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args) => new(console, fileSystem, console.CurrentDirectory, args)
     {
         SourceInput = source.StandardInput.Reader,
         SourceOutput = source.StandardOutput.Writer,
-        SourceError = source.StandardError.Writer
+        SourceError = source.StandardError.Writer,
+        IsPiped = true
     };
 
     private bool _disposed;
@@ -62,6 +58,7 @@ public sealed class ExecutableContext
     internal StreamWriter DestinationInput { get; }
     internal StreamReader DestinationOutput { get; }
     internal StreamReader DestinationError { get; }
+    private bool IsPiped { get; init; }
 
     internal async Task CopyAsync()
     {
