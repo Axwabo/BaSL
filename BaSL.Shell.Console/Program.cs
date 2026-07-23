@@ -1,7 +1,7 @@
-﻿using BaSL.CoreUtils;
+﻿using BaSL;
+using BaSL.CoreUtils;
 using BaSL.FileSystems;
 using BaSL.FileSystems.Extensions;
-using BaSL.Users;
 using Console = System.Console;
 using OperatingSystem = BaSL.OperatingSystem;
 
@@ -37,8 +37,11 @@ async Task<OperatingSystem> CreateSystemAsync()
     var system = new OperatingSystem {Hostname = "OwOS"};
     await system.InstallCoreUtilsAsync();
     var user = system.CreateUser("user");
-    var userHome = system.FileSystem.ResolveDirectory(user.Home).Value!;
-    await using var writer = new StreamWriter(userHome.CreateFile("amogus.txt").Open(new UserContext(user), OpenMode.ReadWrite).Value!);
-    await writer.WriteLineAsync("Hello World!");
+    await system.SudoAsync(async (operatingSystem, context) =>
+    {
+        var userHome = operatingSystem.FileSystem.ResolveDirectory(user.Home).Value!;
+        await using var writer = new StreamWriter(userHome.CreateFile("amogus.txt").Open(context, OpenMode.ReadWrite).Value!);
+        await writer.WriteLineAsync("Hello World!");
+    });
     return system;
 }
