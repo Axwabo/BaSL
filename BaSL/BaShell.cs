@@ -39,7 +39,7 @@ public sealed class BaShell : App
             var token = cts.Token;
             try
             {
-                await ExecuteAsync(line, token);
+                await await ExecuteAsync(line, token);
             }
             catch (OperationCanceledException) when (token.IsCancellationRequested)
             {
@@ -52,19 +52,21 @@ public sealed class BaShell : App
         }
     }
 
-    private async Task ExecuteAsync(string line, CancellationToken token)
+    private async Task<Task> ExecuteAsync(string line, CancellationToken token)
     {
         var args = line.Split();
-        var context = ExecutableContext.Piped(Context, Console, FileSystem, args.AsMemory(1));
+        await using var context = ExecutableContext.Piped(Context, Console, FileSystem, args.AsMemory(1));
         var result = ResolveFromPath(args[0]).Execute(context, token);
         if (result is not {Success: true, Value: var process})
         {
             await context.DisposeAsync();
             await StandardOutput.WriteLineAsync(result.Error.Message); // TODO: fix sync
-            return;
+            return Task.CompletedTask;
         }
 
+        var copy = context.CopyAsync();
         await process.WaitForExitAsync();
+        return copy;
     }
 
     private GetFileResult ResolveFromPath(FileSystemEntryName arg)
