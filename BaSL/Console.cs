@@ -40,9 +40,17 @@ public sealed class Console
 
     public async Task<int> StartAsync()
     {
-        var context = ExecutableContext.Root(this, FileSystem, ReadOnlyMemory<string>.Empty, StandardInput, StandardOutput, StandardError);
-        _shell = new BaShell(context);
-        return await _shell.ExecuteAsync(CancellationToken.None);
+        await using var context = ExecutableContext.Root(this, FileSystem, ReadOnlyMemory<string>.Empty, StandardInput, StandardOutput, StandardError);
+        var copy = context.CopyAsync();
+        try
+        {
+            _shell = new BaShell(context);
+            return await _shell.ExecuteAsync(CancellationToken.None);
+        }
+        finally
+        {
+            await copy;
+        }
     }
 
     public void TerminateCurrentProcess() => _shell?.Cancel();
