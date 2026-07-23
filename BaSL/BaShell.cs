@@ -39,16 +39,7 @@ public sealed class BaShell : App
             var token = cts.Token;
             try
             {
-                var args = line.Split();
-                var context = ExecutableContext.Piped(Context, Console, FileSystem, args.AsMemory()[1..]);
-                var result = ResolveFromPath(args[0]).Execute(context, token);
-                if (result is not {Success: true, Value: var process})
-                {
-                    await StandardOutput.WriteLineAsync(result.Error.Message); // TODO: fix sync
-                    continue;
-                }
-
-                await process.WaitForExitAsync();
+                await ExecuteAsync(line, token);
             }
             catch (OperationCanceledException) when (token.IsCancellationRequested)
             {
@@ -59,6 +50,21 @@ public sealed class BaShell : App
                 _cts = null;
             }
         }
+    }
+
+    private async Task ExecuteAsync(string line, CancellationToken token)
+    {
+        var args = line.Split();
+        var context = ExecutableContext.Piped(Context, Console, FileSystem, args.AsMemory(1));
+        var result = ResolveFromPath(args[0]).Execute(context, token);
+        if (result is not {Success: true, Value: var process})
+        {
+            await context.DisposeAsync();
+            await StandardOutput.WriteLineAsync(result.Error.Message); // TODO: fix sync
+            return;
+        }
+
+        await process.WaitForExitAsync();
     }
 
     private GetFileResult ResolveFromPath(FileSystemEntryName arg)

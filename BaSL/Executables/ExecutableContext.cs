@@ -45,8 +45,8 @@ public sealed class ExecutableContext
         SourceOutput = StandardOutput.Writer;
         SourceError = StandardError.Writer;
         DestinationInput = StandardInput.Writer;
-        DestinationError = StandardOutput.Reader;
-        DestinationOutput = StandardError.Reader;
+        DestinationOutput = StandardOutput.Reader;
+        DestinationError = StandardError.Reader;
     }
 
     private PipeWrapper StandardInput { get; }

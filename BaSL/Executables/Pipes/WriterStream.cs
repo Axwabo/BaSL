@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using System.IO.Pipelines;
 
 namespace BaSL.Executables.Pipes;
 
+[DebuggerDisplay("Writer of {Id}")]
 internal sealed class WriterStream : DelegatingStream
 {
 
@@ -9,6 +11,8 @@ internal sealed class WriterStream : DelegatingStream
     private bool _disposed;
 
     public WriterStream(PipeWrapper wrapper, Pipe pipe) : base(pipe.Writer.AsStream()) => _wrapper = wrapper;
+
+    private int Id => _wrapper.GetHashCode();
 
     protected override void Dispose(bool disposing)
     {
