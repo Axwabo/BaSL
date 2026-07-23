@@ -1,4 +1,7 @@
 using System;
+using System.IO;
+using BaSL.FileSystems.Errors;
+using BaSL.Users;
 
 namespace BaSL.FileSystems.Extensions;
 
@@ -27,6 +30,15 @@ public static class FileSystemExtensions
         public GetDirectoryResult ResolveDirectory(Path path) => fileSystem.Resolve(path).AsDirectory();
 
         public GetFileResult ResolveFile(Path path) => fileSystem.Resolve(path).AsFile();
+
+        public Result<Stream, FileSystemError> OpenFile(Path path, UserContext context, OpenMode mode)
+        {
+            var file = fileSystem.ResolveFile(path);
+            if (!file.Success)
+                return file.Error;
+            var open = file.Value.Open(context, mode);
+            return open.Success ? open.Value : open.Error;
+        }
 
     }
 

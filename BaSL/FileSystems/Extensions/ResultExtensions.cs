@@ -1,4 +1,6 @@
 using System.IO;
+using System.Threading;
+using BaSL.Executables;
 using BaSL.FileSystems.Errors;
 using BaSL.Users;
 
@@ -23,6 +25,27 @@ public static class ResultExtensions
             {Value: File file} => file,
             _ => GetEntryError.NotAFile
         };
+
+    }
+
+    extension(GetFileResult result)
+    {
+
+        public StreamReader OpenReadOrNull(UserContext context)
+        {
+            if (!result.Success)
+                return StreamReader.Null;
+            var open = result.Value.Open(context, OpenMode.Read);
+            return open.Success ? new StreamReader(open.Value) : StreamReader.Null;
+        }
+
+        public Result<Process, FileSystemError> Execute(ExecutableContext context, CancellationToken cancellationToken)
+        {
+            if (!result.Success)
+                return result.Error;
+            var execute = result.Value.Execute(context, cancellationToken);
+            return execute.Success ? execute.Value : execute.Error;
+        }
 
     }
 

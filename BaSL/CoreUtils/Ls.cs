@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
@@ -25,12 +24,7 @@ public sealed class Ls : App
         var directory = result.Value;
         await using var writer = StandardOutput;
         foreach (var entry in directory.EnumerateEntries())
-        {
-            var memory = entry.FullPath.Value.AsMemory();
-            var slash = memory.Span.LastIndexOf('/') + 1;
-            await writer.WriteLineAsync(memory[slash..], cancellationToken);
-        }
-
+            await writer.WriteLineAsync(entry.Name, cancellationToken);
         return 0;
     }
 

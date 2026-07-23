@@ -41,18 +41,14 @@ public sealed class BaShell : App
             {
                 var args = line.Split();
                 var context = ExecutableContext.Piped(Context, Console, FileSystem, args.AsMemory()[1..]);
-                var fileResult = ResolveFromPath(args[0]);
-                if (!fileResult.Success)
+                var result = ResolveFromPath(args[0]).Execute(context, token);
+                if (result is not {Success: true, Value: var process})
                 {
-                    await StandardOutput.WriteLineAsync(fileResult.Error.Message);
+                    await StandardOutput.WriteLineAsync(result.Error.Message); // TODO: fix sync
                     continue;
                 }
 
-                var executeResult = fileResult.Value.Execute(context, token);
-                if (executeResult is {Success: true, Value: var process})
-                    await process.WaitForExitAsync();
-                else
-                    await StandardOutput.WriteLineAsync(executeResult.Error.Message); // TODO: fix sync
+                await process.WaitForExitAsync();
             }
             catch (OperationCanceledException) when (token.IsCancellationRequested)
             {

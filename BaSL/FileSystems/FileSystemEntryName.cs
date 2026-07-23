@@ -13,7 +13,9 @@ public readonly record struct FileSystemEntryName
             throw new ArgumentException("Forward slash not allowed");
     }
 
-    public string Value { get; }
+    public static implicit operator FileSystemEntryName(string value) => new(value);
+
+    public static implicit operator ReadOnlyMemory<char>(FileSystemEntryName entryName) => entryName.Value.AsMemory();
 
     public FileSystemEntryName(string value)
     {
@@ -27,6 +29,6 @@ public readonly record struct FileSystemEntryName
         Value = value.ToString();
     }
 
-    public static implicit operator FileSystemEntryName(string value) => new(value);
+    public string Value { get; }
 
 }
