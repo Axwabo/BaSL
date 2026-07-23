@@ -2,4 +2,5 @@
     <Project Path="BaSL.FileSystems.Tests/BaSL.FileSystems.Tests.csproj" />
     <Project Path="BaSL.Shell.Console/BaSL.Shell.Console.csproj" />
     <Project Path="BaSL\BaSL.csproj" />
+    <Project Path="PipeCopyTest/PipeCopyTest.csproj" />
 </Solution>
