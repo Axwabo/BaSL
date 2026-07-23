@@ -2,6 +2,7 @@
 using BaSL.CoreUtils;
 using BaSL.FileSystems;
 using BaSL.FileSystems.Extensions;
+using BaSL.Shell.Console;
 using Console = System.Console;
 using OperatingSystem = BaSL.OperatingSystem;
 
@@ -18,6 +19,8 @@ outWriter.AutoFlush = true;
 Console.SetIn(inReader);
 Console.SetOut(outWriter);
 Console.SetError(errWriter);
+
+var (inReader, outWriter, errWriter) = SystemConsole.Open();
 
 var console = new BaSL.Console(await CreateSystemAsync(), "user")
 {
