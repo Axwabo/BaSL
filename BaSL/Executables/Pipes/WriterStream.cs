@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO.Pipelines;
+using System.Threading.Tasks;
 
 namespace BaSL.Executables.Pipes;
 
@@ -24,5 +25,7 @@ internal sealed class WriterStream : DelegatingStream
 
         base.Dispose(disposing);
     }
+
+    public override ValueTask DisposeAsync() => base.DisposeAsync();
 
 }

@@ -55,7 +55,7 @@ public sealed class BaShell : App
     private async Task<Task> ExecuteAsync(string line, CancellationToken token)
     {
         var args = line.Split();
-        await using var context = ExecutableContext.Piped(Context, Console, FileSystem, args.AsMemory(1));
+        var context = ExecutableContext.Piped(Context, Console, FileSystem, args.AsMemory(1));
         var result = ResolveFromPath(args[0]).Execute(context, token);
         if (result is not {Success: true, Value: var process})
         {
@@ -66,6 +66,9 @@ public sealed class BaShell : App
 
         var copy = context.CopyAsync();
         await process.WaitForExitAsync();
+        context.SourceInput.Dispose();
+        await context.SourceOutput.DisposeAsync();
+        await context.SourceError.DisposeAsync();
         return copy;
     }
 

@@ -20,6 +20,7 @@ internal sealed class ReaderStream : DelegatingStream
     {
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _wrapper.CancellationToken);
         var token = cts.Token;
+        token.Register(() => System.Console.WriteLine("CANCELED"));
         try
         {
             await base.CopyToAsync(destination, bufferSize, token);

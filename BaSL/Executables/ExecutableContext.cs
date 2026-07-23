@@ -49,9 +49,9 @@ public sealed class ExecutableContext
         DestinationError = StandardError.Reader;
     }
 
-    private PipeWrapper StandardInput { get; }
-    private PipeWrapper StandardOutput { get; }
-    private PipeWrapper StandardError { get; }
+    internal PipeWrapper StandardInput { get; }
+    internal PipeWrapper StandardOutput { get; }
+    internal PipeWrapper StandardError { get; }
     internal Console Console { get; }
     internal FileSystem FileSystem { get; }
     internal Directory WorkingDirectory { get; }
@@ -67,11 +67,11 @@ public sealed class ExecutableContext
     {
         try
         {
-            await Task.WhenAll(
-                SourceInput.BaseStream is ReaderStream ? SourceInput.BaseStream.CopyToAsync(DestinationInput.BaseStream, StandardInput.CancellationToken) : Task.CompletedTask,
-                DestinationOutput.BaseStream.CopyToAsync(SourceOutput.BaseStream, StandardOutput.CancellationToken),
+            await /*Task.WhenAll(
+                SourceInput.BaseStream is ReaderStream ? SourceInput.BaseStream.CopyToAsync(DestinationInput.BaseStream, StandardInput.CancellationToken) : Task.CompletedTask,*/
+                DestinationOutput.BaseStream.CopyToAsync(SourceOutput.BaseStream, StandardOutput.CancellationToken) /*,
                 DestinationError.BaseStream.CopyToAsync(SourceError.BaseStream, StandardError.CancellationToken)
-            );
+            )*/;
         }
         catch (OperationCanceledException) when (_disposed)
         {
