@@ -5,7 +5,6 @@ using BaSL.FileSystems.Extensions;
 using Console = System.Console;
 using OperatingSystem = BaSL.OperatingSystem;
 
-/*
 await using var stdin = Console.OpenStandardInput();
 await using var stdout = Console.OpenStandardOutput();
 await using var stderr = Console.OpenStandardError();
@@ -19,12 +18,13 @@ outWriter.AutoFlush = true;
 Console.SetIn(inReader);
 Console.SetOut(outWriter);
 Console.SetError(errWriter);
-*/
 
-var console = new BaSL.Console(await CreateSystemAsync(), "user");
-Console.SetIn(console.StandardInput);
-Console.SetOut(console.StandardOutput);
-Console.SetError(console.StandardError);
+var console = new BaSL.Console(await CreateSystemAsync(), "user")
+{
+    StandardInput = inReader,
+    StandardOutput = outWriter,
+    StandardError = errWriter
+};
 Console.CancelKeyPress += (_, eventArgs) =>
 {
     console.TerminateCurrentProcess();
