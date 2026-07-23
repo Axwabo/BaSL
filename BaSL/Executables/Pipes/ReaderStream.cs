@@ -15,7 +15,7 @@ internal sealed class ReaderStream : DelegatingStream
 
     public override async Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken)
     {
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _wrapper.Cts.Token);
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _wrapper.CancellationToken);
         var token = cts.Token;
         try
         {

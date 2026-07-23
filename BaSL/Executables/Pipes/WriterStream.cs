@@ -15,8 +15,7 @@ internal sealed class WriterStream : DelegatingStream
         if (disposing && !_disposed)
         {
             _disposed = true;
-            _wrapper.Cts.Cancel();
-            _wrapper.Cts.Dispose();
+            _wrapper.Cancel();
         }
 
         base.Dispose(disposing);

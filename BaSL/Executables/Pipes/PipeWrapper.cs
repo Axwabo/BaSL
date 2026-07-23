@@ -9,7 +9,10 @@ namespace BaSL.Executables.Pipes;
 internal sealed class PipeWrapper : IAsyncDisposable
 {
 
+    private readonly CancellationTokenSource _cts = new();
+
     private readonly Pipe _pipe = new();
+    private bool _canceled;
 
     public PipeWrapper()
     {
@@ -17,7 +20,7 @@ internal sealed class PipeWrapper : IAsyncDisposable
         Writer = new StreamWriter(new WriterStream(this, _pipe)) {AutoFlush = true};
     }
 
-    internal CancellationTokenSource Cts { get; } = new();
+    public CancellationToken CancellationToken => _cts.Token;
 
     public StreamReader Reader { get; }
 
@@ -25,9 +28,18 @@ internal sealed class PipeWrapper : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        Cts.Dispose();
+        Cancel();
         Reader.Dispose();
         await Writer.DisposeAsync();
+    }
+
+    public void Cancel()
+    {
+        if (_canceled)
+            return;
+        _canceled = true;
+        _cts.Cancel();
+        _cts.Dispose();
     }
 
 }
