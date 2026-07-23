@@ -76,15 +76,16 @@ public sealed class ExecutableContext
 
     internal async Task CopyAsync()
     {
+        if (Parent == null)
+            return;
         try
         {
-            await /*Task.WhenAll(
-                SourceInput.BaseStream is ReaderStream ? SourceInput.BaseStream.CopyToAsync(DestinationInput.BaseStream, StandardInput.CancellationToken) : Task.CompletedTask,*/
-                (Parent != null
-                    ? CopyAsync(DestinationOutput, Parent.SourceOutput, StandardOutput)
-                    : DestinationOutput.BaseStream.CopyToAsync(SourceOutput.BaseStream, StandardOutput.CancellationToken)) /*,
-                    DestinationError.BaseStream.CopyToAsync(SourceError.BaseStream, StandardError.CancellationToken)
-                )*/;
+            // TODO: stdin is blocked until enter
+            await Task.WhenAll(
+                CopyAsync(Parent.SourceInput, DestinationInput, StandardInput),
+                CopyAsync(DestinationOutput, Parent.SourceOutput, StandardOutput),
+                CopyAsync(DestinationError, Parent.SourceError, StandardError)
+            );
         }
         catch (OperationCanceledException) when (_disposed)
         {
