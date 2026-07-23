@@ -23,6 +23,18 @@ public sealed class ExecutableContext
         Parent = source
     };
 
+    private static async Task CopyAsync(StreamReader source, StreamWriter destination, PipeWrapper cancellation)
+    {
+        try
+        {
+            await source.BaseStream.CopyToAsync(destination.BaseStream, cancellation.CancellationToken);
+        }
+        catch (InvalidOperationException)
+        {
+            // "Reading is not allowed after reader was completed." NERD EMOJI
+        }
+    }
+
     private bool _disposed;
 
     private ExecutableContext(
@@ -69,7 +81,7 @@ public sealed class ExecutableContext
             await /*Task.WhenAll(
                 SourceInput.BaseStream is ReaderStream ? SourceInput.BaseStream.CopyToAsync(DestinationInput.BaseStream, StandardInput.CancellationToken) : Task.CompletedTask,*/
                 (Parent != null
-                    ? DestinationOutput.BaseStream.CopyToAsync(Parent.SourceOutput.BaseStream, StandardOutput.CancellationToken)
+                    ? CopyAsync(DestinationOutput, Parent.SourceOutput, StandardOutput)
                     : DestinationOutput.BaseStream.CopyToAsync(SourceOutput.BaseStream, StandardOutput.CancellationToken)) /*,
                     DestinationError.BaseStream.CopyToAsync(SourceError.BaseStream, StandardError.CancellationToken)
                 )*/;
