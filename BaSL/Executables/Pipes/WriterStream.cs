@@ -17,15 +17,23 @@ internal sealed class WriterStream : DelegatingStream
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing && !_disposed)
-        {
-            _disposed = true;
-            _wrapper.Cancel();
-        }
-
+        if (disposing)
+            Cancel();
         base.Dispose(disposing);
     }
 
-    public override ValueTask DisposeAsync() => base.DisposeAsync();
+    private void Cancel()
+    {
+        if (_disposed)
+            return;
+        _disposed = true;
+        _wrapper.Cancel();
+    }
+
+    public override ValueTask DisposeAsync()
+    {
+        Cancel();
+        return base.DisposeAsync();
+    }
 
 }
