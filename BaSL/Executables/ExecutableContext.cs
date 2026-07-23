@@ -80,9 +80,7 @@ public sealed class ExecutableContext
             return;
         try
         {
-            // TODO: stdin is blocked until enter
             await Task.WhenAll(
-                CopyAsync(Parent.SourceInput, DestinationInput, StandardInput),
                 CopyAsync(DestinationOutput, Parent.SourceOutput, StandardOutput),
                 CopyAsync(DestinationError, Parent.SourceError, StandardError)
             );
