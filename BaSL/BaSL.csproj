@@ -1,9 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    <ItemGroup>
-        <!-- TODO: remove -->
-        <InternalsVisibleTo Include="BaSL.Shell.Console" />
-    </ItemGroup>
-    <ItemGroup>
+
+<ItemGroup>
         <PackageReference Include="System.IO.Pipelines" Version="10.0.10" />
     </ItemGroup>
+
 </Project>

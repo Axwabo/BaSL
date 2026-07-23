@@ -1,6 +1,8 @@
+using System.Threading;
+using System.Threading.Tasks;
 using BaSL.Executables;
 
-namespace BaSL.Shell.Console;
+namespace BaSL.CoreUtils;
 
 public sealed class Echo : App
 {
