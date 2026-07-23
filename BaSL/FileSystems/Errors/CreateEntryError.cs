@@ -1,6 +1,6 @@
 namespace BaSL.FileSystems.Errors;
 
-public abstract record CreateEntryError(string Message)
+public abstract record CreateEntryError(string Message) : FileSystemError(Message)
 {
 
     public static CreateEntryError AccessDenied { get; } = new CreateDeniedError();

@@ -1,4 +1,6 @@
+using System.IO;
 using BaSL.FileSystems.Errors;
+using BaSL.Users;
 
 namespace BaSL.FileSystems.Extensions;
 
@@ -21,6 +23,29 @@ public static class ResultExtensions
             {Value: File file} => file,
             _ => GetEntryError.NotAFile
         };
+
+    }
+
+    extension(CreateDirectoryResult result)
+    {
+
+        public CreateDirectoryResult CreateDirectory(FileSystemEntryName name)
+            => result.Success
+                ? result.Value.CreateDirectory(name)
+                : result;
+
+    }
+
+    extension(CreateFileResult result)
+    {
+
+        public Result<Stream, FileSystemError> Open(UserContext context, OpenMode mode)
+        {
+            if (!result.Success)
+                return result.Error;
+            var open = result.Value.Open(context, mode);
+            return open.Success ? open.Value : open.Error;
+        }
 
     }
 

@@ -2,14 +2,14 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace BaSL;
 
-public readonly record struct Result<TResult, TError>
+public readonly record struct Result<TResult, TError> where TError : Error
 {
 
     public static Result<TResult, TError> CreateSuccess(TResult result) => result;
 
     public static Result<TResult, TError> CreateError(TError error) => error;
 
-    public static implicit operator Result<TResult, TError>(TResult result) => new(result, default, true);
+    public static implicit operator Result<TResult, TError>(TResult result) => new(result, null, true);
 
     public static implicit operator Result<TResult, TError>(TError error) => new(default, error, false);
 

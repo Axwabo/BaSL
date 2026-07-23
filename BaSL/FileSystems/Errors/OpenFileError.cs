@@ -1,6 +1,6 @@
 namespace BaSL.FileSystems.Errors;
 
-public abstract record OpenFileError(string Message)
+public abstract record OpenFileError(string Message) : FileSystemError(Message)
 {
 
     public static OpenFileError AccessDenied { get; } = new OpenDeniedError();

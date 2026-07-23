@@ -1,6 +1,6 @@
 namespace BaSL.FileSystems.Errors;
 
-public abstract record GetEntryError(string Message)
+public abstract record GetEntryError(string Message) : FileSystemError(Message)
 {
 
     public static GetEntryError NotFound { get; } = new NotFoundError();

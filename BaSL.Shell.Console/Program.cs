@@ -39,7 +39,7 @@ OperatingSystem CreateSystem()
     var system = new OperatingSystem {Hostname = "OwOS"};
     var ctx = new UserContext(system.Root);
     var rootFs = system.FileSystem;
-    var bin = rootFs.Root.CreateDirectory("usr").Value!.CreateDirectory("bin").Value!;
+    var bin = rootFs.Root.CreateDirectory("usr").CreateDirectory("bin").Value!;
     ((IMountSupport) rootFs.Root).Mount(ctx, new DevFileSystem(system.Root), "dev");
     CreateBinary("echo", context => new Echo(context));
     CreateBinary("pwd", context => new Pwd(context));
@@ -51,7 +51,7 @@ OperatingSystem CreateSystem()
 
     var user = system.CreateUser("user");
     var userHome = system.FileSystem.ResolveDirectory(user.Home).Value!;
-    using var writer = new StreamWriter(userHome.CreateFile("amogus.txt").Value!.Open(ctx, OpenMode.ReadWrite).Value!);
+    using var writer = new StreamWriter(userHome.CreateFile("amogus.txt").Open(ctx, OpenMode.ReadWrite).Value!);
     writer.WriteLineAsync("Hello World!");
     return system;
 
