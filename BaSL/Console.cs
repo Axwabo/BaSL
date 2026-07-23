@@ -42,7 +42,7 @@ public sealed class Console
     {
         await using var context = ExecutableContext.Root(this, FileSystem, ReadOnlyMemory<string>.Empty, StandardInput, StandardOutput, StandardError);
         _shell = new BaShell(context);
-        var copy = context.CopyAsync();
+        var copy = Task.Run(context.CopyAsync);
         try
         {
             return await _shell.ExecuteAsync(CancellationToken.None);
