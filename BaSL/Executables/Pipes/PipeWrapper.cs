@@ -16,8 +16,8 @@ internal sealed class PipeWrapper : IAsyncDisposable
 
     public PipeWrapper()
     {
-        Reader = new StreamReader(new ReaderStream(this, _pipe));
-        Writer = new StreamWriter(new WriterStream(this, _pipe)) {AutoFlush = true};
+        Reader = new StreamReader(_pipe.Reader.AsStream());
+        Writer = new StreamWriter(_pipe.Writer.AsStream()) {AutoFlush = true};
     }
 
     public CancellationToken CancellationToken => _cts.Token;
