@@ -17,6 +17,8 @@ public sealed class BaShell : App
 
     private CancellationTokenSource? _cts;
 
+    private int? _lastExitCode;
+
     public BaShell(ExecutableContext context) : base(context)
     {
         foreach (var kvp in context.Console.User.Environment)
@@ -63,13 +65,13 @@ public sealed class BaShell : App
         var result = ResolveFromPath(args[0]).Execute(context, token);
         if (result is not {Success: true, Value: var process})
         {
-            await context.DisposeAsync();
+            _lastExitCode = 127; // TODO: uhhhhhh sure..?
             await StandardError.WriteLineAsync(result.Error.Message); // TODO: fix sync
             return Task.CompletedTask;
         }
 
         var copy = context.CopyAsync(!Context.IsRoot);
-        await process.WaitForExitAsync();
+        _lastExitCode = await process.WaitForExitAsync();
         return copy;
     }
 
@@ -85,6 +87,8 @@ public sealed class BaShell : App
                 End(Wrap.SingleQuotes);
             else if (char.IsWhiteSpace(c) && wrap is not (Wrap.SingleQuotes or Wrap.DoubleQuotes))
                 End(Wrap.None);
+            else if (wrap == Wrap.None && c == '$')
+                wrap = Wrap.Variable;
             else
                 sb.Append(c);
         End(wrap);
@@ -103,6 +107,9 @@ public sealed class BaShell : App
             {
                 case Wrap.None or Wrap.SingleQuotes or Wrap.DoubleQuotes:
                     list.Add(sb.ToString());
+                    break;
+                case Wrap.Variable when sb is ['?'] && _lastExitCode != null:
+                    list.Add(_lastExitCode.ToString());
                     break;
                 case Wrap.Variable when ExportedVariables.TryGetValue(sb.ToString(), out var env):
                     list.Add(env);
