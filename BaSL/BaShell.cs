@@ -58,8 +58,8 @@ public sealed class BaShell : App
 
     private async Task<Task> ExecuteAsync(string line, CancellationToken token)
     {
-        var args = Expand(line);
-        await using var context = ExecutableContext.Piped(Context, Console, FileSystem, args.ToArray());
+        var args = Expand(line).ToArray();
+        await using var context = ExecutableContext.Piped(Context, Console, FileSystem, args.AsMemory(1));
         var result = ResolveFromPath(args[0]).Execute(context, token);
         if (result is not {Success: true, Value: var process})
         {
@@ -79,16 +79,14 @@ public sealed class BaShell : App
         var wrap = Wrap.None;
         var sb = new StringBuilder();
         foreach (var c in line)
-        {
             if (c == '"')
                 End(Wrap.DoubleQuotes);
             else if (c == '\'')
                 End(Wrap.SingleQuotes);
             else if (char.IsWhiteSpace(c) && wrap is not (Wrap.SingleQuotes or Wrap.DoubleQuotes))
                 End(Wrap.None);
-            sb.Append(c);
-        }
-
+            else
+                sb.Append(c);
         End(wrap);
 
         return list;
