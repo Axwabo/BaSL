@@ -11,7 +11,7 @@ public static class OperatingSystemExtensions
 
     private static Task Install(OperatingSystem system, UserContext ctx)
     {
-        var bin = system.FileSystem.Root.CreateDirectory("usr").CreateDirectory("bin").Value!;
+        var bin = system.FileSystem.Root.CreateDirectories(Path.Binaries).Value!;
         CreateBinary("echo", context => new Echo(context));
         CreateBinary("pwd", context => new Pwd(context));
         CreateBinary("cd", context => new Cd(context));

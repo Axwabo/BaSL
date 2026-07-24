@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -23,6 +24,20 @@ public static class DirectoryExtensions
                 foreach (var subEntry in subdirectory.EnumerateEntriesRecursive())
                     yield return subEntry;
             }
+        }
+
+        public CreateDirectoryResult CreateDirectories(Path path)
+        {
+            var current = directory;
+            foreach (var s in path.Value.Split('/', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var result = current.CreateDirectory(s);
+                if (!result.Success)
+                    return result;
+                current = result.Value;
+            }
+
+            return current;
         }
 
     }
