@@ -14,6 +14,7 @@ public static class OperatingSystemExtensions
         var bin = system.FileSystem.Root.CreateDirectories(Path.Binaries).Value!;
         CreateBinary("basl", context => new BaShell(context));
         CreateBinary("mkdir", context => new Mkdir(context));
+        CreateBinary("rmdir", context => new Rmdir(context));
         CreateBinary("echo", context => new Echo(context));
         CreateBinary("pwd", context => new Pwd(context));
         CreateBinary("cd", context => new Cd(context));

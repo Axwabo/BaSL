@@ -65,6 +65,7 @@ internal sealed class VirtualDirectory : Directory, IMountSupport
 
         foreach (var _ in directory.EnumerateEntries())
             return RemoveEntryError.DirectoryNotEmpty;
+        _entries.Remove(name.Value);
         return null;
     }
 
