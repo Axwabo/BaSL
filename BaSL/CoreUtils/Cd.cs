@@ -21,7 +21,7 @@ public sealed class Cd : App
         var result = FileSystem.ResolveDirectory(final);
         if (!result.Success)
         {
-            await StandardOutput.WriteLineAsync(result.Error.Message);
+            await StandardOutput.WriteLineAsync(result.Error.Message, cancellationToken);
             return 1;
         }
 

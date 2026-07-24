@@ -13,7 +13,7 @@ public sealed class WhoAmI : App
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        await StandardOutput.WriteLineAsync(UserContext.Name);
+        await StandardOutput.WriteLineAsync(UserContext.Name, cancellationToken);
         return 0;
     }
 

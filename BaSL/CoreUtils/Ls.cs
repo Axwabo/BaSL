@@ -17,7 +17,7 @@ public sealed class Ls : App
         var result = Args.Length == 0 ? WorkingDirectory : FileSystem.ResolveDirectory(Args.Span[0]);
         if (!result.Success)
         {
-            await StandardError.WriteLineAsync(result.Error.Message);
+            await StandardError.WriteLineAsync(result.Error.Message, cancellationToken);
             return 1;
         }
 

@@ -17,17 +17,19 @@ public sealed class Cat : App
     {
         foreach (var arg in Args)
         {
+            if (cancellationToken.IsCancellationRequested)
+                break;
             var entry = FileSystem.ResolveFile(arg);
             if (!entry.Success)
             {
-                await StandardError.WriteLineAsync(entry.Error.Message);
+                await StandardError.WriteLineAsync(entry.Error.Message, cancellationToken);
                 return 1;
             }
 
             var open = entry.Value.Open(UserContext, OpenMode.Read);
             if (!open.Success)
             {
-                await StandardError.WriteLineAsync(open.Error.Message);
+                await StandardError.WriteLineAsync(open.Error.Message, cancellationToken);
                 return 1;
             }
 
