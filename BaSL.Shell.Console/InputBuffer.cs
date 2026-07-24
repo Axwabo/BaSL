@@ -27,7 +27,12 @@ public static class InputBuffer
                         System.Console.Write(key.KeyChar);
                     }
                     else if (sb.Length != 0)
+                    {
+                        var pos = --System.Console.CursorLeft;
+                        System.Console.Write(' ');
+                        System.Console.CursorLeft = pos;
                         sb.Remove(sb.Length - 1, 1);
+                    }
                 }
 
                 await consoleStandardInput.WriteLineAsync(sb.ToString());
