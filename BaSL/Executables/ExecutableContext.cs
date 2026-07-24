@@ -73,14 +73,16 @@ public sealed class ExecutableContext
     internal StreamWriter DestinationInput { get; }
     internal StreamReader DestinationOutput { get; }
     internal StreamReader DestinationError { get; }
+    internal bool IsRoot => Parent == null;
 
-    internal async Task CopyAsync()
+    internal async Task CopyAsync(bool copyStdin)
     {
         if (Parent == null)
             return;
         try
         {
             await Task.WhenAll(
+                copyStdin ? CopyAsync(Parent.SourceInput, DestinationInput, StandardInput) : Task.CompletedTask,
                 CopyAsync(DestinationOutput, Parent.SourceOutput, StandardOutput),
                 CopyAsync(DestinationError, Parent.SourceError, StandardError)
             );

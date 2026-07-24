@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
@@ -24,6 +25,8 @@ public sealed class BaShell : App
     public Dictionary<string, string> ExportedVariables { get; } = [];
 
     private User User => Console.User;
+
+    private new StreamWriter StandardError => Context.IsRoot ? StandardOutput : base.StandardError;
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
@@ -60,16 +63,12 @@ public sealed class BaShell : App
         if (result is not {Success: true, Value: var process})
         {
             await context.DisposeAsync();
-            await StandardOutput.WriteLineAsync(result.Error.Message); // TODO: fix sync
+            await StandardError.WriteLineAsync(result.Error.Message); // TODO: fix sync
             return Task.CompletedTask;
         }
 
-        var copy = context.CopyAsync();
+        var copy = context.CopyAsync(!Context.IsRoot);
         await process.WaitForExitAsync();
-        // context.SourceOutput.Dispose();
-        // context.SourceInput.Dispose();
-        // await context.SourceOutput.DisposeAsync();
-        // await context.SourceError.DisposeAsync();
         return copy;
     }
 
