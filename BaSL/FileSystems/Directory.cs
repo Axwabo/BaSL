@@ -24,13 +24,10 @@ public abstract class Directory : FileSystemEntry
 
     public abstract GetEntryResult GetEntry(FileSystemEntryName name);
 
-    public virtual GetDirectoryResult GetDirectory(FileSystemEntryName name) => ResultExtensions.AsDirectory(GetEntry(name));
+    public abstract RemoveEntryError? RemoveEntry(FileSystemEntryName name);
 
-    public virtual GetFileResult GetFile(FileSystemEntryName name) => GetEntry(name) switch
-    {
-        {Success: false, Error: var error} => error,
-        {Value: File file} => file,
-        _ => GetEntryError.NotAFile
-    };
+    public virtual GetDirectoryResult GetDirectory(FileSystemEntryName name) => GetEntry(name).AsDirectory();
+
+    public virtual GetFileResult GetFile(FileSystemEntryName name) => GetEntry(name).AsFile();
 
 }

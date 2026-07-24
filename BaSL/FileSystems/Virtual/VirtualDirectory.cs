@@ -53,4 +53,19 @@ internal sealed class VirtualDirectory : Directory, IMountSupport
     public override GetEntryResult GetEntry(FileSystemEntryName name)
         => _entries.TryGetValue(name.Value, out var entry) ? entry : GetEntryError.NotFound;
 
+    public override RemoveEntryError? RemoveEntry(FileSystemEntryName name)
+    {
+        if (!_entries.TryGetValue(name.Value, out var entry))
+            return RemoveEntryError.NothingToRemove;
+        if (entry is not Directory directory)
+        {
+            _entries.Remove(name.Value);
+            return null;
+        }
+
+        foreach (var _ in directory.EnumerateEntries())
+            return RemoveEntryError.DirectoryNotEmpty;
+        return null;
+    }
+
 }

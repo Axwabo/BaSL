@@ -28,4 +28,6 @@ internal sealed class DevDirectory : Directory
 
     public override GetEntryResult GetEntry(FileSystemEntryName name) => _files.TryGetValue(name.Value, out var file) ? file : GetEntryError.NotFound;
 
+    public override RemoveEntryError RemoveEntry(FileSystemEntryName name) => RemoveEntryError.NothingToRemove;
+
 }

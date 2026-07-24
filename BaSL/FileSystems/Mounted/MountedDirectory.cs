@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using BaSL.FileSystems.Errors;
 
 namespace BaSL.FileSystems.Mounted;
 
@@ -61,6 +62,14 @@ internal sealed class MountedDirectory : Directory
             return cached;
         var result = _original.GetEntry(name);
         return result.Success ? Cache(result.Value) : result;
+    }
+
+    public override RemoveEntryError? RemoveEntry(FileSystemEntryName name)
+    {
+        var error = _original.RemoveEntry(name);
+        if (error is null)
+            _cachedEntries.Remove(name.Value);
+        return error;
     }
 
 }

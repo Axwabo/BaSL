@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BaSL.FileSystems.Errors;
 
 namespace BaSL.FileSystems.Mounted;
 
@@ -21,6 +22,8 @@ internal sealed class FileSystemMount : Directory
     public override CreateFileResult CreateFile(FileSystemEntryName name, Mode mode = Mode.Rw) => _root.CreateFile(name, mode);
 
     public override GetEntryResult GetEntry(FileSystemEntryName name) => _root.GetEntry(name);
+
+    public override RemoveEntryError? RemoveEntry(FileSystemEntryName name) => _root.RemoveEntry(name);
 
     public override GetDirectoryResult GetDirectory(FileSystemEntryName name) => _root.GetDirectory(name);
 
