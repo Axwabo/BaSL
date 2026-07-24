@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
@@ -57,8 +58,8 @@ public sealed class BaShell : App
 
     private async Task<Task> ExecuteAsync(string line, CancellationToken token)
     {
-        var args = line.Split();
-        await using var context = ExecutableContext.Piped(Context, Console, FileSystem, args.AsMemory(1));
+        var args = Expand(line);
+        await using var context = ExecutableContext.Piped(Context, Console, FileSystem, args.ToArray());
         var result = ResolveFromPath(args[0]).Execute(context, token);
         if (result is not {Success: true, Value: var process})
         {
@@ -70,6 +71,49 @@ public sealed class BaShell : App
         var copy = context.CopyAsync(!Context.IsRoot);
         await process.WaitForExitAsync();
         return copy;
+    }
+
+    private List<string> Expand(string line)
+    {
+        var list = new List<string>();
+        var wrap = Wrap.None;
+        var sb = new StringBuilder();
+        foreach (var c in line)
+        {
+            if (c == '"')
+                End(Wrap.DoubleQuotes);
+            else if (c == '\'')
+                End(Wrap.SingleQuotes);
+            else if (char.IsWhiteSpace(c) && wrap is not (Wrap.SingleQuotes or Wrap.DoubleQuotes))
+                End(Wrap.None);
+            sb.Append(c);
+        }
+
+        End(wrap);
+
+        return list;
+
+        void End(Wrap newWrap)
+        {
+            if (sb.Length == 0)
+            {
+                wrap = newWrap == wrap ? Wrap.None : newWrap;
+                return;
+            }
+
+            switch (wrap)
+            {
+                case Wrap.None or Wrap.SingleQuotes or Wrap.DoubleQuotes:
+                    list.Add(sb.ToString());
+                    break;
+                case Wrap.Variable when ExportedVariables.TryGetValue(sb.ToString(), out var env):
+                    list.Add(env);
+                    break;
+            }
+
+            sb.Clear();
+            wrap = newWrap == wrap ? Wrap.None : newWrap;
+        }
     }
 
     private GetFileResult ResolveFromPath(FileSystemEntryName arg)
@@ -101,5 +145,15 @@ public sealed class BaShell : App
     }
 
     public void Cancel() => _cts?.Cancel();
+
+}
+
+file enum Wrap
+{
+
+    None,
+    Variable,
+    SingleQuotes,
+    DoubleQuotes
 
 }
