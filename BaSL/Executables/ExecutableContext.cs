@@ -10,10 +10,9 @@ namespace BaSL.Executables;
 public sealed class ExecutableContext
 {
 
-    internal static ExecutableContext Root(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, StreamReader standardInput, StreamWriter standardOutput, StreamWriter standardError)
+    internal static ExecutableContext Root(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, StreamWriter standardOutput, StreamWriter standardError)
         => new(console, fileSystem, console.CurrentDirectory, args)
         {
-            SourceInput = standardInput,
             SourceOutput = standardOutput,
             SourceError = standardError
         };

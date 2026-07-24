@@ -13,13 +13,16 @@ namespace BaSL;
 public sealed class Console
 {
 
+    private readonly ExecutableContext _context;
+
     private BaShell? _shell;
 
-    public Console(OperatingSystem operatingSystem, string username)
+    public Console(OperatingSystem operatingSystem, string username, StreamWriter standardOutput, StreamWriter standardError)
     {
         OperatingSystem = operatingSystem;
         UserContext = new UserContext(operatingSystem.Users[username]);
         CurrentDirectory = FileSystem.ResolveDirectory(User.Home).Value!;
+        _context = ExecutableContext.Root(this, FileSystem, ReadOnlyMemory<string>.Empty, standardOutput, standardError);
     }
 
     public OperatingSystem OperatingSystem { get; }
@@ -30,17 +33,13 @@ public sealed class Console
 
     public FileSystem FileSystem => OperatingSystem.FileSystem;
 
-    public required StreamReader StandardInput { get; init; }
-
-    public required StreamWriter StandardOutput { get; init; }
-
-    public required StreamWriter StandardError { get; init; }
+    public StreamWriter StandardInput => _context.DestinationInput;
 
     public Directory CurrentDirectory { get; internal set; }
 
     public async Task<int> StartAsync()
     {
-        await using var context = ExecutableContext.Root(this, FileSystem, ReadOnlyMemory<string>.Empty, StandardInput, StandardOutput, StandardError);
+        await using var context = _context;
         _shell = new BaShell(context);
         return await _shell.ExecuteAsync(CancellationToken.None);
     }

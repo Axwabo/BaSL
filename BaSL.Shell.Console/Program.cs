@@ -2,6 +2,7 @@
 using BaSL.CoreUtils;
 using BaSL.FileSystems;
 using BaSL.FileSystems.Extensions;
+using BaSL.Shell.Console;
 using Console = System.Console;
 using OperatingSystem = BaSL.OperatingSystem;
 
@@ -9,22 +10,17 @@ await using var stdin = Console.OpenStandardInput();
 await using var stdout = Console.OpenStandardOutput();
 await using var stderr = Console.OpenStandardError();
 
-using var inReader = new StreamReader(stdin);
 await using var outWriter = new StreamWriter(stdout);
 outWriter.AutoFlush = true;
 await using var errWriter = new StreamWriter(stderr);
 outWriter.AutoFlush = true;
 
-Console.SetIn(inReader);
 Console.SetOut(outWriter);
 Console.SetError(errWriter);
 
-var console = new BaSL.Console(await CreateSystemAsync(), "user")
-{
-    StandardInput = inReader,
-    StandardOutput = outWriter,
-    StandardError = errWriter
-};
+var console = new BaSL.Console(await CreateSystemAsync(), "user", outWriter, errWriter);
+using var cts = new CancellationTokenSource();
+_ = InputBuffer.ReadAsync(console.StandardInput, cts.Token);
 Console.CancelKeyPress += (_, eventArgs) =>
 {
     console.TerminateCurrentProcess();
