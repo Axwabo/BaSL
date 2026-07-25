@@ -14,8 +14,7 @@ public sealed class Cd : App
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        var final = Args.FirstOrDefault(UserContext.User.Home).ToAbsolute(WorkingDirectory.FullPath);
-        var result = FileSystem.ResolveDirectory(final);
+        var result = WorkingDirectory.ResolveDirectory(Args.FirstOrDefault(UserContext.User.Home));
         if (!result.Success)
         {
             await StandardOutput.WriteLineAsync(result.Error.Message, cancellationToken);

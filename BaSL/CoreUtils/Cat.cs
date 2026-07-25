@@ -19,7 +19,7 @@ public sealed class Cat : App
         {
             if (cancellationToken.IsCancellationRequested)
                 break;
-            var entry = FileSystem.ResolveFile(Path.ToAbsolutePath(arg, WorkingDirectory));
+            var entry = WorkingDirectory.ResolveFile(arg);
             if (!entry.Success)
             {
                 await StandardError.WriteLineAsync(entry.Error.Message, cancellationToken);

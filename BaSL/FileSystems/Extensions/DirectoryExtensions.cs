@@ -40,6 +40,15 @@ public static class DirectoryExtensions
             return current;
         }
 
+        public GetEntryResult Resolve(Path relativeOrAbsolute)
+            => directory.FileSystem.Resolve(relativeOrAbsolute.ToAbsolute(directory.FullPath));
+
+        public GetDirectoryResult ResolveDirectory(Path relativeOrAbsolute)
+            => directory.Resolve(relativeOrAbsolute).AsDirectory();
+
+        public GetFileResult ResolveFile(Path relativeOrAbsolute)
+            => directory.Resolve(relativeOrAbsolute).AsFile();
+
     }
 
 }
