@@ -16,9 +16,11 @@ public static class FileSystemExtensions
             FileSystemEntry entry = fileSystem.Root;
             foreach (var s in path.Value.Split("/", StringSplitOptions.RemoveEmptyEntries))
             {
+                if (s is ".")
+                    continue;
                 if (entry is not Directory directory)
                     break;
-                var result = directory.GetEntry(s);
+                var result = s is ".." ? directory.GetParent().AsEntry() : directory.GetEntry(s);
                 if (!result.Success)
                     return result.Error;
                 entry = result.Value;

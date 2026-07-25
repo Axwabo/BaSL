@@ -28,6 +28,13 @@ public static class ResultExtensions
 
     }
 
+    extension(GetDirectoryResult result)
+    {
+
+        public GetEntryResult AsEntry() => result.Success ? result.Value : result.Error;
+
+    }
+
     extension(GetFileResult result)
     {
 
