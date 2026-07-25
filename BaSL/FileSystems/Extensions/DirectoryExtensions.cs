@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BaSL.FileSystems.Errors;
 
 namespace BaSL.FileSystems.Extensions;
 
@@ -39,15 +38,6 @@ public static class DirectoryExtensions
             }
 
             return current;
-        }
-
-        public GetDirectoryResult GetParent()
-        {
-            var pathSpan = directory.FullPath.Value.AsSpan();
-            var slash = pathSpan.LastIndexOf('/');
-            return slash != -1
-                ? directory.FileSystem.ResolveDirectory(pathSpan[..slash].ToString())
-                : GetEntryError.NotFound;
         }
 
         public GetEntryResult Resolve(Path relativeOrAbsolute)

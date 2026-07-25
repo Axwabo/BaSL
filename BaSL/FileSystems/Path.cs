@@ -20,10 +20,6 @@ public readonly record struct Path(string Value)
         return span.ToString();
     }
 
-    public static Path ToAbsolutePath(string path, string basePath) => new Path(path).ToAbsolute(basePath);
-
-    public static Path ToAbsolutePath(string path, Path basePath) => new Path(path).ToAbsolute(basePath);
-
     public static implicit operator Path(string value) => new(value);
 
     public static implicit operator Path(FileSystemEntryName name) => new(name.Value);

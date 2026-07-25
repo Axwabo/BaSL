@@ -11,7 +11,7 @@ internal sealed class FileSystemMount : Directory
     public FileSystemMount(FileSystemAccess fileSystemAccess, Path parentDirectory, FileSystemEntryName name, FileSystem fileSystemToMount)
         : base(fileSystemAccess, parentDirectory, name, fileSystemToMount.Root.Metadata)
     {
-        var mounted = new MountedFileSystem(fileSystemToMount, FullPath);
+        var mounted = new MountedFileSystem(fileSystemToMount, fileSystemAccess.FileSystem, FullPath);
         _root = mounted.Root;
     }
 

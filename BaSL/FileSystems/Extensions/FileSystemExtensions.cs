@@ -13,6 +13,8 @@ public static class FileSystemExtensions
 
         public GetEntryResult Resolve(Path path)
         {
+            if (path.IsEmpty)
+                return GetEntryError.NotFound;
             FileSystemEntry entry = fileSystem.Root;
             foreach (var s in path.Value.Split("/", StringSplitOptions.RemoveEmptyEntries))
             {

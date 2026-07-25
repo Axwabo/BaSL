@@ -8,10 +8,10 @@ namespace BaSL.FileSystems.Mounted;
 internal sealed class MountedDirectory : Directory
 {
 
-    public static MountedDirectory Create(MountedFileSystem mountedFileSystem, Path mountPoint, Directory original)
+    public static MountedDirectory Create(FileSystem fileSystem, Path mountPoint, Directory original)
         => original is MountedDirectory
             ? throw new ArgumentException("Cannot double-mount a directory")
-            : new MountedDirectory(new FileSystemAccess(mountedFileSystem), mountPoint, original);
+            : new MountedDirectory(new FileSystemAccess(fileSystem), mountPoint, original);
 
     private readonly Dictionary<string, FileSystemEntry> _cachedEntries = [];
 

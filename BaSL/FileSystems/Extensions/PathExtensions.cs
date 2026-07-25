@@ -8,7 +8,31 @@ public static class PathExtensions
     extension(Path)
     {
 
-        public static Path ToAbsolutePath(string path, Directory basePath) => Path.ToAbsolutePath(path, basePath.FullPath);
+        // ReSharper disable once InvokeAsExtensionMemberFromSameClass
+        public static Path ToAbsolutePath(string path, Directory basePath) => ToAbsolutePath(path, basePath.FullPath);
+
+        public static Path ToAbsolutePath(string path, string basePath) => new Path(path).ToAbsolute(basePath);
+
+        public static Path ToAbsolutePath(string path, Path basePath) => new Path(path).ToAbsolute(basePath);
+
+    }
+
+    extension(Path path)
+    {
+
+        public Path Parent
+        {
+            get
+            {
+                var pathSpan = path.Value.AsSpan();
+                var slash = pathSpan.LastIndexOf('/');
+                return slash != -1
+                    ? pathSpan[..slash].ToString()
+                    : new Path();
+            }
+        }
+
+        public bool IsEmpty => string.IsNullOrEmpty(path.Value);
 
     }
 
