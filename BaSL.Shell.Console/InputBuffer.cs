@@ -23,6 +23,8 @@ public static class InputBuffer
 
                     if (key.Key != ConsoleKey.Backspace)
                     {
+                        if (char.IsControl(key.KeyChar))
+                            continue;
                         sb.Append(key.KeyChar);
                         System.Console.Write(key.KeyChar);
                     }
