@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
@@ -41,7 +42,7 @@ public sealed class Ls : App
 
         var directory = result.Value;
         await using var writer = StandardOutput;
-        foreach (var entry in directory.EnumerateEntries())
+        foreach (var entry in directory.EnumerateEntries().OrderBy(e => e.Name.Value))
         {
             if (cancellationToken.IsCancellationRequested)
                 break;
