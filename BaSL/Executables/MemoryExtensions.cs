@@ -14,6 +14,15 @@ public static class MemoryExtensions
 
     }
 
+    extension<T>(ReadOnlyMemory<T> memory) where T : notnull
+    {
+
+        public T? FirstOrDefault() => memory.Length == 0 ? default : memory.Span[0];
+
+        public T FirstOrDefault(T @default) => memory.Length == 0 ? @default : memory.Span[0];
+
+    }
+
 }
 
 public struct ReadOnlyMemoryEnumerator<T> : IEnumerator<T>

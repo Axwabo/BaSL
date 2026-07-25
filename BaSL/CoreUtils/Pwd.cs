@@ -13,7 +13,7 @@ public sealed class Pwd : App
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        await StandardOutput.WriteLineAsync(WorkingDirectory.FullPath.Value, cancellationToken);
+        await StandardOutput.WriteLineAsync(WorkingDirectory.FullPath, cancellationToken);
         return 0;
     }
 

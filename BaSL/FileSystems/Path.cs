@@ -20,9 +20,15 @@ public readonly record struct Path(string Value)
         return span.ToString();
     }
 
+    public static Path ToAbsolutePath(string path, string basePath) => new Path(path).ToAbsolute(basePath);
+
+    public static Path ToAbsolutePath(string path, Path basePath) => new Path(path).ToAbsolute(basePath);
+
     public static implicit operator Path(string value) => new(value);
 
     public static implicit operator Path(FileSystemEntryName name) => new(name.Value);
+
+    public static implicit operator ReadOnlyMemory<char>(Path path) => path.Value.AsMemory();
 
     public static Path operator /(Path left, Path right) => Combine(left, right);
 
@@ -30,10 +36,10 @@ public readonly record struct Path(string Value)
 
     public static Path Binaries { get; } = "/usr/bin";
 
-    public Path ToAbsolutePath(Path basePath)
+    public Path ToAbsolute(Path basePath)
     {
         var baseSpan = basePath.Value.AsSpan();
-        return baseSpan.IsEmpty || Value.AsSpan().StartsWith("/")
+        return baseSpan.IsEmpty || Value.AsSpan().StartsWith(Root.Value)
             ? this
             : Combine(basePath, this);
     }
