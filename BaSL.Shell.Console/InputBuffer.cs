@@ -91,7 +91,7 @@ public static class InputBuffer
         while (!Console.KeyAvailable)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            await Task.Yield();
+            await Task.Delay(10, cancellationToken);
         }
 
         return Console.ReadKey(true);
