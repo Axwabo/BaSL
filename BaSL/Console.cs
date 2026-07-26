@@ -44,12 +44,6 @@ public sealed class Console
         return await _shell.ExecuteAsync(CancellationToken.None);
     }
 
-    public void TerminateCurrentProcess()
-    {
-        if (_shell == null || _shell.TerminateCurrentProcess())
-            return;
-        _context.SourceOutput.WriteLine();
-        StandardInput.WriteLine(); // TODO probably won't support sync writing
-    }
+    public void TerminateCurrentProcess() => _shell?.Cancel();
 
 }

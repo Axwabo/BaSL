@@ -149,13 +149,7 @@ public sealed class BaShell : App
         return span.ToString();
     }
 
-    public bool TerminateCurrentProcess()
-    {
-        if (_cts == null)
-            return false;
-        _cts.Cancel();
-        return true;
-    }
+    public void Cancel() => _cts?.Cancel();
 
 }
 
