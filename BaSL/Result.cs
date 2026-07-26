@@ -28,4 +28,6 @@ public readonly record struct Result<TResult, TError> where TError : Error
     [MemberNotNullWhen(false, nameof(Error))]
     public bool Success { get; }
 
+    public TResult Unwrap() => Success ? Value : throw new ErrorException(Error);
+
 }

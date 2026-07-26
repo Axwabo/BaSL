@@ -35,8 +35,8 @@ async Task<OperatingSystem> CreateSystemAsync()
     var user = system.CreateUser("user");
     await system.SudoAsync(async (operatingSystem, context) =>
     {
-        var userHome = operatingSystem.FileSystem.ResolveDirectory(user.Home).Value!;
-        await using var writer = new StreamWriter(userHome.CreateFile("amogus.txt").Open(context, OpenMode.ReadWrite).Value!);
+        var userHome = operatingSystem.FileSystem.ResolveDirectory(user.Home).Unwrap();
+        await using var writer = new StreamWriter(userHome.CreateFile("amogus.txt").Open(context, OpenMode.ReadWrite).Unwrap());
         await writer.WriteLineAsync("Hello World!");
     });
     return system;

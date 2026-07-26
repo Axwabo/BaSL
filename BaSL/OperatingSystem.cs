@@ -23,7 +23,7 @@ public sealed class OperatingSystem
         };
         Users["root"] = Root;
         FileSystem = FileSystem.CreateVirtual(Root);
-        _homes = (IMountSupport) FileSystem.Root.CreateDirectory("home").Value!;
+        _homes = (IMountSupport) FileSystem.Root.CreateDirectory("home").Unwrap();
     }
 
     internal User Root { get; }
@@ -46,7 +46,7 @@ public sealed class OperatingSystem
         };
         Users.Add(name, user);
         var userFs = FileSystem.CreateVirtual(user);
-        var mount = _homes.Mount(new UserContext(Root), userFs, entryName).Value!;
+        var mount = _homes.Mount(new UserContext(Root), userFs, entryName).Unwrap();
         user.Home = mount.FullPath;
         return user;
     }

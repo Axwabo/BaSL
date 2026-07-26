@@ -21,7 +21,7 @@ public sealed class Console
     {
         OperatingSystem = operatingSystem;
         UserContext = new UserContext(operatingSystem.Users[username]);
-        CurrentDirectory = FileSystem.ResolveDirectory(User.Home).Value!;
+        CurrentDirectory = FileSystem.ResolveDirectory(User.Home).Unwrap();
         _context = ExecutableContext.Root(this, FileSystem, ReadOnlyMemory<string>.Empty, standardOutput, standardError);
     }
 
