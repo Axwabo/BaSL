@@ -10,26 +10,46 @@ public static class InputBuffer
     private static readonly List<string> PreviousInputs = [];
     private static int _index;
 
-    public static async Task ReadAsync(StreamWriter consoleStandardInput, CancellationToken cancellationToken)
+    public static async Task ReadAsync(BaSL.Console console, CancellationToken cancellationToken)
     {
+        var stdin = console.StandardInput;
+        var cts = CreateCts();
+        Console.CancelKeyPress += (_, eventArgs) =>
+        {
+            eventArgs.Cancel = true;
+            cts.Cancel();
+        };
         try
         {
             while (!cancellationToken.IsCancellationRequested)
             {
                 var sb = new StringBuilder();
-                while (!cancellationToken.IsCancellationRequested)
+                var token = cts.Token;
+                try
                 {
-                    var key = await ReadKeyAsync(cancellationToken);
-                    if (CompleteStatement(key, sb))
-                        break;
-                }
+                    while (!token.IsCancellationRequested)
+                    {
+                        var key = await ReadKeyAsync(token);
+                        if (CompleteStatement(key, sb))
+                            break;
+                    }
 
-                await consoleStandardInput.WriteLineAsync(sb.ToString());
+                    await stdin.WriteLineAsync(sb.ToString());
+                }
+                catch (OperationCanceledException) when (cts.IsCancellationRequested)
+                {
+                    if (!console.TerminateCurrentProcess())
+                        await stdin.WriteLineAsync();
+                }
             }
         }
         catch (OperationCanceledException)
         {
         }
+
+        return;
+
+        CancellationTokenSource CreateCts() => CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
     }
 
     private static bool CompleteStatement(ConsoleKeyInfo key, StringBuilder sb)

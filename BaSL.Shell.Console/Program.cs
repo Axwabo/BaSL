@@ -20,12 +20,7 @@ Console.SetError(errWriter);
 
 var console = new BaSL.Console(await CreateSystemAsync(), "user", outWriter, errWriter);
 using var cts = new CancellationTokenSource();
-_ = InputBuffer.ReadAsync(console.StandardInput, cts.Token);
-Console.CancelKeyPress += (_, eventArgs) =>
-{
-    console.TerminateCurrentProcess();
-    eventArgs.Cancel = true;
-};
+_ = InputBuffer.ReadAsync(console, cts.Token);
 return await console.StartAsync();
 
 async Task<OperatingSystem> CreateSystemAsync()
