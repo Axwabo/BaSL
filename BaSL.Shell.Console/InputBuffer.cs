@@ -13,33 +13,29 @@ public static class InputBuffer
     public static async Task ReadAsync(BaSL.Console console, CancellationToken cancellationToken)
     {
         var stdin = console.StandardInput;
-        var cts = CreateCts();
+        var ctsEs = new CancellationTokenSource[] {null!};
+        CreateCts();
         Console.CancelKeyPress += (_, eventArgs) =>
         {
             eventArgs.Cancel = true;
-            cts.Cancel();
+            ctsEs[0].Cancel();
         };
         try
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                var sb = new StringBuilder();
-                var token = cts.Token;
+                var token = ctsEs[0].Token;
                 try
                 {
-                    while (!token.IsCancellationRequested)
-                    {
-                        var key = await ReadKeyAsync(token);
-                        if (CompleteStatement(key, sb))
-                            break;
-                    }
-
-                    await stdin.WriteLineAsync(sb.ToString());
+                    await InputAsync(stdin, token);
                 }
-                catch (OperationCanceledException) when (cts.IsCancellationRequested)
+                catch (OperationCanceledException) when (token.IsCancellationRequested)
                 {
+                    Console.WriteLine("^C");
                     if (!console.TerminateCurrentProcess())
                         await stdin.WriteLineAsync();
+                    ctsEs[0].Dispose();
+                    CreateCts();
                 }
             }
         }
@@ -49,7 +45,20 @@ public static class InputBuffer
 
         return;
 
-        CancellationTokenSource CreateCts() => CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        void CreateCts() => ctsEs[0] = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+    }
+
+    private static async Task InputAsync(StreamWriter stdin, CancellationToken cancellationToken)
+    {
+        var sb = new StringBuilder();
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var key = await ReadKeyAsync(cancellationToken);
+            if (CompleteStatement(key, sb))
+                break;
+        }
+
+        await stdin.WriteLineAsync(sb.ToString());
     }
 
     private static bool CompleteStatement(ConsoleKeyInfo key, StringBuilder sb)
