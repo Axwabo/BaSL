@@ -23,7 +23,7 @@ internal sealed class FileSystemMount : Directory
 
     public override GetEntryResult GetEntry(FileSystemEntryName name) => _root.GetEntry(name);
 
-    public override RemoveEntryError? RemoveEntry(FileSystemEntryName name) => _root.RemoveEntry(name);
+    public override RemoveChildError? RemoveEntry(FileSystemEntryName name) => _root.RemoveEntry(name);
 
     public override GetDirectoryResult GetDirectory(FileSystemEntryName name) => _root.GetDirectory(name);
 

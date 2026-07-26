@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using BaSL.FileSystems.Errors;
 
 namespace BaSL.FileSystems.Extensions;
 
@@ -48,6 +49,27 @@ public static class DirectoryExtensions
 
         public GetFileResult ResolveFile(Path relativeOrAbsolute)
             => directory.Resolve(relativeOrAbsolute).AsFile();
+
+        public IEnumerable<RemoveSelfError> RemoveEntriesRecursive()
+        {
+            var entires = directory.EnumerateEntries().ToList();
+            for (var i = entires.Count - 1; i >= 0; i--)
+                if (entires[i].RemoveSelf() is { } error)
+                    yield return error;
+        }
+
+        public IEnumerable<RemoveSelfError> RemoveSelfAndEntries()
+        {
+            var failed = false;
+            foreach (var error in directory.RemoveEntriesRecursive())
+            {
+                yield return error;
+                failed = true;
+            }
+
+            if (!failed && directory.RemoveSelf() is { } selfError)
+                yield return selfError;
+        }
 
     }
 

@@ -24,7 +24,7 @@ public sealed class Rmdir : App
         var entry = WorkingDirectory.GetEntry(Args.Span[0]);
         if (entry.Value is not Directory directory)
         {
-            await StandardOutput.WriteLineAsync(RemoveEntryError.NothingToRemove.Message, cancellationToken);
+            await StandardOutput.WriteLineAsync(RemoveChildError.NothingToRemove.Message, cancellationToken);
             return 1;
         }
 

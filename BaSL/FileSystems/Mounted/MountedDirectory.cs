@@ -64,7 +64,7 @@ internal sealed class MountedDirectory : Directory
         return result.Success ? Cache(result.Value) : result;
     }
 
-    public override RemoveEntryError? RemoveEntry(FileSystemEntryName name)
+    public override RemoveChildError? RemoveEntry(FileSystemEntryName name)
     {
         var error = _original.RemoveEntry(name);
         if (error is null)

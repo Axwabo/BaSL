@@ -24,7 +24,7 @@ public abstract class Directory : FileSystemEntry
 
     public abstract GetEntryResult GetEntry(FileSystemEntryName name);
 
-    public abstract RemoveEntryError? RemoveEntry(FileSystemEntryName name);
+    public abstract RemoveChildError? RemoveEntry(FileSystemEntryName name);
 
     public virtual GetDirectoryResult GetDirectory(FileSystemEntryName name) => GetEntry(name).AsDirectory();
 
