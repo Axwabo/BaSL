@@ -11,7 +11,7 @@ public static class OperatingSystemExtensions
 
     private static Task Install(OperatingSystem system, UserContext ctx)
     {
-        var bin = system.FileSystem.Root.CreateDirectories(Path.Binaries).Unwrap();
+        var bin = system.FileSystem.Root.CreateDirectories(ctx, Path.Binaries).Unwrap();
         CreateBinary("basl", context => new BaShell(context));
         CreateBinary("mkdir", context => new Mkdir(context));
         CreateBinary("rmdir", context => new Rmdir(context));
@@ -29,7 +29,7 @@ public static class OperatingSystemExtensions
 
         void CreateBinary(FileSystemEntryName name, Executable executable)
         {
-            var file = bin.CreateFile(name, Mode.Rwx).Unwrap();
+            var file = bin.CreateFile(ctx, name, Mode.Rwx).Unwrap();
             file.MakeExecutable(ctx, executable);
             file.Metadata.ChangeMode(file.Metadata.Modes with {Others = Mode.Rx});
         }

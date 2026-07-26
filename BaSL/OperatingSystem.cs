@@ -23,7 +23,7 @@ public sealed class OperatingSystem
         };
         Users["root"] = Root;
         FileSystem = FileSystem.CreateVirtual(Root);
-        _homes = (IMountSupport) FileSystem.Root.CreateDirectory("home").Unwrap();
+        _homes = (IMountSupport) FileSystem.Root.CreateDirectory(new UserContext(Root), "home").Unwrap();
     }
 
     internal User Root { get; }

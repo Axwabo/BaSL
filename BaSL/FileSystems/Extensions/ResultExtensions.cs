@@ -59,9 +59,9 @@ public static class ResultExtensions
     extension(CreateDirectoryResult result)
     {
 
-        public CreateDirectoryResult CreateDirectory(FileSystemEntryName name)
+        public CreateDirectoryResult CreateDirectory(UserContext context, FileSystemEntryName name)
             => result.Success
-                ? result.Value.CreateDirectory(name)
+                ? result.Value.CreateDirectory(context, name)
                 : result;
 
     }

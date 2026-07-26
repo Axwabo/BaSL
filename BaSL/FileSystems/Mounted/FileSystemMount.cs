@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using BaSL.FileSystems.Errors;
+using BaSL.Users;
 
 namespace BaSL.FileSystems.Mounted;
 
@@ -17,13 +18,13 @@ internal sealed class FileSystemMount : Directory
 
     public override IEnumerable<FileSystemEntry> EnumerateEntries() => _root.EnumerateEntries();
 
-    public override CreateDirectoryResult CreateDirectory(FileSystemEntryName name, Mode mode = Mode.Rw) => _root.CreateDirectory(name, mode);
+    public override CreateDirectoryResult CreateDirectory(UserContext context, FileSystemEntryName name, Mode mode = Mode.Rw) => _root.CreateDirectory(context, name, mode);
 
-    public override CreateFileResult CreateFile(FileSystemEntryName name, Mode mode = Mode.Rw) => _root.CreateFile(name, mode);
+    public override CreateFileResult CreateFile(UserContext context, FileSystemEntryName name, Mode mode = Mode.Rw) => _root.CreateFile(context, name, mode);
 
     public override GetEntryResult GetEntry(FileSystemEntryName name) => _root.GetEntry(name);
 
-    public override RemoveChildError? RemoveEntry(FileSystemEntryName name) => _root.RemoveEntry(name);
+    public override RemoveChildError? RemoveEntry(UserContext context, FileSystemEntryName name) => _root.RemoveEntry(context, name);
 
     public override GetDirectoryResult GetDirectory(FileSystemEntryName name) => _root.GetDirectory(name);
 

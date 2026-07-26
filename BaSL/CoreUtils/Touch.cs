@@ -27,7 +27,7 @@ public sealed class Touch : App
                 return 1;
             }
 
-            var result = directory.Value.CreateFile(arg);
+            var result = directory.Value.CreateFile(UserContext, arg);
             if (result.Success)
                 continue;
             await StandardError.WriteLineAsync(result.Error.Message, cancellationToken);

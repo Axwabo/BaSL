@@ -18,16 +18,16 @@ public abstract class Directory : FileSystemEntry
 
     public abstract IEnumerable<FileSystemEntry> EnumerateEntries();
 
-    public abstract CreateDirectoryResult CreateDirectory(FileSystemEntryName name, Mode mode = Mode.Rw);
+    public abstract CreateDirectoryResult CreateDirectory(UserContext context, FileSystemEntryName name, Mode mode = Mode.Rw);
 
-    public abstract CreateFileResult CreateFile(FileSystemEntryName name, Mode mode = Mode.Rw);
+    public abstract CreateFileResult CreateFile(UserContext context, FileSystemEntryName name, Mode mode = Mode.Rw);
 
     public abstract GetEntryResult GetEntry(FileSystemEntryName name);
-
-    public abstract RemoveChildError? RemoveEntry(FileSystemEntryName name);
 
     public virtual GetDirectoryResult GetDirectory(FileSystemEntryName name) => GetEntry(name).AsDirectory();
 
     public virtual GetFileResult GetFile(FileSystemEntryName name) => GetEntry(name).AsFile();
+
+    public abstract RemoveChildError? RemoveEntry(UserContext context, FileSystemEntryName name);
 
 }

@@ -28,9 +28,9 @@ internal sealed class VirtualDirectory : Directory, IMountSupport
 
     public override IEnumerable<FileSystemEntry> EnumerateEntries() => _entries.Values;
 
-    public override CreateDirectoryResult CreateDirectory(FileSystemEntryName name, Mode mode = Mode.Rw)
+    public override CreateDirectoryResult CreateDirectory(UserContext context, FileSystemEntryName name, Mode mode = Mode.Rw)
     {
-        if (!Metadata.OwnerMode.CanWrite)
+        if (!Metadata.CanWrite(context))
             return CreateEntryError.AccessDenied;
         if (_entries.ContainsKey(name.Value))
             return CreateEntryError.NameCollision;
@@ -39,9 +39,9 @@ internal sealed class VirtualDirectory : Directory, IMountSupport
         return directory;
     }
 
-    public override CreateFileResult CreateFile(FileSystemEntryName name, Mode mode = Mode.Rw)
+    public override CreateFileResult CreateFile(UserContext context, FileSystemEntryName name, Mode mode = Mode.Rw)
     {
-        if (!Metadata.OwnerMode.CanWrite)
+        if (!Metadata.CanWrite(context))
             return CreateEntryError.AccessDenied;
         if (_entries.ContainsKey(name.Value))
             return CreateEntryError.NameCollision;
@@ -53,8 +53,10 @@ internal sealed class VirtualDirectory : Directory, IMountSupport
     public override GetEntryResult GetEntry(FileSystemEntryName name)
         => _entries.TryGetValue(name.Value, out var entry) ? entry : GetEntryError.NotFound;
 
-    public override RemoveChildError? RemoveEntry(FileSystemEntryName name)
+    public override RemoveChildError? RemoveEntry(UserContext context, FileSystemEntryName name)
     {
+        if (!Metadata.CanWrite(context))
+            return RemoveChildError.AccessDenied;
         if (!_entries.TryGetValue(name.Value, out var entry))
             return RemoveChildError.NothingToRemove;
         if (entry is not Directory directory)

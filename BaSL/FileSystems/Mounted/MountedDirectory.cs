@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using BaSL.FileSystems.Errors;
+using BaSL.Users;
 
 namespace BaSL.FileSystems.Mounted;
 
@@ -44,15 +45,15 @@ internal sealed class MountedDirectory : Directory
         _ => throw new IOException($"Invalid filesystem entry {entry}")
     };
 
-    public override CreateDirectoryResult CreateDirectory(FileSystemEntryName name, Mode mode = Mode.Rw)
+    public override CreateDirectoryResult CreateDirectory(UserContext context, FileSystemEntryName name, Mode mode = Mode.Rw)
     {
-        var result = _original.CreateDirectory(name, mode);
+        var result = _original.CreateDirectory(context, name, mode);
         return result.Success ? (Directory) Cache(result.Value) : result;
     }
 
-    public override CreateFileResult CreateFile(FileSystemEntryName name, Mode mode = Mode.Rw)
+    public override CreateFileResult CreateFile(UserContext context, FileSystemEntryName name, Mode mode = Mode.Rw)
     {
-        var result = _original.CreateFile(name, mode);
+        var result = _original.CreateFile(context, name, mode);
         return result.Success ? (File) Cache(result.Value) : result;
     }
 
@@ -64,9 +65,9 @@ internal sealed class MountedDirectory : Directory
         return result.Success ? Cache(result.Value) : result;
     }
 
-    public override RemoveChildError? RemoveEntry(FileSystemEntryName name)
+    public override RemoveChildError? RemoveEntry(UserContext context, FileSystemEntryName name)
     {
-        var error = _original.RemoveEntry(name);
+        var error = _original.RemoveEntry(context, name);
         if (error is null)
             _cachedEntries.Remove(name.Value);
         return error;

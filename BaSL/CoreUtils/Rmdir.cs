@@ -34,7 +34,7 @@ public sealed class Rmdir : App
             return 1;
         }
 
-        if (WorkingDirectory.RemoveEntry(Args.Span[0]) is not { } error)
+        if (WorkingDirectory.RemoveEntry(UserContext, Args.Span[0]) is not { } error)
             return 0;
         await StandardError.WriteLineAsync(error.Message, cancellationToken);
         return 1;

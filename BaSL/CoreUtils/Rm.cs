@@ -39,7 +39,7 @@ public sealed class Rm : App
             return french ? 0 : 1;
         }
 
-        foreach (var error in entry.Value.Remove(recursive, french))
+        foreach (var error in entry.Value.Remove(UserContext, recursive, french))
         {
             if (cancellationToken.IsCancellationRequested)
                 break;

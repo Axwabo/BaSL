@@ -7,7 +7,11 @@ public abstract record RemoveChildError(string Message) : FileSystemError(Messag
 
     public static RemoveChildError DirectoryNotEmpty { get; } = new DirectoryNotEmptyError();
 
+    public static RemoveChildError AccessDenied { get; } = new RemoveChildDenied();
+
 }
+
+public sealed record RemoveChildDenied() : RemoveChildError("Access denied");
 
 public sealed record NothingToRemoveError() : RemoveChildError("Nothing to remove");
 
