@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
@@ -67,27 +66,19 @@ public sealed class Rm : App
             return await RemoveOneAsync(file, french, cancellationToken);
         }
 
-        var entries = directory.EnumerateEntriesRecursive().ToList();
-        entries.Reverse();
-        foreach (var entry in entries)
-            await RemoveEntryAsync(entry, french, cancellationToken);
-        await RemoveEntryAsync(resolve.Value, french, cancellationToken);
-        return 0;
-    }
-
-    private async Task RemoveEntryAsync(FileSystemEntry entry, bool french, CancellationToken cancellationToken)
-    {
-        var parent = entry.GetParent();
-        if (!parent.Success)
+        foreach (var error in directory.RemoveSelfAndEntries())
         {
+            if (cancellationToken.IsCancellationRequested)
+                break;
+            await StandardError.WriteAsync("Cannot remove ", cancellationToken);
+            await StandardError.WriteAsync(error.EntryPath, cancellationToken);
+            await StandardError.WriteAsync(": ", cancellationToken);
+            await StandardError.WriteLineAsync(error.Message, cancellationToken);
             if (!french)
-                await CannotRemoveAsync(entry.FullPath.Value, parent.Error, cancellationToken);
-            return;
+                return 1;
         }
 
-        var remove = parent.Value.RemoveEntry(entry.Name);
-        if (remove is not null && !french)
-            await CannotRemoveAsync(entry.FullPath.Value, remove, cancellationToken);
+        return 0;
     }
 
     private async Task CannotRemoveAsync(string path, FileSystemError error, CancellationToken cancellationToken)
