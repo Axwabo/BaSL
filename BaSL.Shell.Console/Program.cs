@@ -27,7 +27,7 @@ async Task<OperatingSystem> CreateSystemAsync()
 {
     var system = new OperatingSystem {Hostname = "OwOS"};
     await system.InstallCoreUtilsAsync();
-    var user = system.CreateUser("user");
+    var user = system.CreateUser("user").Unwrap();
     await system.SudoAsync(async (operatingSystem, context) =>
     {
         var userHome = operatingSystem.FileSystem.ResolveDirectory(user.Home).Unwrap();

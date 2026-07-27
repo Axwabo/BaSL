@@ -35,9 +35,12 @@ public sealed class OperatingSystem
 
     public string Hostname { get; set; } = Guid.NewGuid().ToString("N").ToUpper();
 
-    public User CreateUser(string name)
+    public CreateUserResult CreateUser(string name)
     {
-        FileSystemEntryName entryName = name;
+        if (!FileSystemEntryName.IsValid(name))
+            return CreateUserError.InvalidUsername;
+        if (Users.ContainsKey(name))
+            return CreateUserError.Exists;
         var user = new User(name)
         {
             Environment =
@@ -45,10 +48,12 @@ public sealed class OperatingSystem
                 {"PATH", Path.Binaries.Value}
             }
         };
-        Users.Add(name, user);
         var userFs = FileSystem.CreateVirtual(user);
-        var mount = _homes.Mount(new UserContext(Root), userFs, entryName).Unwrap();
-        user.Home = mount.FullPath;
+        var mount = _homes.Mount(new UserContext(Root), userFs, name);
+        if (!mount.Success)
+            return new CannotMountHome(mount.Error);
+        user.Home = mount.Value.FullPath;
+        Users[name] = user;
         return user;
     }
 
