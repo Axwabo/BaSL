@@ -6,6 +6,8 @@ using BaSL.FileSystems.Extensions;
 
 namespace BaSL.CoreUtils;
 
+using ModeDeltas = (Mode AddOwner, Mode AddOthers, Mode RemoveOwner, Mode RemoveOthers);
+
 public sealed class Chmod : App
 {
 
@@ -21,8 +23,9 @@ public sealed class Chmod : App
             return 1;
         }
 
-        var (addOwner, addOthers, removeOwner, removeOthers) = ParseModeChange(Args.Span[0]);
-        foreach (var arg in Args[1..])
+        var tuple = ParseModeChange(Args.Span[0]);
+        var recursive = Args.Span[1] is "-R";
+        foreach (var arg in Args[(recursive ? 2 : 1)..])
         {
             if (cancellationToken.IsCancellationRequested)
                 break;
@@ -36,21 +39,30 @@ public sealed class Chmod : App
                 return 1;
             }
 
-            var metadata = entry.Value.Metadata;
-            var newOwner = (metadata.OwnerMode | addOwner) & ~removeOwner;
-            var newOthers = (metadata.OthersMode | addOthers) & ~removeOthers;
-            if (metadata.ChangeMode(UserContext, new Modes(newOwner, 0, newOthers)) is not { } error)
+            await ChangeModeAsync(entry.Value, tuple, cancellationToken);
+            if (!recursive || entry.Value is not Directory directory)
                 continue;
-            await StandardError.WriteAsync("Cannot change ", cancellationToken);
-            await StandardError.WriteAsync(entry.Value.FullPath, cancellationToken);
-            await StandardError.WriteAsync(": ", cancellationToken);
-            await StandardError.WriteLineAsync(error.Message, cancellationToken);
+            foreach (var child in directory.EnumerateEntriesRecursive())
+                await ChangeModeAsync(child, tuple, cancellationToken);
         }
 
         return 0;
     }
 
-    private (Mode AddOwner, Mode AddOthers, Mode RemoveOwner, Mode RemoveOthers) ParseModeChange(string s)
+    private async Task ChangeModeAsync(FileSystemEntry entry, ModeDeltas tuple, CancellationToken cancellationToken)
+    {
+        var metadata = entry.Metadata;
+        var newOwner = (metadata.OwnerMode | tuple.AddOwner) & ~tuple.RemoveOwner;
+        var newOthers = (metadata.OthersMode | tuple.AddOthers) & ~tuple.RemoveOthers;
+        if (metadata.ChangeMode(UserContext, new Modes(newOwner, 0, newOthers)) is not { } error)
+            return;
+        await StandardError.WriteAsync("Cannot change ", cancellationToken);
+        await StandardError.WriteAsync(entry.FullPath, cancellationToken);
+        await StandardError.WriteAsync(": ", cancellationToken);
+        await StandardError.WriteLineAsync(error.Message, cancellationToken);
+    }
+
+    private ModeDeltas ParseModeChange(string s)
         => Modes.TryParseOctal(s, out var modes)
             ? (modes.Owner, modes.Others, ~modes.Owner, ~modes.Others)
             : Args.Span[0] switch
