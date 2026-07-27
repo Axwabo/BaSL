@@ -5,6 +5,10 @@ namespace BaSL.FileSystems;
 public readonly record struct FileSystemEntryName
 {
 
+    public const string Current = ".";
+
+    public const string Parent = "..";
+
     public static bool IsValid(ReadOnlySpan<char> name) => name.IndexOf('/') == -1;
 
     public static void ThrowIfInvalid(ReadOnlySpan<char> name)
