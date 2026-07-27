@@ -21,20 +21,7 @@ public sealed class Chmod : App
             return 1;
         }
 
-        var addOwner = Mode.None;
-        var addOthers = Mode.None;
-        var removeOwner = Mode.None;
-        var removeOthers = Mode.None;
-        switch (Args.Span[0])
-        {
-            case "+x":
-                addOthers = addOwner = Mode.Execute;
-                break;
-            case "-x":
-                removeOthers = removeOwner = Mode.Execute;
-                break;
-        }
-
+        var (addOwner, addOthers, removeOwner, removeOthers) = ParseModeChange(Args.Span[0]);
         foreach (var arg in Args[1..])
         {
             if (cancellationToken.IsCancellationRequested)
@@ -62,5 +49,20 @@ public sealed class Chmod : App
 
         return 0;
     }
+
+    private (Mode AddOwner, Mode AddOthers, Mode RemoveOwner, Mode RemoveOthers) ParseModeChange(string s)
+        => Modes.TryParseOctal(s, out var modes)
+            ? (modes.Owner, modes.Others, ~modes.Owner, ~modes.Others)
+            : Args.Span[0] switch
+            {
+                // TODO
+                "+x" => (Mode.Execute, Mode.Execute, 0, 0),
+                "-x" => (0, Mode.Execute, 0, Mode.Execute),
+                "+w" => (Mode.Write, Mode.Write, 0, 0),
+                "-w" => (0, Mode.Write, 0, Mode.Write),
+                "+r" => (Mode.Read, Mode.Read, 0, 0),
+                "-r" => (0, Mode.Read, 0, Mode.Read),
+                _ => (0, 0, 0, 0)
+            };
 
 }

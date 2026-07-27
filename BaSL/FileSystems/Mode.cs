@@ -20,21 +20,37 @@ public enum Mode
 public static class ModeExtensions
 {
 
-    extension(Mode mode)
+    extension(Mode)
     {
 
-        public static Mode ParseOctal(char c) => c switch
+        public static bool TryParseOctal(char c, out Mode mode)
         {
-            '0' => Mode.None,
-            '1' => Mode.Execute,
-            '2' => Mode.Write,
-            '3' => Mode.Wx,
-            '4' => Mode.Read,
-            '5' => Mode.Rx,
-            '6' => Mode.Rw,
-            '7' => Mode.Rwx,
-            _ => throw new ArgumentOutOfRangeException(nameof(c), c, "Unknown mode")
-        };
+            Mode? nullableMode = c switch
+            {
+                '0' => Mode.None,
+                '1' => Mode.Execute,
+                '2' => Mode.Write,
+                '3' => Mode.Wx,
+                '4' => Mode.Read,
+                '5' => Mode.Rx,
+                '6' => Mode.Rw,
+                '7' => Mode.Rwx,
+                _ => null
+            };
+            mode = nullableMode ?? Mode.None;
+            return nullableMode.HasValue;
+        }
+
+        public static Mode ParseOctal(char c)
+            // ReSharper disable once InvokeAsExtensionMemberFromSameClass
+            => TryParseOctal(c, out var mode)
+                ? mode
+                : throw new ArgumentOutOfRangeException(nameof(c), c, "Unknown mode");
+
+    }
+
+    extension(Mode mode)
+    {
 
         public bool CanRead => mode.Has(Mode.Read);
 
