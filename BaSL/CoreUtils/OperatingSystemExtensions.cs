@@ -22,6 +22,7 @@ public static class OperatingSystemExtensions
         CreateBinary("pwd", context => new Pwd(context));
         CreateBinary("cd", context => new Cd(context));
         CreateBinary("ls", context => new Ls(context));
+        CreateBinary("chmod", context => new Chmod(context));
         CreateBinary("cat", context => new Cat(context));
         CreateBinary("touch", context => new Touch(context));
         CreateBinary("bytes", context => new Bytes(context));

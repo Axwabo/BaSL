@@ -1,4 +1,6 @@
 using System;
+using BaSL.FileSystems.Errors;
+using BaSL.FileSystems.Extensions;
 using BaSL.Users;
 
 namespace BaSL.FileSystems;
@@ -30,12 +32,20 @@ public sealed class Inode
             Owner = user;
     }
 
-    internal void ChangeMode(Modes modes)
+    private void ChangeMode(Modes modes)
     {
-        if (IsFrozen)
-            return;
         OwnerMode = modes.Owner;
         OthersMode = modes.Others;
+    }
+
+    public ChangeModeError? ChangeMode(UserContext context, Modes modes)
+    {
+        if (IsFrozen)
+            return ChangeModeError.Immutable;
+        if (context.User != Owner && !this.CanWrite(context))
+            return ChangeModeError.AccessDenied;
+        ChangeMode(modes);
+        return null;
     }
 
 }
