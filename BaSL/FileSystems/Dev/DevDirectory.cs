@@ -22,9 +22,9 @@ internal sealed class DevDirectory : Directory
 
     public override IEnumerable<FileSystemEntry> EnumerateEntries() => _files.Values;
 
-    public override CreateDirectoryResult CreateDirectory(UserContext context, FileSystemEntryName name, Mode mode = Mode.Rw) => CreateEntryError.ImmutableFileSystem;
+    public override CreateDirectoryResult CreateDirectory(UserContext context, FileSystemEntryName name, Modes modes) => CreateEntryError.ImmutableFileSystem;
 
-    public override CreateFileResult CreateFile(UserContext context, FileSystemEntryName name, Mode mode = Mode.Rw) => CreateEntryError.ImmutableFileSystem;
+    public override CreateFileResult CreateFile(UserContext context, FileSystemEntryName name, Modes modes) => CreateEntryError.ImmutableFileSystem;
 
     public override GetEntryResult GetEntry(FileSystemEntryName name) => _files.TryGetValue(name.Value, out var file) ? file : GetEntryError.NotFound;
 

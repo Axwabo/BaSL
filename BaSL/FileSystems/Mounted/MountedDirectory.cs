@@ -45,15 +45,15 @@ internal sealed class MountedDirectory : Directory
         _ => throw new IOException($"Invalid filesystem entry {entry}")
     };
 
-    public override CreateDirectoryResult CreateDirectory(UserContext context, FileSystemEntryName name, Mode mode = Mode.Rw)
+    public override CreateDirectoryResult CreateDirectory(UserContext context, FileSystemEntryName name, Modes modes)
     {
-        var result = _original.CreateDirectory(context, name, mode);
+        var result = _original.CreateDirectory(context, name, modes);
         return result.Success ? (Directory) Cache(result.Value) : result;
     }
 
-    public override CreateFileResult CreateFile(UserContext context, FileSystemEntryName name, Mode mode = Mode.Rw)
+    public override CreateFileResult CreateFile(UserContext context, FileSystemEntryName name, Modes modes)
     {
-        var result = _original.CreateFile(context, name, mode);
+        var result = _original.CreateFile(context, name, modes);
         return result.Success ? (File) Cache(result.Value) : result;
     }
 

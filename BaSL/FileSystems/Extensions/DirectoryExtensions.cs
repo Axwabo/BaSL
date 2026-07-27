@@ -12,6 +12,11 @@ public static class DirectoryExtensions
     extension(Directory directory)
     {
 
+        // TODO: idk how to model this
+        public static Modes DefaultFileModes => new(Mode.Rwx, 0, Mode.Read);
+
+        public static Modes DefaultDirectoryModes => new(Mode.Rwx, 0, Mode.Rx);
+
         public IEnumerable<File> EnumerateFiles() => directory.EnumerateEntries().OfType<File>();
 
         public IEnumerable<Directory> EnumerateDirectories() => directory.EnumerateEntries().OfType<Directory>();
@@ -27,6 +32,12 @@ public static class DirectoryExtensions
                     yield return subEntry;
             }
         }
+
+        public CreateFileResult CreateFile(UserContext context, FileSystemEntryName name)
+            => directory.CreateFile(context, name, Directory.DefaultFileModes);
+
+        public CreateDirectoryResult CreateDirectory(UserContext context, FileSystemEntryName name)
+            => directory.CreateDirectory(context, name, Directory.DefaultDirectoryModes);
 
         public CreateDirectoryResult CreateDirectories(UserContext context, Path path)
         {

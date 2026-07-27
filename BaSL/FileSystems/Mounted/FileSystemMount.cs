@@ -18,9 +18,9 @@ internal sealed class FileSystemMount : Directory
 
     public override IEnumerable<FileSystemEntry> EnumerateEntries() => _root.EnumerateEntries();
 
-    public override CreateDirectoryResult CreateDirectory(UserContext context, FileSystemEntryName name, Mode mode = Mode.Rw) => _root.CreateDirectory(context, name, mode);
+    public override CreateDirectoryResult CreateDirectory(UserContext context, FileSystemEntryName name, Modes modes) => _root.CreateDirectory(context, name, modes);
 
-    public override CreateFileResult CreateFile(UserContext context, FileSystemEntryName name, Mode mode = Mode.Rw) => _root.CreateFile(context, name, mode);
+    public override CreateFileResult CreateFile(UserContext context, FileSystemEntryName name, Modes modes) => _root.CreateFile(context, name, modes);
 
     public override GetEntryResult GetEntry(FileSystemEntryName name) => _root.GetEntry(name);
 

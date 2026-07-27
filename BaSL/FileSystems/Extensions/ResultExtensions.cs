@@ -77,6 +77,9 @@ public static class ResultExtensions
             return open.Success ? open.Value : open.Error;
         }
 
+        public FileSystemError? MakeExecutable(UserContext context, Executable executable)
+            => result.Success ? result.Value.MakeExecutable(context, executable) : result.Error;
+
     }
 
 }

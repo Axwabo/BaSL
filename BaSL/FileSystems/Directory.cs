@@ -18,9 +18,9 @@ public abstract class Directory : FileSystemEntry
 
     public abstract IEnumerable<FileSystemEntry> EnumerateEntries();
 
-    public abstract CreateDirectoryResult CreateDirectory(UserContext context, FileSystemEntryName name, Mode mode = Mode.Rw);
+    public abstract CreateDirectoryResult CreateDirectory(UserContext context, FileSystemEntryName name, Modes modes);
 
-    public abstract CreateFileResult CreateFile(UserContext context, FileSystemEntryName name, Mode mode = Mode.Rw);
+    public abstract CreateFileResult CreateFile(UserContext context, FileSystemEntryName name, Modes modes);
 
     public abstract GetEntryResult GetEntry(FileSystemEntryName name);
 

@@ -9,6 +9,8 @@ namespace BaSL.CoreUtils;
 public static class OperatingSystemExtensions
 {
 
+    private static readonly Modes BinaryModes = Directory.DefaultFileModes with {Others = Mode.Rx};
+
     private static Task Install(OperatingSystem system, UserContext ctx)
     {
         var bin = system.FileSystem.Root.CreateDirectories(ctx, Path.Binaries).Unwrap();
@@ -27,12 +29,7 @@ public static class OperatingSystemExtensions
         CreateBinary("sleep", context => new Sleep(context));
         return Task.CompletedTask;
 
-        void CreateBinary(FileSystemEntryName name, Executable executable)
-        {
-            var file = bin.CreateFile(ctx, name, Mode.Rwx).Unwrap();
-            file.MakeExecutable(ctx, executable);
-            file.Metadata.ChangeMode(file.Metadata.Modes with {Others = Mode.Rx});
-        }
+        void CreateBinary(FileSystemEntryName name, Executable executable) => bin.CreateFile(ctx, name, BinaryModes).MakeExecutable(ctx, executable);
     }
 
     extension(OperatingSystem operatingSystem)

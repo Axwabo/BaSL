@@ -28,24 +28,24 @@ internal sealed class VirtualDirectory : Directory, IMountSupport
 
     public override IEnumerable<FileSystemEntry> EnumerateEntries() => _entries.Values;
 
-    public override CreateDirectoryResult CreateDirectory(UserContext context, FileSystemEntryName name, Mode mode = Mode.Rw)
+    public override CreateDirectoryResult CreateDirectory(UserContext context, FileSystemEntryName name, Modes modes)
     {
         if (!Metadata.CanWrite(context))
             return CreateEntryError.AccessDenied;
         if (_entries.ContainsKey(name.Value))
             return CreateEntryError.NameCollision;
-        var directory = new VirtualDirectory(FileSystemAccess, FullPath, name, Metadata.Owner, Metadata.Modes with {Owner = mode});
+        var directory = new VirtualDirectory(FileSystemAccess, FullPath, name, Metadata.Owner, modes);
         _entries.Add(name.Value, directory);
         return directory;
     }
 
-    public override CreateFileResult CreateFile(UserContext context, FileSystemEntryName name, Mode mode = Mode.Rw)
+    public override CreateFileResult CreateFile(UserContext context, FileSystemEntryName name, Modes modes)
     {
         if (!Metadata.CanWrite(context))
             return CreateEntryError.AccessDenied;
         if (_entries.ContainsKey(name.Value))
             return CreateEntryError.NameCollision;
-        var file = new VirtualFile(FileSystemAccess, FullPath, name, Metadata.Owner, Metadata.Modes with {Owner = mode});
+        var file = new VirtualFile(FileSystemAccess, FullPath, name, Metadata.Owner, modes);
         _entries.Add(name.Value, file);
         return file;
     }
