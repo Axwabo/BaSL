@@ -8,7 +8,7 @@ namespace BaSL.FileSystems.Dev;
 internal sealed class DevDirectory : Directory
 {
 
-    private static readonly Modes Modes = new(Mode.Read, 0, Mode.Read);
+    private static readonly Modes Modes = new(Mode.Rx, 0, Mode.Rx);
 
     private readonly Dictionary<string, FileSystemEntry> _files = new();
 
@@ -28,6 +28,6 @@ internal sealed class DevDirectory : Directory
 
     public override GetEntryResult GetEntry(FileSystemEntryName name) => _files.TryGetValue(name.Value, out var file) ? file : GetEntryError.NotFound;
 
-    public override RemoveChildError? RemoveEntry(UserContext context, FileSystemEntryName name) => RemoveChildError.NothingToRemove;
+    public override RemoveChildError RemoveEntry(UserContext context, FileSystemEntryName name) => RemoveChildError.NothingToRemove;
 
 }
