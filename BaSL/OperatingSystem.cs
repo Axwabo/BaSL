@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BaSL.FileSystems;
+using BaSL.FileSystems.Dev;
 using BaSL.FileSystems.Extensions;
 using BaSL.Users;
 
@@ -22,9 +23,11 @@ public sealed class OperatingSystem
                 {"PATH", Path.Binaries.Value}
             }
         };
+        var ctx = new UserContext(Root);
         Users["root"] = Root;
         FileSystem = FileSystem.CreateVirtual(Root);
-        _homes = (IMountSupport) FileSystem.Root.CreateDirectory(new UserContext(Root), "home").Unwrap();
+        ((IMountSupport) FileSystem.Root).Mount(ctx, new DevFileSystem(Root), "dev");
+        _homes = (IMountSupport) FileSystem.Root.CreateDirectory(ctx, "home").Unwrap();
     }
 
     internal User Root { get; }
