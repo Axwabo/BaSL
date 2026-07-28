@@ -15,6 +15,13 @@ namespace BaSL;
 public sealed class BaShell : App
 {
 
+    private static readonly Dictionary<string, Action> BuiltInCommands = new()
+    {
+        {
+            "clear", System.Console.Clear
+        }
+    };
+
     private CancellationTokenSource? _cts;
 
     public BaShell(ExecutableContext context) : base(context)
@@ -84,7 +91,7 @@ public sealed class BaShell : App
 
     private async Task<Task> ExecuteAsync(ReadOnlyMemory<string> args, ExecutableContext context, CancellationToken token)
     {
-        var result = ResolveFromPath(args.Span[0]).Execute(context, token);
+        var result = ExecuteCommand(args.Span[0], context, token);
         if (result is not {Success: true, Value: var process})
         {
             LastExitCode = 127; // TODO: uhhhhhh sure..?
@@ -93,8 +100,22 @@ public sealed class BaShell : App
         }
 
         var copy = context.CopyAsync(!Context.IsRoot);
-        LastExitCode = await process.WaitForExitAsync();
+        LastExitCode = await process();
         return copy;
+    }
+
+    private Result<Func<Task<int>>, FileSystemError> ExecuteCommand(string name, ExecutableContext context, CancellationToken token)
+    {
+        if (BuiltInCommands.TryGetValue(name, out var action))
+            return Result<Func<Task<int>>, FileSystemError>.CreateSuccess(() =>
+            {
+                action();
+                return Task.FromResult(0);
+            });
+        var command = ResolveFromPath(name).Execute(context, token);
+        return command.Success
+            ? Result<Func<Task<int>>, FileSystemError>.CreateSuccess(() => command.Value.WaitForExitAsync())
+            : command.Error;
     }
 
     private async Task<Task> ExecuteToFileAsync(ReadOnlyMemory<string> args, string outputFile, bool overwrite, CancellationToken token)
