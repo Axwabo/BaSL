@@ -1,6 +1,6 @@
 namespace BaSL.Syntax;
 
-public enum StatementType
+internal enum StatementType
 {
 
     Simple,

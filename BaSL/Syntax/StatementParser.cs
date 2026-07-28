@@ -1,14 +1,18 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BaSL.Syntax;
 
 internal static class StatementParser
 {
 
-    public static List<Statement> Parse(string line)
+    // TODO: escaping & shit
+    public static List<Statement> Parse(string line) => line.Split(';').Select(ParseStatement).ToList();
+
+    private static Statement ParseStatement(string text)
     {
-        // TODO: escaping & shit
-        var statements = line.Split(';');
+        throw new NotImplementedException();
     }
 
 }
