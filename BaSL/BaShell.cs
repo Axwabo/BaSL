@@ -112,7 +112,7 @@ public sealed class BaShell : App
         }
 
         await using var stream = new StreamWriter(fileResult.Value);
-        await using var context = ExecutableContext.Sunken(Context, Console, FileSystem, args, stream, StreamWriter.Null); // TODO: where to pipe sterr?
+        await using var context = ExecutableContext.Sunken(Context, Console, FileSystem, args[1..], stream, StreamWriter.Null); // TODO: where to pipe sterr?
         return await ExecuteAsync(args, context, token);
     }
 
