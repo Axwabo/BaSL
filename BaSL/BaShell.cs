@@ -61,7 +61,7 @@ public sealed class BaShell : App
 
     private async Task<Task> ExecuteAsync(string line, CancellationToken token)
     {
-        var statements = StatementParser.Parse(line);
+        var statements = StatementParser.Parse(line, ExportedVariables.TryGetValue);
         var args = Expand(line).ToArray();
         await using var context = ExecutableContext.Piped(Context, Console, FileSystem, args.AsMemory(1));
         var result = ResolveFromPath(args[0]).Execute(context, token);
