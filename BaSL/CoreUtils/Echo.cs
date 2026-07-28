@@ -45,10 +45,14 @@ public sealed class Echo : App
             for (var i = 0; i < arg.Length; i++)
             {
                 var c = arg[i];
-                if (c == '\\' && i < arg.Length - 1 && GetEscaped(arg[i + 1]) is not char.MinValue and var escaped)
+                if (c == '\\' && i < arg.Length - 1)
                 {
-                    buffer[writeIndex++] = escaped;
-                    i++;
+                    if (GetEscaped(arg[i + 1]) is not char.MinValue and var escaped)
+                    {
+                        buffer[writeIndex++] = escaped;
+                        i++;
+                    }
+
                     continue;
                 }
 
