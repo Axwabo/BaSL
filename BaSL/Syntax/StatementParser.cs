@@ -25,7 +25,10 @@ internal static class StatementParser
         var args = new List<string>();
         var syntax = SyntaxType.Text;
         var outerSyntax = SyntaxType.Text;
-        foreach (var c in s)
+        for (var i = 0; i < s.Length; i++)
+        {
+            var c = s[i];
+            char? next = i < s.Length - 1 ? s[i + 1] : null;
             switch (syntax, c)
             {
                 case (SyntaxType.VerbatimString, '\''):
@@ -40,6 +43,10 @@ internal static class StatementParser
                     break;
                 case (SyntaxType.Text, '|'):
                     AddStatement(StatementType.Pipe);
+                    break;
+                case (SyntaxType.Text, '>') when next == '>':
+                    AddStatement(StatementType.RedirectStandardOutputAppend);
+                    i++;
                     break;
                 case (SyntaxType.Text, '>'):
                     AddStatement(StatementType.RedirectStandardOutputOverwrite);
@@ -65,6 +72,7 @@ internal static class StatementParser
                     argBuzilder.Append(c);
                     break;
             }
+        }
 
         if (argBuzilder.Length != 0)
             AddArg();

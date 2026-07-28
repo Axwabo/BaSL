@@ -70,8 +70,8 @@ public sealed class BaShell : App
             {
                 return await ExecuteSimpleAsync(oneSimple.Args, token);
             }
-            case [{Type: StatementType.RedirectStandardOutputOverwrite} statement, {Type: StatementType.Simple, Args: {Length: not 0} targetFile}]:
-                return await ExecuteToFileOverwriteAsync(statement.Args, targetFile.Span[0], token);
+            case [{Type: StatementType.RedirectStandardOutputOverwrite or StatementType.RedirectStandardOutputAppend} statement, {Type: StatementType.Simple, Args: {Length: not 0} targetFile}]:
+                return await ExecuteToFileAsync(statement.Args, targetFile.Span[0], statement.Type == StatementType.RedirectStandardOutputOverwrite, token);
             default:
                 await StandardOutput.WriteLineAsync("Statement too complex or invalid", token);
                 return Task.CompletedTask;
@@ -99,9 +99,9 @@ public sealed class BaShell : App
         return copy;
     }
 
-    private async Task<Task> ExecuteToFileOverwriteAsync(ReadOnlyMemory<string> args, string outputFile, CancellationToken token)
+    private async Task<Task> ExecuteToFileAsync(ReadOnlyMemory<string> args, string outputFile, bool overwrite, CancellationToken token)
     {
-        var fileResult = WorkingDirectory.ResolveFileOrCreate(UserContext, outputFile).Open(UserContext);
+        var fileResult = WorkingDirectory.ResolveFileOrCreate(UserContext, outputFile).Open(UserContext, OpenMode.ReadWrite);
         if (!fileResult.Success)
         {
             await StandardOutput.WriteAsync("Cannot open file '", token);
@@ -111,8 +111,12 @@ public sealed class BaShell : App
             return Task.CompletedTask;
         }
 
-        await using var stream = new StreamWriter(fileResult.Value);
-        await using var context = ExecutableContext.Sunken(Context, Console, FileSystem, args[1..], stream, StreamWriter.Null); // TODO: where to pipe sterr?
+        await using var stream = fileResult.Value;
+        if (overwrite)
+            stream.SetLength(0);
+        else
+            stream.Seek(0, SeekOrigin.End);
+        await using var context = ExecutableContext.Sunken(Context, Console, FileSystem, args[1..], new StreamWriter(stream), StreamWriter.Null); // TODO: where to pipe sterr?
         return await ExecuteAsync(args, context, token);
     }
 
