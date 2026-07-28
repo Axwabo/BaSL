@@ -104,11 +104,14 @@ public sealed class BaShell : App
         var fileResult = WorkingDirectory.ResolveFileOrCreate(UserContext, outputFile).Open(UserContext);
         if (!fileResult.Success)
         {
-            await StandardOutput.WriteAsync("File not found: ", token);
-            await StandardOutput.WriteLineAsync(outputFile, token);
+            await StandardOutput.WriteAsync("Cannot open file '", token);
+            await StandardOutput.WriteAsync(outputFile, token);
+            await StandardOutput.WriteAsync("': ", token);
+            await StandardOutput.WriteLineAsync(fileResult.Error.Message, token);
+            return Task.CompletedTask;
         }
 
-        await using var stream = new StreamWriter(fileResult.Value!);
+        await using var stream = new StreamWriter(fileResult.Value);
         await using var context = ExecutableContext.Sunken(Context, Console, FileSystem, args, stream, StreamWriter.Null); // TODO: where to pipe sterr?
         return await ExecuteAsync(args, context, token);
     }
