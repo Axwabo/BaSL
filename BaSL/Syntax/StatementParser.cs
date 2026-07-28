@@ -59,6 +59,8 @@ internal static class StatementParser
                     break;
             }
 
+        if (argBuzilder.Length != 0)
+            AddArg();
         if (args.Count != 0)
             AddStatement(StatementType.Simple);
 
