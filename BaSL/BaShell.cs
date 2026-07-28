@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
@@ -62,9 +61,20 @@ public sealed class BaShell : App
     private async Task<Task> ExecuteAsync(string line, CancellationToken token)
     {
         var statements = StatementParser.Parse(line, ExportedVariables.TryGetValue);
-        var args = Expand(line).ToArray();
-        await using var context = ExecutableContext.Piped(Context, Console, FileSystem, args.AsMemory(1));
-        var result = ResolveFromPath(args[0]).Execute(context, token);
+        if (statements is [{Type: StatementType.Simple} oneSimple])
+        {
+            var args = oneSimple.Args;
+            return await ExecuteSimpleAsync(token, args);
+        }
+
+        await StandardOutput.WriteLineAsync("Statement too complex or invalid", token);
+        return Task.CompletedTask;
+    }
+
+    private async Task<Task> ExecuteSimpleAsync(CancellationToken token, ReadOnlyMemory<string> args)
+    {
+        await using var context = ExecutableContext.Piped(Context, Console, FileSystem, args[1..]);
+        var result = ResolveFromPath(args.Span[0]).Execute(context, token);
         if (result is not {Success: true, Value: var process})
         {
             _lastExitCode = 127; // TODO: uhhhhhh sure..?
@@ -75,52 +85,6 @@ public sealed class BaShell : App
         var copy = context.CopyAsync(!Context.IsRoot);
         _lastExitCode = await process.WaitForExitAsync();
         return copy;
-    }
-
-    private List<string> Expand(string line)
-    {
-        var list = new List<string>();
-        var wrap = Wrap.None;
-        var sb = new StringBuilder();
-        foreach (var c in line)
-            if (c == '"')
-                End(Wrap.DoubleQuotes);
-            else if (c == '\'')
-                End(Wrap.SingleQuotes);
-            else if (char.IsWhiteSpace(c) && wrap is not (Wrap.SingleQuotes or Wrap.DoubleQuotes))
-                End(Wrap.None);
-            else if (wrap == Wrap.None && c == '$')
-                wrap = Wrap.Variable;
-            else
-                sb.Append(c);
-        End(wrap);
-
-        return list;
-
-        void End(Wrap newWrap)
-        {
-            if (sb.Length == 0)
-            {
-                wrap = newWrap == wrap ? Wrap.None : newWrap;
-                return;
-            }
-
-            switch (wrap)
-            {
-                case Wrap.None or Wrap.SingleQuotes or Wrap.DoubleQuotes:
-                    list.Add(sb.ToString());
-                    break;
-                case Wrap.Variable when sb is ['?'] && _lastExitCode != null:
-                    list.Add(_lastExitCode.ToString());
-                    break;
-                case Wrap.Variable when ExportedVariables.TryGetValue(sb.ToString(), out var env):
-                    list.Add(env);
-                    break;
-            }
-
-            sb.Clear();
-            wrap = newWrap == wrap ? Wrap.None : newWrap;
-        }
     }
 
     private GetFileResult ResolveFromPath(FileSystemEntryName arg)
