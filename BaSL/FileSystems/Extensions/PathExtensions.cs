@@ -32,6 +32,18 @@ public static class PathExtensions
             }
         }
 
+        public FileSystemEntryName Name
+        {
+            get
+            {
+                var pathSpan = path.Value.AsSpan();
+                var slash = pathSpan.LastIndexOf('/');
+                return slash != -1
+                    ? pathSpan[(slash + 1)..].ToString()
+                    : path.Value;
+            }
+        }
+
         public bool IsEmpty => string.IsNullOrEmpty(path.Value);
 
     }

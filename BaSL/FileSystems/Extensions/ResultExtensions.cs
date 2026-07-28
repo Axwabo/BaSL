@@ -56,6 +56,19 @@ public static class ResultExtensions
 
     }
 
+    extension<T>(Result<File, T> result) where T : FileSystemError
+    {
+
+        public Result<Stream, FileSystemError> Open(UserContext context, OpenMode mode = OpenMode.Read)
+        {
+            if (!result.Success)
+                return result.Error;
+            var open = result.Value.Open(context, mode);
+            return open.Success ? open.Value : open.Error;
+        }
+
+    }
+
     extension(CreateDirectoryResult result)
     {
 

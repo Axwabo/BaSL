@@ -62,6 +62,19 @@ public static class DirectoryExtensions
         public GetFileResult ResolveFile(Path relativeOrAbsolute)
             => directory.Resolve(relativeOrAbsolute).AsFile();
 
+        public Result<File, FileSystemError> ResolveFileOrCreate(UserContext context, Path relativeOrAbsolute)
+        {
+            var absolute = relativeOrAbsolute.ToAbsolute(directory.FullPath);
+            var existing = directory.ResolveFile(absolute);
+            if (existing.Success)
+                return existing.Value;
+            var parent = directory.FileSystem.ResolveDirectory(absolute.Parent);
+            if (!parent.Success)
+                return parent.Error;
+            var create = parent.Value.CreateFile(context, absolute.Name);
+            return create.Success ? create.Value : create.Error;
+        }
+
         public IEnumerable<RemoveSelfError> RemoveEntriesRecursive(UserContext context)
         {
             var entires = directory.EnumerateEntries().ToList();
