@@ -35,6 +35,9 @@ internal static class StatementParser
                 case (SyntaxType.Text, '\''):
                     AddArg(SyntaxType.VerbatimString);
                     break;
+                case (SyntaxType.Text, '"'):
+                    AddArg(SyntaxType.QuotedString);
+                    break;
                 case (SyntaxType.Text, '|'):
                     AddStatement(StatementType.Pipe);
                     break;
