@@ -22,6 +22,14 @@ public sealed class ExecutableContext
         Parent = source
     };
 
+    internal static ExecutableContext Sunken(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, StreamWriter standardOutput, StreamWriter standardError)
+        => new(console, fileSystem, console.CurrentDirectory, args)
+        {
+            Parent = source,
+            SourceOutput = standardOutput,
+            SourceError = standardError
+        };
+
     private static async Task CopyAsync(StreamReader source, StreamWriter destination, PipeWrapper cancellation)
     {
         try
