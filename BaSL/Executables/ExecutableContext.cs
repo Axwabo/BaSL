@@ -25,12 +25,12 @@ public sealed class ExecutableContext
     internal static ExecutableContext Sunken(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, StreamWriter standardOutput, StreamWriter standardError)
         => new(console, fileSystem, console.CurrentDirectory, args)
         {
-            Parent = source,
             SourceOutput = standardOutput,
-            SourceError = standardError
+            SourceError = standardError,
+            DisposeOutput = true
         };
 
-    private static async Task CopyAsync(StreamReader source, StreamWriter destination, PipeWrapper cancellation)
+    private static async Task CopyAsync(StreamReader source, StreamWriter destination, PipeWrapper cancellation, bool dispose = false)
     {
         try
         {
@@ -39,6 +39,11 @@ public sealed class ExecutableContext
         catch (InvalidOperationException)
         {
             // "Reading is not allowed after reader was completed." NERD EMOJI
+        }
+        finally
+        {
+            if (dispose)
+                await destination.DisposeAsync();
         }
     }
 
@@ -80,6 +85,7 @@ public sealed class ExecutableContext
     internal StreamWriter DestinationInput { get; }
     internal StreamReader DestinationOutput { get; }
     internal StreamReader DestinationError { get; }
+    private bool DisposeOutput { get; init; }
     internal bool IsRoot => Parent == null;
 
     internal async Task CopyAsync(bool copyStdin)
@@ -90,7 +96,7 @@ public sealed class ExecutableContext
         {
             await Task.WhenAll(
                 copyStdin ? CopyAsync(Parent.SourceInput, DestinationInput, StandardInput) : Task.CompletedTask,
-                CopyAsync(DestinationOutput, Parent.SourceOutput, StandardOutput),
+                CopyAsync(DestinationOutput, Parent.SourceOutput, StandardOutput, DisposeOutput),
                 CopyAsync(DestinationError, Parent.SourceError, StandardError)
             );
         }
@@ -105,6 +111,8 @@ public sealed class ExecutableContext
         await StandardInput.DisposeAsync();
         await StandardOutput.DisposeAsync();
         await StandardError.DisposeAsync();
+        if (DisposeOutput)
+            await SourceOutput.DisposeAsync();
     }
 
 }

@@ -67,9 +67,7 @@ public sealed class BaShell : App
         switch (statements)
         {
             case [{Type: StatementType.Simple} oneSimple]:
-            {
                 return await ExecuteSimpleAsync(oneSimple.Args, token);
-            }
             case [{Type: StatementType.RedirectStandardOutputOverwrite or StatementType.RedirectStandardOutputAppend} statement, {Type: StatementType.Simple, Args: {Length: not 0} targetFile}]:
                 return await ExecuteToFileAsync(statement.Args, targetFile.Span[0], statement.Type == StatementType.RedirectStandardOutputOverwrite, token);
             default:
@@ -111,7 +109,7 @@ public sealed class BaShell : App
             return Task.CompletedTask;
         }
 
-        await using var stream = fileResult.Value;
+        var stream = fileResult.Value;
         if (overwrite)
             stream.SetLength(0);
         else
