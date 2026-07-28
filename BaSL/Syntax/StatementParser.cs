@@ -48,8 +48,11 @@ internal static class StatementParser
                 case (SyntaxType.Variable, '"') when outerSyntax == SyntaxType.QuotedString:
                     AddArg();
                     break;
-                case (SyntaxType.Variable, ' ') when outerSyntax == SyntaxType.QuotedString:
+                case (SyntaxType.Variable, ' ' or '.') when outerSyntax == SyntaxType.QuotedString:
                     AppendVariable();
+                    break;
+                case (SyntaxType.Variable, _):
+                    variableBuilder.Append(c);
                     break;
                 case (SyntaxType.Text, _) when char.IsWhiteSpace(c):
                     AddArg();
