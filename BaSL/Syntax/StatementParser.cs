@@ -51,8 +51,9 @@ internal static class StatementParser
                 case (SyntaxType.Variable, '"') when outerSyntax == SyntaxType.QuotedString:
                     AddArg();
                     break;
-                case (SyntaxType.Variable, ' ' or '.') when outerSyntax == SyntaxType.QuotedString:
+                case (SyntaxType.Variable, ' ' or '.'):
                     AppendVariable();
+                    argBuzilder.Append(c);
                     break;
                 case (SyntaxType.Variable, _):
                     variableBuilder.Append(c);
@@ -60,7 +61,7 @@ internal static class StatementParser
                 case (SyntaxType.Text, _) when char.IsWhiteSpace(c):
                     AddArg();
                     break;
-                case (SyntaxType.Text, _):
+                case (SyntaxType.Text or SyntaxType.QuotedString or SyntaxType.VerbatimString, _):
                     argBuzilder.Append(c);
                     break;
             }
