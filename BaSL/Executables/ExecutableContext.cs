@@ -13,8 +13,8 @@ public sealed class ExecutableContext
     internal static ExecutableContext Root(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, StreamWriter standardOutput, StreamWriter standardError)
         => new ExecutableContext(console, fileSystem, args)
         {
-            SourceOutput = standardOutput,
-            SourceError = standardError
+            _sourceOutput = standardOutput,
+            _sourceError = standardError
         }.CreateStdinPipe();
 
     internal static ExecutableContext Piped(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args) => new(console, fileSystem, console.CurrentDirectory, args)
@@ -47,10 +47,15 @@ public sealed class ExecutableContext
         }
     }
 
-    private static T CheckFinalized<T>(T? returnValue) => returnValue ?? throw new InvalidOperationException("Context has not yet been initialized, this should not happen!");
+    private static T ThrowIfNull<T>(T? returnValue) => returnValue ?? throw new InvalidOperationException("Context has not yet been initialized, this should not happen!");
+    private StreamReader? _destinationError;
+    private StreamWriter? _destinationInput;
+    private StreamReader? _destinationOutput;
 
     private bool _disposed;
+    private StreamWriter? _sourceError;
     private StreamReader? _sourceInput;
+    private StreamWriter? _sourceOutput;
 
     private ExecutableContext(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
     {
@@ -60,46 +65,27 @@ public sealed class ExecutableContext
         Args = args;
     }
 
-    private ExecutableContext? Parent { get; init; }
-    internal PipeWrapper? StandardInput { get; private set; }
-    internal PipeWrapper? StandardOutput { get; private set; }
-    internal PipeWrapper? StandardError { get; init; }
     internal Console Console { get; }
     internal FileSystem FileSystem { get; }
     internal Directory WorkingDirectory { get; }
     internal ReadOnlyMemory<string> Args { get; }
 
-    internal StreamReader SourceInput => CheckFinalized(_sourceInput);
+    private ExecutableContext? Parent { get; init; }
+    internal PipeWrapper? StandardInput { get; private set; }
+    internal PipeWrapper? StandardOutput { get; private set; }
+    internal PipeWrapper? StandardError { get; private set; }
 
-    internal StreamWriter SourceOutput
-    {
-        get => CheckFinalized(field);
-        private set;
-    } = null!;
+    internal StreamReader SourceInput => ThrowIfNull(_sourceInput);
 
-    internal StreamWriter SourceError
-    {
-        get => CheckFinalized(field);
-        private set;
-    } = null!;
+    internal StreamWriter SourceOutput => ThrowIfNull(_sourceOutput);
 
-    internal StreamWriter DestinationInput
-    {
-        get => CheckFinalized(field);
-        private set;
-    } = null!;
+    internal StreamWriter SourceError => ThrowIfNull(_sourceError);
 
-    internal StreamReader DestinationOutput
-    {
-        get => CheckFinalized(field);
-        private set;
-    } = null!;
+    internal StreamWriter DestinationInput => ThrowIfNull(_destinationInput);
 
-    internal StreamReader DestinationError
-    {
-        get => CheckFinalized(field);
-        private set;
-    } = null!;
+    internal StreamReader DestinationOutput => ThrowIfNull(_destinationOutput);
+
+    internal StreamReader DestinationError => ThrowIfNull(_destinationError);
 
     private bool DisposeOutput { get; init; }
     internal bool IsRoot => Parent == null;
@@ -107,7 +93,8 @@ public sealed class ExecutableContext
     private ExecutableContext CreateStdinPipe()
     {
         StandardInput = new PipeWrapper();
-        SourceInput = StandardInput.Reader;
+        _sourceInput = StandardInput.Reader;
+        _destinationInput ??= StandardInput.Writer;
         return this;
     }
 
@@ -131,9 +118,12 @@ public sealed class ExecutableContext
     internal async ValueTask DisposeAsync()
     {
         _disposed = true;
-        await StandardInput.DisposeAsync();
-        await StandardOutput.DisposeAsync();
-        await StandardError.DisposeAsync();
+        if (StandardInput != null)
+            await StandardInput.DisposeAsync();
+        if (StandardOutput != null)
+            await StandardOutput.DisposeAsync();
+        if (StandardError != null)
+            await StandardError.DisposeAsync();
         if (DisposeOutput)
             await SourceOutput.DisposeAsync();
     }
