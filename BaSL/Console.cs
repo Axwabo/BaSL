@@ -5,8 +5,10 @@ using System.Threading.Tasks;
 using BaSL.Executables;
 using BaSL.FileSystems;
 using BaSL.FileSystems.Extensions;
+using BaSL.Syntax;
 using BaSL.Users;
 using Directory = BaSL.FileSystems.Directory;
+using Path = BaSL.FileSystems.Path;
 
 namespace BaSL;
 
@@ -40,7 +42,7 @@ public sealed class Console
     public async Task<int> StartAsync()
     {
         await using var context = _context;
-        _shell = new BaShell(context);
+        _shell = new BaShell(context, new StandaloneStatement(Path.Binaries / "echo", new[] {"hello world"}) /* | Path.Binaries / "cat"*/);
         return await _shell.ExecuteAsync(CancellationToken.None);
     }
 

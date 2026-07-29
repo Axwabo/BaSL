@@ -15,6 +15,8 @@ public sealed class Cat : App
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
+        if (Args.Length == 0)
+            return await ReadStandardInputAsync(cancellationToken);
         foreach (var arg in Args)
         {
             if (cancellationToken.IsCancellationRequested)
@@ -37,6 +39,13 @@ public sealed class Cat : App
             await stream.CopyToAsync(StandardOutput.BaseStream, cancellationToken);
         }
 
+        return 0;
+    }
+
+    private async Task<int> ReadStandardInputAsync(CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+            await StandardOutput.WriteLineAsync(await StandardInput.ReadLineAsync(), cancellationToken);
         return 0;
     }
 

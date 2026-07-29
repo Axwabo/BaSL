@@ -53,8 +53,22 @@ public sealed class BaShell : App
                 return await ExecuteInteractiveAsync();
             case StandaloneStatement standaloneStatement:
             {
+                // TODO: this sucks
                 await using var context = ExecutableContext.Piped(Context, Console, FileSystem, standaloneStatement.Args);
-                var command = ResolveFromPath(name).Execute(context, token);
+                var command = FileSystem.ResolveFile(standaloneStatement.FullPath).Execute(context, cancellationToken);
+                if (!command.Success)
+                {
+                    await StandardError.WriteAsync("Cannot execute '", cancellationToken);
+                    await StandardError.WriteAsync(standaloneStatement.FullPath, cancellationToken);
+                    await StandardError.WriteAsync("' due to: ", cancellationToken);
+                    await StandardError.WriteLineAsync(command.Error.Message);
+                    return 127;
+                }
+
+                var copy = context.CopyAsync(!Context.IsRoot);
+                var code = await command.Value.WaitForExitAsync();
+                await copy;
+                return code;
             }
             case PipeStatement pipeStatement:
             case RedirectStatement redirectStatement:
