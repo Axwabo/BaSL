@@ -19,13 +19,39 @@ public sealed class ExecutableContext
         }.CreatePipes();
 
     internal static ExecutableContext Piped(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
-        => new(console, fileSystem, args)
-        {
-        };
+        => new ExecutableContext(console, fileSystem, args) {Parent = source}
+            .CreatePipes()
+            .PipeStdin(source)
+            .PipeStdout(source)
+            .PipeStderr(source);
 
     internal static ExecutableContext Redirected(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, Streams streams)
     {
         var context = new ExecutableContext(console, fileSystem, args);
+        if (streams.StandardInput is { } stdin)
+        {
+            context._sourceInput = new StreamReader(stdin);
+            context._disposables.Add(stdin);
+        }
+        else
+            context.CreateStdinPipe().PipeStdin(source);
+
+        if (streams.StandardOutput is { } stdout)
+        {
+            context._sourceOutput = new StreamWriter(stdout) {AutoFlush = true};
+            context._disposables.Add(stdout);
+        }
+        else
+            context.CreateStdoutPipe().PipeStdout(source);
+
+        if (streams.StandardError is { } stderr)
+        {
+            context._sourceError = new StreamWriter(stderr) {AutoFlush = true};
+            context._disposables.Add(stderr);
+        }
+        else
+            context.CreateStderrPipe().PipeStderr(source);
+
         return context;
     }
 
@@ -92,6 +118,27 @@ public sealed class ExecutableContext
     internal StreamReader DestinationError => ThrowIfNull(_destinationError);
 
     internal bool IsRoot => Parent == null;
+
+    public ExecutableContext PipeStdin(ExecutableContext source)
+    {
+        if (source._sourceInput != null)
+            _copy.Add((source._sourceInput, DestinationInput, StandardInput!, false));
+        return this;
+    }
+
+    public ExecutableContext PipeStdout(ExecutableContext source)
+    {
+        if (source._destinationOutput != null)
+            _copy.Add((source._destinationOutput, SourceOutput, StandardOutput!, false));
+        return this;
+    }
+
+    private ExecutableContext PipeStderr(ExecutableContext source)
+    {
+        if (source._destinationError != null)
+            _copy.Add((source._destinationError, SourceError, StandardError!, false));
+        return this;
+    }
 
     private PipeWrapper CreatePipe(ref StreamReader? reader, ref StreamWriter? writer)
     {
