@@ -11,11 +11,11 @@ public sealed class ExecutableContext
 {
 
     internal static ExecutableContext Root(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, StreamWriter standardOutput, StreamWriter standardError)
-        => new(console, fileSystem, console.CurrentDirectory, args)
+        => new ExecutableContext(console, fileSystem, args)
         {
             SourceOutput = standardOutput,
             SourceError = standardError
-        };
+        }.CreateStdinPipe();
 
     internal static ExecutableContext Piped(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args) => new(console, fileSystem, console.CurrentDirectory, args)
     {
@@ -47,46 +47,69 @@ public sealed class ExecutableContext
         }
     }
 
-    private bool _disposed;
+    private static T CheckFinalized<T>(T? returnValue) => returnValue ?? throw new InvalidOperationException("Context has not yet been initialized, this should not happen!");
 
-    private ExecutableContext(
-        Console console,
-        FileSystem fileSystem,
-        Directory workingDirectory,
-        ReadOnlyMemory<string> args
-    )
+    private bool _disposed;
+    private StreamReader? _sourceInput;
+
+    private ExecutableContext(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
     {
-        StandardInput = new PipeWrapper();
-        StandardOutput = new PipeWrapper();
-        StandardError = new PipeWrapper();
         Console = console;
         FileSystem = fileSystem;
-        WorkingDirectory = workingDirectory;
+        WorkingDirectory = console.CurrentDirectory;
         Args = args;
-        SourceInput = StandardInput.Reader;
-        SourceOutput = StandardOutput.Writer;
-        SourceError = StandardError.Writer;
-        DestinationInput = StandardInput.Writer;
-        DestinationOutput = StandardOutput.Reader;
-        DestinationError = StandardError.Reader;
     }
 
     private ExecutableContext? Parent { get; init; }
-    internal PipeWrapper? StandardInput { get; init; }
-    internal PipeWrapper? StandardOutput { get; init; }
+    internal PipeWrapper? StandardInput { get; private set; }
+    internal PipeWrapper? StandardOutput { get; private set; }
     internal PipeWrapper? StandardError { get; init; }
     internal Console Console { get; }
     internal FileSystem FileSystem { get; }
     internal Directory WorkingDirectory { get; }
     internal ReadOnlyMemory<string> Args { get; }
-    internal StreamReader SourceInput { get; private init; }
-    internal StreamWriter SourceOutput { get; private init; }
-    internal StreamWriter SourceError { get; private init; }
-    internal StreamWriter DestinationInput { get; }
-    internal StreamReader DestinationOutput { get; }
-    internal StreamReader DestinationError { get; }
+
+    internal StreamReader SourceInput => CheckFinalized(_sourceInput);
+
+    internal StreamWriter SourceOutput
+    {
+        get => CheckFinalized(field);
+        private set;
+    } = null!;
+
+    internal StreamWriter SourceError
+    {
+        get => CheckFinalized(field);
+        private set;
+    } = null!;
+
+    internal StreamWriter DestinationInput
+    {
+        get => CheckFinalized(field);
+        private set;
+    } = null!;
+
+    internal StreamReader DestinationOutput
+    {
+        get => CheckFinalized(field);
+        private set;
+    } = null!;
+
+    internal StreamReader DestinationError
+    {
+        get => CheckFinalized(field);
+        private set;
+    } = null!;
+
     private bool DisposeOutput { get; init; }
     internal bool IsRoot => Parent == null;
+
+    private ExecutableContext CreateStdinPipe()
+    {
+        StandardInput = new PipeWrapper();
+        SourceInput = StandardInput.Reader;
+        return this;
+    }
 
     internal async Task CopyAsync(bool copyStdin)
     {
