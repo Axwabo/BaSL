@@ -43,7 +43,7 @@ public sealed class BaShell : App
 
     private User User => Console.User;
 
-    private new StreamWriter StandardError => Context is RootExecutableContext ? StandardOutput : base.StandardError;
+    private new StreamWriter StandardError => Context.IsRoot ? StandardOutput : base.StandardError;
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
@@ -65,7 +65,7 @@ public sealed class BaShell : App
                     return 127;
                 }
 
-                var copy = context.CopyAsync();
+                var copy = context.CopyAsync(!Context.IsRoot);
                 var code = await command.Value.WaitForExitAsync();
                 await copy;
                 return code;
@@ -137,7 +137,7 @@ public sealed class BaShell : App
             return Task.CompletedTask;
         }
 
-        var copy = context.CopyAsync();
+        var copy = context.CopyAsync(!Context.IsRoot);
         LastExitCode = await process();
         return copy;
     }

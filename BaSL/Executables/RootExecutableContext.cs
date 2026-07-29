@@ -19,12 +19,9 @@ internal sealed class RootExecutableContext : ExecutableContext
     internal override StreamWriter DestinationInput => null!;
     internal override StreamReader DestinationOutput => null!;
     internal override StreamReader DestinationError => null!;
+    internal override bool IsRoot { get; }
+    internal override Task CopyAsync() => throw new NotImplementedException();
 
-    internal override Task CopyAsync()
-    {
-        throw new NotImplementedException();
-    }
-
-    internal override async ValueTask DisposeAsync() => await _inputPipe.DisposeAsync();
+    internal override ValueTask DisposeAsync() => throw new NotImplementedException();
 
 }
