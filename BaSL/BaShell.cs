@@ -22,6 +22,8 @@ public sealed class BaShell : App
         }
     };
 
+    private readonly ShellStatement? _statement;
+
     private CancellationTokenSource? _cts;
 
     public BaShell(ExecutableContext context) : base(context)
@@ -29,6 +31,8 @@ public sealed class BaShell : App
         foreach (var kvp in context.Console.User.Environment)
             ExportedVariables[kvp.Key] = kvp.Value;
     }
+
+    public BaShell(ExecutableContext context, ShellStatement statement) : this(context) => _statement = statement;
 
     private int? LastExitCode
     {
@@ -42,6 +46,26 @@ public sealed class BaShell : App
     private new StreamWriter StandardError => Context.IsRoot ? StandardOutput : base.StandardError;
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
+    {
+        switch (_statement)
+        {
+            case null:
+                return await ExecuteInteractiveAsync();
+            case StandaloneStatement standaloneStatement:
+            {
+                await using var context = ExecutableContext.Piped(Context, Console, FileSystem, standaloneStatement.Args);
+                var command = ResolveFromPath(name).Execute(context, token);
+            }
+            case PipeStatement pipeStatement:
+            case RedirectStatement redirectStatement:
+            default:
+                await StandardError.WriteAsync("Unsupported statement: ", cancellationToken);
+                await StandardError.WriteLineAsync(_statement.ToString(), cancellationToken);
+                return 1;
+        }
+    }
+
+    private async Task<int> ExecuteInteractiveAsync()
     {
         while (true)
         {

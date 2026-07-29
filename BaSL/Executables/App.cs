@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.FileSystems;
+using BaSL.Syntax;
 using BaSL.Users;
 using Directory = BaSL.FileSystems.Directory;
 
@@ -32,5 +33,11 @@ public abstract class App
     protected ReadOnlyMemory<string> Args => Context.Args;
 
     public abstract Task<int> ExecuteAsync(CancellationToken cancellationToken);
+
+    protected async Task<int> ShellExecuteAsync(ShellStatement statement, CancellationToken cancellationToken)
+    {
+        var shell = new BaShell(Context, statement);
+        return await shell.ExecuteAsync(cancellationToken);
+    }
 
 }
