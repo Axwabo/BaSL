@@ -75,7 +75,6 @@ public abstract class ExecutableContext
     internal abstract StreamWriter DestinationInput { get; }
     internal abstract StreamReader DestinationOutput { get; }
     internal abstract StreamReader DestinationError { get; }
-    internal abstract bool IsRoot { get; }
 
     internal abstract Task CopyAsync();
 
