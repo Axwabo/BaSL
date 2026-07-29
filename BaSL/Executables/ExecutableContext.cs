@@ -72,9 +72,9 @@ public sealed class ExecutableContext
     }
 
     private ExecutableContext? Parent { get; init; }
-    internal PipeWrapper StandardInput { get; }
-    internal PipeWrapper StandardOutput { get; }
-    internal PipeWrapper StandardError { get; }
+    internal PipeWrapper? StandardInput { get; init; }
+    internal PipeWrapper? StandardOutput { get; init; }
+    internal PipeWrapper? StandardError { get; init; }
     internal Console Console { get; }
     internal FileSystem FileSystem { get; }
     internal Directory WorkingDirectory { get; }

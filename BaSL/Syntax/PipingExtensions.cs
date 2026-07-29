@@ -6,14 +6,6 @@ namespace BaSL.Syntax;
 public static class PipingExtensions
 {
 
-    extension(File)
-    {
-
-        public static ShellStatement operator |(File sourceExecutable, Path targetExecutablePath)
-            => new PipeStatement(new StandaloneStatement(sourceExecutable.FullPath), targetExecutablePath);
-
-    }
-
     extension(ShellStatement)
     {
 
