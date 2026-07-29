@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BaSL.Executables.Pipes;
 
-internal sealed class PipeWrapper : IAsyncDisposable
+internal sealed class PipeWrapper : IDisposable, IAsyncDisposable
 {
 
     private readonly CancellationTokenSource _cts = new();
@@ -31,6 +31,13 @@ internal sealed class PipeWrapper : IAsyncDisposable
         Cancel();
         Reader.Dispose();
         await Writer.DisposeAsync();
+    }
+
+    public void Dispose()
+    {
+        Cancel();
+        Reader.Dispose();
+        Writer.Dispose();
     }
 
     public void Cancel()

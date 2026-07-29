@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
+using BaSL.Executables.Pipes;
 using BaSL.FileSystems;
 using BaSL.FileSystems.Errors;
 using BaSL.FileSystems.Extensions;
@@ -65,7 +66,7 @@ public sealed class BaShell : App
                     return 127;
                 }
 
-                var copy = context.CopyAsync(!Context.IsRoot);
+                var copy = context.CopyAsync();
                 var code = await command.Value.WaitForExitAsync();
                 await copy;
                 return code;
@@ -137,7 +138,7 @@ public sealed class BaShell : App
             return Task.CompletedTask;
         }
 
-        var copy = context.CopyAsync(!Context.IsRoot);
+        var copy = context.CopyAsync();
         LastExitCode = await process();
         return copy;
     }
@@ -173,7 +174,7 @@ public sealed class BaShell : App
             stream.SetLength(0);
         else
             stream.Seek(0, SeekOrigin.End);
-        await using var context = ExecutableContext.Sunken(Context, Console, FileSystem, args[1..], new StreamWriter(stream), StreamWriter.Null); // TODO: where to pipe sterr?
+        await using var context = ExecutableContext.Redirected(Context, Console, FileSystem, args[1..], new Streams(null, stream, null)); // TODO: where to pipe sterr?
         return await ExecuteAsync(args, context, token);
     }
 

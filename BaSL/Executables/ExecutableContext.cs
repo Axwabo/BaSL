@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using BaSL.Executables.Pipes;
@@ -15,20 +16,18 @@ public sealed class ExecutableContext
         {
             _sourceOutput = standardOutput,
             _sourceError = standardError
-        }.CreateStdinPipe();
+        }.CreatePipes();
 
-    internal static ExecutableContext Piped(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args) => new(console, fileSystem, console.CurrentDirectory, args)
-    {
-        Parent = source
-    };
-
-    internal static ExecutableContext Sunken(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, StreamWriter standardOutput, StreamWriter standardError)
-        => new(console, fileSystem, console.CurrentDirectory, args)
+    internal static ExecutableContext Piped(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
+        => new(console, fileSystem, args)
         {
-            SourceOutput = standardOutput,
-            SourceError = standardError,
-            DisposeOutput = true
         };
+
+    internal static ExecutableContext Redirected(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, Streams streams)
+    {
+        var context = new ExecutableContext(console, fileSystem, args);
+        return context;
+    }
 
     private static async Task CopyAsync(StreamReader source, StreamWriter destination, PipeWrapper cancellation, bool dispose = false)
     {
@@ -48,7 +47,12 @@ public sealed class ExecutableContext
     }
 
     private static T ThrowIfNull<T>(T? returnValue) => returnValue ?? throw new InvalidOperationException("Context has not yet been initialized, this should not happen!");
+
+    private readonly List<(StreamReader, StreamWriter, PipeWrapper, bool)> _copy = [];
+
+    private readonly List<IDisposable> _disposables = [];
     private StreamReader? _destinationError;
+
     private StreamWriter? _destinationInput;
     private StreamReader? _destinationOutput;
 
@@ -87,28 +91,51 @@ public sealed class ExecutableContext
 
     internal StreamReader DestinationError => ThrowIfNull(_destinationError);
 
-    private bool DisposeOutput { get; init; }
     internal bool IsRoot => Parent == null;
+
+    private PipeWrapper CreatePipe(ref StreamReader? reader, ref StreamWriter? writer)
+    {
+        var pipe = new PipeWrapper();
+        reader ??= pipe.Reader;
+        writer ??= pipe.Writer;
+        _disposables.Add(pipe);
+        return pipe;
+    }
+
+    private ExecutableContext CreatePipes() => CreateStdinPipe().CreateStdoutPipe().CreateStderrPipe();
 
     private ExecutableContext CreateStdinPipe()
     {
-        StandardInput = new PipeWrapper();
-        _sourceInput = StandardInput.Reader;
-        _destinationInput ??= StandardInput.Writer;
+        StandardInput = CreatePipe(ref _sourceInput, ref _destinationInput);
         return this;
     }
 
-    internal async Task CopyAsync(bool copyStdin)
+    private ExecutableContext CreateStdoutPipe()
     {
-        if (Parent == null)
+        StandardOutput = CreatePipe(ref _destinationOutput, ref _sourceOutput);
+        return this;
+    }
+
+    private ExecutableContext CreateStderrPipe()
+    {
+        StandardError = CreatePipe(ref _destinationError, ref _sourceError);
+        return this;
+    }
+
+    internal async Task CopyAsync()
+    {
+        if (_copy.Count == 0)
             return;
         try
         {
-            await Task.WhenAll(
-                copyStdin ? CopyAsync(Parent.SourceInput, DestinationInput, StandardInput) : Task.CompletedTask,
-                CopyAsync(DestinationOutput, Parent.SourceOutput, StandardOutput, DisposeOutput),
-                CopyAsync(DestinationError, Parent.SourceError, StandardError)
-            );
+            var copy = new Task[_copy.Count];
+            for (var i = 0; i < copy.Length; i++)
+            {
+                var (reader, writer, pipeWrapper, dispose) = _copy[i];
+                copy[i] = CopyAsync(reader, writer, pipeWrapper, dispose);
+            }
+
+            await Task.WhenAll(copy);
         }
         catch (OperationCanceledException) when (_disposed)
         {
@@ -118,14 +145,11 @@ public sealed class ExecutableContext
     internal async ValueTask DisposeAsync()
     {
         _disposed = true;
-        if (StandardInput != null)
-            await StandardInput.DisposeAsync();
-        if (StandardOutput != null)
-            await StandardOutput.DisposeAsync();
-        if (StandardError != null)
-            await StandardError.DisposeAsync();
-        if (DisposeOutput)
-            await SourceOutput.DisposeAsync();
+        foreach (var disposable in _disposables)
+            if (disposable is IAsyncDisposable asyncDisposable)
+                await asyncDisposable.DisposeAsync();
+            else
+                disposable.Dispose();
     }
 
 }
