@@ -153,19 +153,19 @@ public sealed class ExecutableContext
 
     private ExecutableContext CreateStdinPipe()
     {
-        StandardInput = CreatePipe(ref _sourceInput, ref _destinationInput);
+        StandardInput ??= CreatePipe(ref _sourceInput, ref _destinationInput);
         return this;
     }
 
     private ExecutableContext CreateStdoutPipe()
     {
-        StandardOutput = CreatePipe(ref _destinationOutput, ref _sourceOutput);
+        StandardOutput ??= CreatePipe(ref _destinationOutput, ref _sourceOutput);
         return this;
     }
 
     private ExecutableContext CreateStderrPipe()
     {
-        StandardError = CreatePipe(ref _destinationError, ref _sourceError);
+        StandardError ??= CreatePipe(ref _destinationError, ref _sourceError);
         return this;
     }
 
@@ -179,7 +179,7 @@ public sealed class ExecutableContext
             for (var i = 0; i < copy.Length; i++)
             {
                 var (reader, writer, pipeWrapper, dispose, tag) = _copy[i];
-                copy[i] = CopyAsync(reader, writer, pipeWrapper, dispose, tag);
+                copy[i] = CopyAsync(reader, writer, pipeWrapper, true, tag);
             }
 
             await Task.WhenAll(copy);
