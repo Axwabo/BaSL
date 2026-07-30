@@ -55,7 +55,7 @@ public sealed class BaShell : App
             case StandaloneStatement standaloneStatement:
             {
                 // TODO: this sucks
-                await using var context = ExecutableContext.Piped(Context, Console, FileSystem, standaloneStatement.Args);
+                await using var context = ExecutableContext.Sub(Context, Console, FileSystem, standaloneStatement.Args);
                 var command = FileSystem.ResolveFile(standaloneStatement.FullPath).Execute(context, cancellationToken);
                 if (!command.Success)
                 {
@@ -127,7 +127,7 @@ public sealed class BaShell : App
 
     private async Task ExecuteSimpleAsync(ReadOnlyMemory<string> args, CancellationToken token)
     {
-        await using var context = ExecutableContext.Piped(Context, Console, FileSystem, args[1..]);
+        await using var context = ExecutableContext.Sub(Context, Console, FileSystem, args[1..]);
         await ExecuteAsync(args, context, token);
     }
 

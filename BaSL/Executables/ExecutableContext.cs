@@ -19,6 +19,17 @@ public sealed class ExecutableContext
             _sourceError = standardError
         }.CreatePipes();
 
+    internal static ExecutableContext Sub(ExecutableContext parent, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
+    {
+        var context = new ExecutableContext(console, fileSystem, args).CreatePipes();
+        if (parent.StandardOutput != null)
+            context._copy.Add((context.DestinationOutput!, parent.SourceOutput, context.StandardOutput!, false, "stdout"));
+        if (parent.StandardError != null)
+            context._copy.Add((context.DestinationError!, parent.SourceError, context.StandardError!, false, "sterr"));
+        return context;
+    }
+
+    // TODO: genuinely what is this
     internal static ExecutableContext Piped(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
         => new ExecutableContext(console, fileSystem, args)
             .CreatePipes()
