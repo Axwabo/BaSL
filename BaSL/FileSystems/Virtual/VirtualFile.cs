@@ -93,7 +93,7 @@ file sealed class VirtualFileStream : Stream
     protected override void Dispose(bool disposing)
     {
         GC.SuppressFinalize(this);
-        if (disposing) // TODO: ???
+        if (disposing && CanWrite) // TODO: ???
             _file.Release(_stream.GetBuffer(), (int) _stream.Length);
         _stream.Dispose();
     }
