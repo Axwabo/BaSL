@@ -147,18 +147,26 @@ public sealed class BaShell : App
         await copy;
     }
 
-    private Result<Func<Task<int>>, FileSystemError> ExecuteCommand(string name, ExecutableContext context, CancellationToken token)
+    private Result<Func<Task<int>>, Error> ExecuteCommand(string name, ExecutableContext context, CancellationToken token)
     {
+        if (name.StartsWith('/') || name.StartsWith("./") || name.StartsWith("../"))
+        {
+            var command = WorkingDirectory.ResolveFile(name).Execute(context, token);
+            return command.Success
+                ? Result<Func<Task<int>>, Error>.CreateSuccess(() => command.Value.WaitForExitAsync())
+                : command.Error;
+        }
+
         if (BuiltInCommands.TryGetValue(name, out var action))
-            return Result<Func<Task<int>>, FileSystemError>.CreateSuccess(() =>
+            return Result<Func<Task<int>>, Error>.CreateSuccess(() =>
             {
                 action();
                 return Task.FromResult(0);
             });
-        var command = ResolveFromPath(name).Execute(context, token);
-        return command.Success
-            ? Result<Func<Task<int>>, FileSystemError>.CreateSuccess(() => command.Value.WaitForExitAsync())
-            : command.Error;
+        var process = ResolveFromPath(name).Execute(context, token);
+        return process.Success
+            ? Result<Func<Task<int>>, Error>.CreateSuccess(() => process.Value.WaitForExitAsync())
+            : CommandError.NotFound;
     }
 
     private async Task ExecuteToFileAsync(ReadOnlyMemory<string> args, string outputFile, bool overwrite, CancellationToken token)
@@ -214,6 +222,14 @@ public sealed class BaShell : App
             return false;
         _cts.Cancel();
         return true;
+    }
+
+// TODO
+    private sealed record CommandError() : Error("Command not found")
+    {
+
+        public static Error NotFound { get; } = new CommandError();
+
     }
 
 }
