@@ -58,13 +58,9 @@ public sealed class ExecutableContext
 
     private static async Task CopyAsync(StreamReader source, StreamWriter destination, PipeWrapper cancellation, bool dispose, string tag)
     {
-        var token = cancellation.CancellationToken;
         try
         {
-            await source.BaseStream.CopyToAsync(destination.BaseStream, token);
-        }
-        catch (OperationCanceledException) when (token.IsCancellationRequested)
-        {
+            await source.BaseStream.CopyToAsync(destination.BaseStream, cancellation.CancellationToken);
         }
         catch (InvalidOperationException)
         {
@@ -87,6 +83,7 @@ public sealed class ExecutableContext
     private StreamWriter? _destinationInput;
     private StreamReader? _destinationOutput;
 
+    private bool _disposed;
     private StreamWriter? _sourceError;
     private StreamReader? _sourceInput;
     private StreamWriter? _sourceOutput;
@@ -176,24 +173,30 @@ public sealed class ExecutableContext
     {
         if (_copy.Count == 0)
             return;
-        var copy = new Task[_copy.Count];
-        for (var i = 0; i < copy.Length; i++)
+        try
         {
-            var (reader, writer, pipeWrapper, dispose, tag) = _copy[i];
-            copy[i] = CopyAsync(reader, writer, pipeWrapper, dispose, tag);
-        }
+            var copy = new Task[_copy.Count];
+            for (var i = 0; i < copy.Length; i++)
+            {
+                var (reader, writer, pipeWrapper, dispose, tag) = _copy[i];
+                copy[i] = CopyAsync(reader, writer, pipeWrapper, true, tag);
+            }
 
-        await Task.WhenAll(copy);
+            await Task.WhenAll(copy);
+        }
+        catch (OperationCanceledException) when (_disposed)
+        {
+        }
     }
 
     internal async ValueTask DisposeAsync()
     {
+        _disposed = true;
         foreach (var disposable in _disposables)
             if (disposable is IAsyncDisposable asyncDisposable)
                 await asyncDisposable.DisposeAsync();
             else
                 disposable.Dispose();
-        _disposables.Clear();
     }
 
 }
