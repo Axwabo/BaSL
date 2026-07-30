@@ -14,12 +14,13 @@ public sealed class ExecutableContext
     internal static ExecutableContext Root(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, StreamWriter standardOutput, StreamWriter standardError)
         => new ExecutableContext(console, fileSystem, args)
         {
+            IsRoot = true,
             _sourceOutput = standardOutput,
             _sourceError = standardError
         }.CreatePipes();
 
     internal static ExecutableContext Piped(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
-        => new ExecutableContext(console, fileSystem, args) {Parent = source}
+        => new ExecutableContext(console, fileSystem, args)
             .CreatePipes()
             .PipeStdin(source)
             .PipeStdout(source)
@@ -55,7 +56,7 @@ public sealed class ExecutableContext
         return context;
     }
 
-    private static async Task CopyAsync(StreamReader source, StreamWriter destination, PipeWrapper cancellation, bool dispose = false)
+    private static async Task CopyAsync(StreamReader source, StreamWriter destination, PipeWrapper cancellation, bool dispose, string tag)
     {
         try
         {
@@ -74,7 +75,7 @@ public sealed class ExecutableContext
 
     private static T ThrowIfNull<T>(T? returnValue) => returnValue ?? throw new InvalidOperationException("Context has not yet been initialized, this should not happen!");
 
-    private readonly List<(StreamReader, StreamWriter, PipeWrapper, bool)> _copy = [];
+    private readonly List<(StreamReader, StreamWriter, PipeWrapper, bool, string)> _copy = [];
 
     private readonly List<IDisposable> _disposables = [];
 
@@ -100,7 +101,6 @@ public sealed class ExecutableContext
     internal Directory WorkingDirectory { get; }
     internal ReadOnlyMemory<string> Args { get; }
 
-    private ExecutableContext? Parent { get; init; }
     internal PipeWrapper? StandardInput { get; private set; }
     internal PipeWrapper? StandardOutput { get; private set; }
     internal PipeWrapper? StandardError { get; private set; }
@@ -117,26 +117,26 @@ public sealed class ExecutableContext
 
     internal StreamReader? DestinationError => _destinationError;
 
-    internal bool IsRoot => Parent == null;
+    internal bool IsRoot { get; private set; }
 
     public ExecutableContext PipeStdin(ExecutableContext source)
     {
         if (source._sourceInput != null && DestinationInput != null)
-            _copy.Add((source._sourceInput, DestinationInput, StandardInput!, false));
+            _copy.Add((source._sourceInput, DestinationInput, StandardInput!, false, "stdin"));
         return this;
     }
 
     public ExecutableContext PipeStdout(ExecutableContext source)
     {
         if (source._destinationOutput != null)
-            _copy.Add((source._destinationOutput, SourceOutput, StandardOutput!, false));
+            _copy.Add((source._destinationOutput, SourceOutput, StandardOutput!, false, "stdout"));
         return this;
     }
 
     private ExecutableContext PipeStderr(ExecutableContext source)
     {
         if (source._destinationError != null)
-            _copy.Add((source._destinationError, SourceError, StandardError!, false));
+            _copy.Add((source._destinationError, SourceError, StandardError!, false, "stdout"));
         return this;
     }
 
@@ -178,8 +178,8 @@ public sealed class ExecutableContext
             var copy = new Task[_copy.Count];
             for (var i = 0; i < copy.Length; i++)
             {
-                var (reader, writer, pipeWrapper, dispose) = _copy[i];
-                copy[i] = CopyAsync(reader, writer, pipeWrapper, dispose);
+                var (reader, writer, pipeWrapper, dispose, tag) = _copy[i];
+                copy[i] = CopyAsync(reader, writer, pipeWrapper, dispose, tag);
             }
 
             await Task.WhenAll(copy);
