@@ -63,10 +63,7 @@ file sealed class VirtualFileStream : Stream
             _stream.Write(data.AsSpan(0, length));
         }
         else
-        {
             _stream = new MemoryStream(data, 0, length, false);
-            _stream.SetLength(length);
-        }
     }
 
     public override bool CanRead => _stream.CanRead;
