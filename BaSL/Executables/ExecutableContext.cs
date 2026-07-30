@@ -203,4 +203,14 @@ public sealed class ExecutableContext
                 disposable.Dispose();
     }
 
+    public async Task CompletePipesAsync()
+    {
+        if (StandardInput != null)
+            await StandardInput.DisposeAsync();
+        if (StandardOutput != null)
+            await StandardOutput.Writer.DisposeAsync();
+        if (StandardError != null)
+            await StandardError.Writer.DisposeAsync();
+    }
+
 }

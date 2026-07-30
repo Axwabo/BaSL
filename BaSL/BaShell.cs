@@ -68,6 +68,7 @@ public sealed class BaShell : App
 
                 var copy = context.CopyAsync();
                 var code = await command.Value.WaitForExitAsync();
+                await context.CompletePipesAsync();
                 await copy;
                 return code;
             }
@@ -94,7 +95,7 @@ public sealed class BaShell : App
             var token = cts.Token;
             try
             {
-                await await ExecuteAsync(line, token);
+                await ExecuteAsync(line, token);
             }
             catch (OperationCanceledException) when (token.IsCancellationRequested)
             {
@@ -107,40 +108,43 @@ public sealed class BaShell : App
         }
     }
 
-    private async Task<Task> ExecuteAsync(string line, CancellationToken token)
+    private async Task ExecuteAsync(string line, CancellationToken token)
     {
         var statements = StatementParser.Parse(line, ExportedVariables.TryGetValue);
         switch (statements)
         {
             case [{Type: StatementType.Simple} oneSimple]:
-                return await ExecuteSimpleAsync(oneSimple.Args, token);
+                await ExecuteSimpleAsync(oneSimple.Args, token);
+                break;
             case [{Type: StatementType.RedirectStandardOutputOverwrite or StatementType.RedirectStandardOutputAppend} statement, {Type: StatementType.Simple, Args: {Length: not 0} targetFile}]:
-                return await ExecuteToFileAsync(statement.Args, targetFile.Span[0], statement.Type == StatementType.RedirectStandardOutputOverwrite, token);
+                await ExecuteToFileAsync(statement.Args, targetFile.Span[0], statement.Type == StatementType.RedirectStandardOutputOverwrite, token);
+                break;
             default:
                 await StandardOutput.WriteLineAsync("Statement too complex or invalid", token);
-                return Task.CompletedTask;
+                break;
         }
     }
 
-    private async Task<Task> ExecuteSimpleAsync(ReadOnlyMemory<string> args, CancellationToken token)
+    private async Task ExecuteSimpleAsync(ReadOnlyMemory<string> args, CancellationToken token)
     {
         await using var context = ExecutableContext.Piped(Context, Console, FileSystem, args[1..]);
-        return await ExecuteAsync(args, context, token);
+        await ExecuteAsync(args, context, token);
     }
 
-    private async Task<Task> ExecuteAsync(ReadOnlyMemory<string> args, ExecutableContext context, CancellationToken token)
+    private async Task ExecuteAsync(ReadOnlyMemory<string> args, ExecutableContext context, CancellationToken token)
     {
         var result = ExecuteCommand(args.Span[0], context, token);
         if (result is not {Success: true, Value: var process})
         {
             LastExitCode = 127; // TODO: uhhhhhh sure..?
             await StandardError.WriteLineAsync(result.Error.Message); // TODO: fix sync
-            return Task.CompletedTask;
+            return;
         }
 
         var copy = context.CopyAsync();
         LastExitCode = await process();
-        return copy;
+        await context.CompletePipesAsync();
+        await copy;
     }
 
     private Result<Func<Task<int>>, FileSystemError> ExecuteCommand(string name, ExecutableContext context, CancellationToken token)
@@ -157,7 +161,7 @@ public sealed class BaShell : App
             : command.Error;
     }
 
-    private async Task<Task> ExecuteToFileAsync(ReadOnlyMemory<string> args, string outputFile, bool overwrite, CancellationToken token)
+    private async Task ExecuteToFileAsync(ReadOnlyMemory<string> args, string outputFile, bool overwrite, CancellationToken token)
     {
         var fileResult = WorkingDirectory.ResolveFileOrCreate(UserContext, outputFile).Open(UserContext, OpenMode.ReadWrite);
         if (!fileResult.Success)
@@ -166,14 +170,14 @@ public sealed class BaShell : App
             await StandardOutput.WriteAsync(outputFile, token);
             await StandardOutput.WriteAsync("': ", token);
             await StandardOutput.WriteLineAsync(fileResult.Error.Message, token);
-            return Task.CompletedTask;
+            return;
         }
 
         var stream = fileResult.Value;
         if (overwrite)
             stream.SetLength(0);
         await using var context = ExecutableContext.Redirected(Context, Console, FileSystem, args[1..], new Streams(null, stream, null)); // TODO: where to pipe sterr?
-        return await ExecuteAsync(args, context, token);
+        await ExecuteAsync(args, context, token);
     }
 
     private GetFileResult ResolveFromPath(FileSystemEntryName arg)
