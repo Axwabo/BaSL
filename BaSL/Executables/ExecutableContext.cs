@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables.Pipes;
 using BaSL.FileSystems;
@@ -58,9 +59,14 @@ public sealed class ExecutableContext
 
     private static async Task CopyAsync(StreamReader source, StreamWriter destination, PipeWrapper cancellation, bool dispose, string tag)
     {
+        var token = cancellation.CancellationToken;
         try
         {
-            await source.BaseStream.CopyToAsync(destination.BaseStream, cancellation.CancellationToken);
+            await source.BaseStream.CopyToAsync(destination.BaseStream, token);
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        {
+            await source.BaseStream.CopyToAsync(destination.BaseStream, CancellationToken.None);
         }
         catch (InvalidOperationException)
         {
@@ -179,7 +185,7 @@ public sealed class ExecutableContext
             for (var i = 0; i < copy.Length; i++)
             {
                 var (reader, writer, pipeWrapper, dispose, tag) = _copy[i];
-                copy[i] = CopyAsync(reader, writer, pipeWrapper, true, tag);
+                copy[i] = CopyAsync(reader, writer, pipeWrapper, dispose, tag);
             }
 
             await Task.WhenAll(copy);
