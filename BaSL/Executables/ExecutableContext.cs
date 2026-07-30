@@ -125,22 +125,22 @@ public sealed class ExecutableContext
 
     public ExecutableContext PipeStdin(ExecutableContext source)
     {
-        if (source._sourceInput != null && DestinationInput != null)
-            _copy.Add((source._sourceInput, DestinationInput, StandardInput!, false, "stdin"));
+        /*if (source._sourceInput != null && DestinationInput != null)
+            _copy.Add((source._sourceInput, DestinationInput, StandardInput!, false, "stdin"));*/
         return this;
     }
 
     public ExecutableContext PipeStdout(ExecutableContext source)
     {
-        if (source._destinationOutput != null)
-            _copy.Add((source._destinationOutput, SourceOutput, StandardOutput!, false, "stdout"));
+        if (source.StandardOutput != null)
+            _sourceOutput = source.StandardOutput.Writer;
         return this;
     }
 
     private ExecutableContext PipeStderr(ExecutableContext source)
     {
-        if (source._destinationError != null)
-            _copy.Add((source._destinationError, SourceError, StandardError!, false, "stdout"));
+        /*if (source.StandardError != null)
+            _copy.Add((source._destinationError, SourceError, StandardError!, false, "stdout"));*/
         return this;
     }
 
