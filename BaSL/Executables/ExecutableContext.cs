@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables.Pipes;
 using BaSL.FileSystems;
@@ -66,7 +65,6 @@ public sealed class ExecutableContext
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested)
         {
-            await source.BaseStream.CopyToAsync(destination.BaseStream, CancellationToken.None);
         }
         catch (InvalidOperationException)
         {

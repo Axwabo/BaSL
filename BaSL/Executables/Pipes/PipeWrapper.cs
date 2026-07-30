@@ -29,15 +29,11 @@ internal sealed class PipeWrapper : IDisposable, IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         Cancel();
-        Reader.Dispose();
-        await Writer.DisposeAsync();
     }
 
     public void Dispose()
     {
         Cancel();
-        Reader.Dispose();
-        Writer.Dispose();
     }
 
     public void Cancel()
