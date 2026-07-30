@@ -172,8 +172,6 @@ public sealed class BaShell : App
         var stream = fileResult.Value;
         if (overwrite)
             stream.SetLength(0);
-        else
-            stream.Seek(0, SeekOrigin.End);
         await using var context = ExecutableContext.Redirected(Context, Console, FileSystem, args[1..], new Streams(null, stream, null)); // TODO: where to pipe sterr?
         return await ExecuteAsync(args, context, token);
     }

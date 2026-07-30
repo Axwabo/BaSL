@@ -30,7 +30,7 @@ internal sealed class VirtualFile : File
             if (_used)
                 return OpenFileError.AccessViolation;
             _used = true;
-            return new VirtualFileStream(this, _data, _length);
+            return new VirtualFileStream(this, _data, _length, mode == OpenMode.ReadWrite);
         }
     }
 
@@ -54,12 +54,19 @@ file sealed class VirtualFileStream : Stream
 
     private readonly MemoryStream _stream;
 
-    public VirtualFileStream(VirtualFile file, byte[] data, int length)
+    public VirtualFileStream(VirtualFile file, byte[] data, int length, bool canWrite)
     {
         _file = file;
-        _stream = new MemoryStream();
-        _stream.Write(data.AsSpan(0, length));
-        _stream.Position = 0;
+        if (canWrite)
+        {
+            _stream = new MemoryStream();
+            _stream.Write(data.AsSpan(0, length));
+        }
+        else
+        {
+            _stream = new MemoryStream(data, 0, length, false);
+            _stream.SetLength(length);
+        }
     }
 
     public override bool CanRead => _stream.CanRead;
