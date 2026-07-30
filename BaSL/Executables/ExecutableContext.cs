@@ -77,8 +77,8 @@ public sealed class ExecutableContext
     private readonly List<(StreamReader, StreamWriter, PipeWrapper, bool)> _copy = [];
 
     private readonly List<IDisposable> _disposables = [];
-    private StreamReader? _destinationError;
 
+    private StreamReader? _destinationError;
     private StreamWriter? _destinationInput;
     private StreamReader? _destinationOutput;
 
@@ -111,17 +111,17 @@ public sealed class ExecutableContext
 
     internal StreamWriter SourceError => ThrowIfNull(_sourceError);
 
-    internal StreamWriter DestinationInput => ThrowIfNull(_destinationInput);
+    internal StreamWriter? DestinationInput => _destinationInput;
 
-    internal StreamReader DestinationOutput => ThrowIfNull(_destinationOutput);
+    internal StreamReader? DestinationOutput => _destinationOutput;
 
-    internal StreamReader DestinationError => ThrowIfNull(_destinationError);
+    internal StreamReader? DestinationError => _destinationError;
 
     internal bool IsRoot => Parent == null;
 
     public ExecutableContext PipeStdin(ExecutableContext source)
     {
-        if (source._sourceInput != null)
+        if (source._sourceInput != null && DestinationInput != null)
             _copy.Add((source._sourceInput, DestinationInput, StandardInput!, false));
         return this;
     }

@@ -21,9 +21,9 @@ public sealed class Process
         _exit = executable(context).ExecuteAsync(cancellationToken);
     }
 
-    public StreamWriter StandardInput { get; }
-    public StreamReader StandardOutput { get; }
-    public StreamReader StandardError { get; }
+    public StreamWriter? StandardInput { get; }
+    public StreamReader? StandardOutput { get; }
+    public StreamReader? StandardError { get; }
 
     public int ExitCode => !_exit.IsCompleted
         ? throw new InvalidOperationException("Process has not exited")
