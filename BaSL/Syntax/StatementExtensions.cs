@@ -39,21 +39,6 @@ public static class StatementExtensions
 
     }
 
-    extension(Args)
-    {
-
-        public static ShellStatement? operator >(Args args, Path sinkPath) => (ShellStatement?) args > sinkPath;
-
-        public static ShellStatement operator <(Args args, Path sinkPath) => throw new NotImplementedException();
-
-        public static ShellStatement? operator >> (Args args, Path sinkPath) => (ShellStatement?) args >> sinkPath;
-
-        public static ShellStatement? operator |(Args args, Path executablePath) => (ShellStatement?) args | executablePath;
-
-        public static ShellStatement? operator |(Args args, StandaloneStatement? target) => (ShellStatement?) args | target;
-
-    }
-
     extension(StandaloneStatement)
     {
 
@@ -66,6 +51,8 @@ public static class StatementExtensions
             => args.Length == 0
                 ? null
                 : new StandaloneStatement(args.Span[0], args[1..]);
+
+        public static StandaloneStatement? FromArgs(Args args) => StandaloneStatement.FromArgs(args.Value);
 
         public static StandaloneStatement FromPath(Path fullPath, params string[] args) => new(fullPath, args);
 
