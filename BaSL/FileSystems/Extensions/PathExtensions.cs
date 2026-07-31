@@ -15,6 +15,8 @@ public static class PathExtensions
 
         public static Path ToAbsolutePath(string path, Path basePath) => new Path(path).ToAbsolute(basePath);
 
+        public static bool IsExplicitRelativeOrAbsolute(ReadOnlySpan<char> span) => span.StartsWith("/") || span.StartsWith("./") || span.StartsWith("../");
+
     }
 
     extension(Path path)

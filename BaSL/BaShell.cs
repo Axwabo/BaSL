@@ -10,6 +10,7 @@ using BaSL.FileSystems.Errors;
 using BaSL.FileSystems.Extensions;
 using BaSL.Syntax;
 using BaSL.Users;
+using Path = BaSL.FileSystems.Path;
 
 namespace BaSL;
 
@@ -22,6 +23,8 @@ public sealed class BaShell : App
             "clear", System.Console.Clear
         }
     };
+
+    private static Result<Func<Task<int>>, Error> WaitForExit(Process process) => Result<Func<Task<int>>, Error>.CreateSuccess(process.WaitForExitAsync);
 
     private readonly ShellStatement? _statement;
 
@@ -56,18 +59,18 @@ public sealed class BaShell : App
             {
                 // TODO: this sucks
                 await using var context = ExecutableContext.Sub(Context, Console, FileSystem, standaloneStatement.Args);
-                var command = FileSystem.ResolveFile(standaloneStatement.Location).Execute(context, cancellationToken);
+                var command = ExecuteCommand(standaloneStatement.Location, context, cancellationToken);
                 if (!command.Success)
                 {
                     await StandardError.WriteAsync("Cannot execute '", cancellationToken);
-                    await StandardError.WriteAsync((ReadOnlyMemory<char>) standaloneStatement.Location, cancellationToken);
+                    await StandardError.WriteAsync(standaloneStatement.Location, cancellationToken);
                     await StandardError.WriteAsync("' due to: ", cancellationToken);
                     await StandardError.WriteLineAsync(command.Error.Message);
                     return 127;
                 }
 
                 var copy = context.CopyAsync();
-                var code = await command.Value.WaitForExitAsync();
+                var code = await command.Value();
                 await context.CompletePipesAsync();
                 await copy;
                 return code;
@@ -147,26 +150,25 @@ public sealed class BaShell : App
         await copy;
     }
 
-    private Result<Func<Task<int>>, Error> ExecuteCommand(string name, ExecutableContext context, CancellationToken token)
+    private Result<Func<Task<int>>, Error> ExecuteCommand(CommandLocation location, ExecutableContext context, CancellationToken token) => location switch
     {
-        if (name.StartsWith('/') || name.StartsWith("./") || name.StartsWith("../"))
+        PathCommandLocation {FullPath: var path} => Execute(path, context, token),
+        AutoCommandLocation {Phrase: var path} when Path.IsExplicitRelativeOrAbsolute(path) => Execute(path, context, token),
+        AutoCommandLocation {Phrase: var name} when BuiltInCommands.TryGetValue(name, out var action) => Result<Func<Task<int>>, Error>.CreateSuccess(() =>
         {
-            var command = WorkingDirectory.ResolveFile(name).Execute(context, token);
-            return command.Success
-                ? Result<Func<Task<int>>, Error>.CreateSuccess(() => command.Value.WaitForExitAsync())
-                : command.Error;
-        }
+            action();
+            return Task.FromResult(0);
+        }),
+        AutoCommandLocation {Phrase: var name} when ResolveFromPath(name).Execute(context, token) is {Success: true, Value: var process} => WaitForExit(process),
+        _ => CommandError.NotFound
+    };
 
-        if (BuiltInCommands.TryGetValue(name, out var action))
-            return Result<Func<Task<int>>, Error>.CreateSuccess(() =>
-            {
-                action();
-                return Task.FromResult(0);
-            });
-        var process = ResolveFromPath(name).Execute(context, token);
-        return process.Success
-            ? Result<Func<Task<int>>, Error>.CreateSuccess(() => process.Value.WaitForExitAsync())
-            : CommandError.NotFound;
+    private Result<Func<Task<int>>, Error> Execute(Path path, ExecutableContext context, CancellationToken token)
+    {
+        var command = WorkingDirectory.ResolveFile(path).Execute(context, token);
+        return command.Success
+            ? WaitForExit(command.Value)
+            : command.Error;
     }
 
     private async Task ExecuteToFileAsync(ReadOnlyMemory<string> args, string outputFile, bool overwrite, CancellationToken token)
