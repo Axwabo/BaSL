@@ -5,10 +5,8 @@ using System.Threading.Tasks;
 using BaSL.Executables;
 using BaSL.FileSystems;
 using BaSL.FileSystems.Extensions;
-using BaSL.Syntax;
 using BaSL.Users;
 using Directory = BaSL.FileSystems.Directory;
-using Path = BaSL.FileSystems.Path;
 
 namespace BaSL;
 
@@ -42,14 +40,14 @@ public sealed class Console
     public async Task<int> StartAsync()
     {
         await using var context = _context;
-        Path path = "/home/user/among.txt";
-        var statement = StandaloneStatement.FromPath(Path.Binaries / "echo", "hello world") > path;
-        _shell = new BaShell(context, statement);
+        /*Path path = "/home/user/among.txt";
+        var statement = StandaloneStatement.FromPath(Path.Binaries / "echo", "hello world") > path;*/
+        _shell = new BaShell(context /*, statement*/);
         var code = await _shell.ExecuteAsync(CancellationToken.None);
-        await _context.SourceOutput.WriteAsync("Contents of ");
+        /*await _context.SourceOutput.WriteAsync("Contents of ");
         await _context.SourceOutput.WriteLineAsync(path);
         using var reader = FileSystem.ResolveFile(path).OpenReadOrNull(UserContext);
-        await reader.BaseStream.CopyToAsync(_context.SourceOutput.BaseStream);
+        await reader.BaseStream.CopyToAsync(_context.SourceOutput.BaseStream);*/
         return code;
     }
 

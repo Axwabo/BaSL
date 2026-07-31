@@ -54,10 +54,13 @@ public sealed class BaShell : App
             ? await ExecuteInteractiveAsync()
             : await ExecuteAsync(_statement, cancellationToken);
 
-    private async Task<int> ExecuteAsync(ShellStatement shellStatement, CancellationToken cancellationToken)
+    private async Task<int> ExecuteAsync(ShellStatement? shellStatement, CancellationToken cancellationToken)
     {
         switch (shellStatement)
         {
+            case null:
+                await StandardError.WriteLineAsync("Invalid statement", cancellationToken);
+                return 1;
             case StandaloneStatement standaloneStatement:
             {
                 // TODO: this sucks

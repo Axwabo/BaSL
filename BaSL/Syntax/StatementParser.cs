@@ -11,35 +11,24 @@ internal static class StatementParser
 {
 
     // TODO: escaping & shit
-    public static List<ShellStatement> Parse(string line, TryParse variables)
+    public static List<ShellStatement?> Parse(string line, TryParse variables)
     {
-        var results = new List<ShellStatement>();
+        var results = new List<ShellStatement?>();
         var syntax = new List<Statement>();
         foreach (var s in line.Split(';'))
         {
             syntax.Clear();
             ParseStatements(s, syntax, variables);
-            switch (syntax)
+            results.Add(syntax switch
             {
-                case [{Type: Simple, Args: var simpleArgs}]:
-                    Add(StandaloneStatement.FromArgs(simpleArgs));
-                    break;
-                case [{Type: Simple, Args: var sourceArgs}, {Type: RedirectStandardOutputOverwrite, Args: [var target]}]:
-                    Add(StandaloneStatement.FromArgs(sourceArgs) > target);
-                    break;
-                case [{Type: Simple, Args: var sourceArgs}, {Type: RedirectStandardOutputAppend, Args: [var target]}]:
-                    Add(StandaloneStatement.FromArgs(sourceArgs) >> target);
-                    break;
-            }
+                [{Type: Simple, Args: var simpleArgs}] => StandaloneStatement.FromArgs(simpleArgs),
+                [{Type: RedirectStandardOutputOverwrite, Args: var sourceArgs}, {Type: Simple, Args: [var target]}] => StandaloneStatement.FromArgs(sourceArgs) > target,
+                [{Type: RedirectStandardOutputAppend, Args: var sourceArgs}, {Type: Simple, Args: [var target]}] => StandaloneStatement.FromArgs(sourceArgs) >> target,
+                _ => null
+            });
         }
 
         return results;
-
-        void Add(ShellStatement? statement)
-        {
-            if (statement is not null)
-                results.Add(statement);
-        }
     }
 
     private static void ParseStatements(string s, List<Statement> statements, TryParse variables)
