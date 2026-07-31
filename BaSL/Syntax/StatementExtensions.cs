@@ -32,6 +32,11 @@ public static class StatementExtensions
                 ? source
                 : new PipeStatement(source, executablePath);
 
+        public static ShellStatement? operator |(ShellStatement? source, StandaloneStatement? target)
+            => target is null || source is RedirectStatement or null
+                ? source
+                : new PipeStatement(source, target.Location, target.Args);
+
     }
 
     extension(StandaloneStatement)

@@ -24,6 +24,7 @@ internal static class StatementParser
                 [{Type: Simple, Args: var simpleArgs}] => StandaloneStatement.FromArgs(simpleArgs),
                 [{Type: RedirectStandardOutputOverwrite, Args: var sourceArgs}, {Type: Simple, Args: [var target]}] => StandaloneStatement.FromArgs(sourceArgs) > target,
                 [{Type: RedirectStandardOutputAppend, Args: var sourceArgs}, {Type: Simple, Args: [var target]}] => StandaloneStatement.FromArgs(sourceArgs) >> target,
+                [{Type: Pipe, Args: var sourceArgs}, {Type: Simple, Args: var targetArgs}] => StandaloneStatement.FromArgs(sourceArgs) | StandaloneStatement.FromArgs(targetArgs),
                 _ => null
             });
         }
