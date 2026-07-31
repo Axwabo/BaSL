@@ -5,20 +5,26 @@ using BaSL.FileSystems;
 
 namespace BaSL.Syntax;
 
-public static class PipingExtensions
+public static class StatementExtensions
 {
 
     extension(ShellStatement)
     {
 
-        public static ShellStatement operator >(ShellStatement source, Path sinkPath)
-            => new RedirectStatement(source, sinkPath, true);
+        [return: NotNullIfNotNull(nameof(source))]
+        public static ShellStatement? operator >(ShellStatement? source, Path sinkPath)
+            => source is RedirectStatement or null
+                ? null
+                : new RedirectStatement(source, sinkPath, true);
 
         public static ShellStatement operator <(ShellStatement source, Path sinkPath)
             => throw new NotImplementedException();
 
-        public static ShellStatement operator >> (ShellStatement source, Path sinkPath)
-            => new RedirectStatement(source, sinkPath, false);
+        [return: NotNullIfNotNull(nameof(source))]
+        public static ShellStatement? operator >> (ShellStatement? source, Path sinkPath)
+            => source is RedirectStatement or null
+                ? null
+                : new RedirectStatement(source, sinkPath, false);
 
         [return: NotNullIfNotNull(nameof(source))] // TODO
         public static ShellStatement? operator |(ShellStatement? source, Path executablePath)

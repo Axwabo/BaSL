@@ -10,16 +10,18 @@ internal static class StatementParser
 {
 
     // TODO: escaping & shit
-    public static List<Statement> Parse(string line, TryParse variables)
+    public static List<ShellStatement> Parse(string line, TryParse variables)
     {
-        var statements = new List<Statement>();
+        var statements = new List<ShellStatement>();
         foreach (var s in line.Split(';'))
-            ParseStatements(s, statements, variables);
+            if (ParseStatement(s, variables) is { } statement)
+                statements.Add(statement);
         return statements;
     }
 
-    private static void ParseStatements(string s, List<Statement> statements, TryParse variables)
+    private static ShellStatement? ParseStatement(string s, TryParse variables)
     {
+        ShellStatement? statement = null;
         var argBuzilder = new StringBuilder();
         var variableBuilder = new StringBuilder();
         var args = new List<string>();
@@ -79,7 +81,7 @@ internal static class StatementParser
         if (args.Count != 0)
             AddStatement(StatementType.Simple);
 
-        return;
+        return statement;
 
         void AddArg(SyntaxType next = SyntaxType.Text)
         {
@@ -94,11 +96,13 @@ internal static class StatementParser
 
         void AddStatement(StatementType type)
         {
-            statements.Add(new Statement
+            statement = (type, statement) switch
             {
-                Args = args.ToArray(),
-                Type = type
-            });
+                (StatementType.Simple, _) => StandaloneStatement.FromArgs(args),
+                // (StatementType.Pipe, not null) => statement | StandaloneStatement.FromArgs(args),
+                (StatementType.RedirectStandardOutputAppend, not null) => statement >> ,
+                _ => null
+            };
             args.Clear();
             outerSyntax = syntax = SyntaxType.Text;
         }
