@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using static BaSL.Syntax.StatementType;
 
 namespace BaSL.Syntax;
 
@@ -12,16 +13,37 @@ internal static class StatementParser
     // TODO: escaping & shit
     public static List<ShellStatement> Parse(string line, TryParse variables)
     {
-        var statements = new List<ShellStatement>();
+        var results = new List<ShellStatement>();
+        var syntax = new List<Statement>();
         foreach (var s in line.Split(';'))
-            if (ParseStatement(s, variables) is { } statement)
-                statements.Add(statement);
-        return statements;
+        {
+            syntax.Clear();
+            ParseStatements(s, syntax, variables);
+            switch (syntax)
+            {
+                case [{Type: Simple, Args: var simpleArgs}]:
+                    Add(StandaloneStatement.FromArgs(simpleArgs));
+                    break;
+                case [{Type: Simple, Args: var sourceArgs}, {Type: RedirectStandardOutputOverwrite, Args: [var target]}]:
+                    Add(StandaloneStatement.FromArgs(sourceArgs) > target);
+                    break;
+                case [{Type: Simple, Args: var sourceArgs}, {Type: RedirectStandardOutputAppend, Args: [var target]}]:
+                    Add(StandaloneStatement.FromArgs(sourceArgs) >> target);
+                    break;
+            }
+        }
+
+        return results;
+
+        void Add(ShellStatement? statement)
+        {
+            if (statement is not null)
+                results.Add(statement);
+        }
     }
 
-    private static ShellStatement? ParseStatement(string s, TryParse variables)
+    private static void ParseStatements(string s, List<Statement> statements, TryParse variables)
     {
-        ShellStatement? statement = null;
         var argBuzilder = new StringBuilder();
         var variableBuilder = new StringBuilder();
         var args = new List<string>();
@@ -44,14 +66,14 @@ internal static class StatementParser
                     AddArg(SyntaxType.QuotedString);
                     break;
                 case (SyntaxType.Text, '|'):
-                    AddStatement(StatementType.Pipe);
+                    AddStatement(Pipe);
                     break;
                 case (SyntaxType.Text, '>') when next == '>':
-                    AddStatement(StatementType.RedirectStandardOutputAppend);
+                    AddStatement(RedirectStandardOutputAppend);
                     i++;
                     break;
                 case (SyntaxType.Text, '>'):
-                    AddStatement(StatementType.RedirectStandardOutputOverwrite);
+                    AddStatement(RedirectStandardOutputOverwrite);
                     break;
                 case (SyntaxType.Text or SyntaxType.QuotedString, '$'):
                     outerSyntax = syntax;
@@ -79,9 +101,9 @@ internal static class StatementParser
         if (argBuzilder.Length != 0)
             AddArg();
         if (args.Count != 0)
-            AddStatement(StatementType.Simple);
+            AddStatement(Simple);
 
-        return statement;
+        return;
 
         void AddArg(SyntaxType next = SyntaxType.Text)
         {
@@ -96,13 +118,11 @@ internal static class StatementParser
 
         void AddStatement(StatementType type)
         {
-            statement = (type, statement) switch
+            statements.Add(new Statement
             {
-                (StatementType.Simple, _) => StandaloneStatement.FromArgs(args),
-                // (StatementType.Pipe, not null) => statement | StandaloneStatement.FromArgs(args),
-                (StatementType.RedirectStandardOutputAppend, not null) => statement >> ,
-                _ => null
-            };
+                Args = args.ToArray(),
+                Type = type
+            });
             args.Clear();
             outerSyntax = syntax = SyntaxType.Text;
         }

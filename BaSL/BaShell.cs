@@ -50,11 +50,14 @@ public sealed class BaShell : App
     private new StreamWriter StandardError => Context.IsRoot ? StandardOutput : base.StandardError;
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
+        => _statement is null
+            ? await ExecuteInteractiveAsync()
+            : await ExecuteAsync(_statement, cancellationToken);
+
+    private async Task<int> ExecuteAsync(ShellStatement shellStatement, CancellationToken cancellationToken)
     {
-        switch (_statement)
+        switch (shellStatement)
         {
-            case null:
-                return await ExecuteInteractiveAsync();
             case StandaloneStatement standaloneStatement:
             {
                 // TODO: this sucks
@@ -80,7 +83,7 @@ public sealed class BaShell : App
                 var file = WorkingDirectory.ResolveFileOrCreate(UserContext, redirectStatement.SinkPath).OpenWrite(UserContext);
                 if (!file.Success)
                 {
-                    await StandardError.WriteAsync("Cannot open '", cancellationToken);
+                    await StandardError.WriteAsync("Cannot open file '", cancellationToken);
                     await StandardError.WriteAsync(redirectStatement.SinkPath, cancellationToken);
                     await StandardError.WriteAsync("' due to: ", cancellationToken);
                     await StandardError.WriteLineAsync(file.Error.Message);
@@ -109,8 +112,8 @@ public sealed class BaShell : App
             }
             case PipeStatement pipeStatement:
             default:
-                await StandardError.WriteAsync("Unsupported statement: ", cancellationToken);
-                await StandardError.WriteLineAsync(_statement.ToString(), cancellationToken);
+                await StandardError.WriteAsync("Statement too complex or invalid: ", cancellationToken);
+                await StandardError.WriteLineAsync(shellStatement.ToString(), cancellationToken);
                 return 1;
         }
     }
@@ -145,40 +148,8 @@ public sealed class BaShell : App
     private async Task ExecuteAsync(string line, CancellationToken token)
     {
         var statements = StatementParser.Parse(line, ExportedVariables.TryGetValue);
-        switch (statements)
-        {
-            case [{Type: StatementType.Simple} oneSimple]:
-                await ExecuteSimpleAsync(oneSimple.Args, token);
-                break;
-            case [{Type: StatementType.RedirectStandardOutputOverwrite or StatementType.RedirectStandardOutputAppend} statement, {Type: StatementType.Simple, Args: {Length: not 0} targetFile}]:
-                await ExecuteToFileAsync(statement.Args, targetFile.Span[0], statement.Type == StatementType.RedirectStandardOutputOverwrite, token);
-                break;
-            default:
-                await StandardOutput.WriteLineAsync("Statement too complex or invalid", token);
-                break;
-        }
-    }
-
-    private async Task ExecuteSimpleAsync(ReadOnlyMemory<string> args, CancellationToken token)
-    {
-        await using var context = ExecutableContext.Sub(Context, Console, FileSystem, args[1..]);
-        await ExecuteAsync(args, context, token);
-    }
-
-    private async Task ExecuteAsync(ReadOnlyMemory<string> args, ExecutableContext context, CancellationToken token)
-    {
-        var result = ExecuteCommand(args.Span[0], context, token);
-        if (result is not {Success: true, Value: var process})
-        {
-            LastExitCode = 127; // TODO: uhhhhhh sure..?
-            await StandardError.WriteLineAsync(result.Error.Message); // TODO: fix sync
-            return;
-        }
-
-        var copy = context.CopyAsync();
-        LastExitCode = await process();
-        await context.CompletePipesAsync();
-        await copy;
+        foreach (var statement in statements)
+            LastExitCode = await ExecuteAsync(statement, token);
     }
 
     private Result<Func<Task<int>>, Error> ExecuteCommand(CommandLocation location, ExecutableContext context, CancellationToken token) => location switch
@@ -200,25 +171,6 @@ public sealed class BaShell : App
         return command.Success
             ? WaitForExit(command.Value)
             : command.Error;
-    }
-
-    private async Task ExecuteToFileAsync(ReadOnlyMemory<string> args, string outputFile, bool overwrite, CancellationToken token)
-    {
-        var fileResult = WorkingDirectory.ResolveFileOrCreate(UserContext, outputFile).Open(UserContext, OpenMode.ReadWrite);
-        if (!fileResult.Success)
-        {
-            await StandardOutput.WriteAsync("Cannot open file '", token);
-            await StandardOutput.WriteAsync(outputFile, token);
-            await StandardOutput.WriteAsync("': ", token);
-            await StandardOutput.WriteLineAsync(fileResult.Error.Message, token);
-            return;
-        }
-
-        var stream = fileResult.Value;
-        if (overwrite)
-            stream.SetLength(0);
-        await using var context = ExecutableContext.Redirected(Context, Console, FileSystem, args[1..], new Streams(null, stream, null)); // TODO: where to pipe sterr?
-        await ExecuteAsync(args, context, token);
     }
 
     private GetFileResult ResolveFromPath(FileSystemEntryName arg)
