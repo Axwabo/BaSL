@@ -56,11 +56,11 @@ public sealed class BaShell : App
             {
                 // TODO: this sucks
                 await using var context = ExecutableContext.Sub(Context, Console, FileSystem, standaloneStatement.Args);
-                var command = FileSystem.ResolveFile(standaloneStatement.FullPath).Execute(context, cancellationToken);
+                var command = FileSystem.ResolveFile(standaloneStatement.Location).Execute(context, cancellationToken);
                 if (!command.Success)
                 {
                     await StandardError.WriteAsync("Cannot execute '", cancellationToken);
-                    await StandardError.WriteAsync(standaloneStatement.FullPath, cancellationToken);
+                    await StandardError.WriteAsync((ReadOnlyMemory<char>) standaloneStatement.Location, cancellationToken);
                     await StandardError.WriteAsync("' due to: ", cancellationToken);
                     await StandardError.WriteLineAsync(command.Error.Message);
                     return 127;
