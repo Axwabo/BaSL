@@ -41,6 +41,8 @@ public static class PipingExtensions
                 ? null
                 : new StandaloneStatement(args.Span[0], args[1..]);
 
+        public static StandaloneStatement FromPath(Path fullPath, params string[] args) => new(fullPath, args);
+
     }
 
 }

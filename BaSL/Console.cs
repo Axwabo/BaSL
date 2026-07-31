@@ -42,7 +42,7 @@ public sealed class Console
     public async Task<int> StartAsync()
     {
         await using var context = _context;
-        var statement = new StandaloneStatement(Path.Binaries / "echo", new[] {"hello world"}) /*  | Path.Binaries / "cat"*/;
+        var statement = StandaloneStatement.FromPath(Path.Binaries / "echo", "hello world") /*  | Path.Binaries / "cat"*/;
         _shell = new BaShell(context, statement);
         return await _shell.ExecuteAsync(CancellationToken.None);
     }
