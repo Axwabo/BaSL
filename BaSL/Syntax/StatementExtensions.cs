@@ -39,6 +39,21 @@ public static class StatementExtensions
 
     }
 
+    extension(Args)
+    {
+
+        public static ShellStatement? operator >(Args args, Path sinkPath) => (ShellStatement?) args > sinkPath;
+
+        public static ShellStatement operator <(Args args, Path sinkPath) => throw new NotImplementedException();
+
+        public static ShellStatement? operator >> (Args args, Path sinkPath) => (ShellStatement?) args >> sinkPath;
+
+        public static ShellStatement? operator |(Args args, Path executablePath) => (ShellStatement?) args | executablePath;
+
+        public static ShellStatement? operator |(Args args, StandaloneStatement? target) => (ShellStatement?) args | target;
+
+    }
+
     extension(StandaloneStatement)
     {
 
