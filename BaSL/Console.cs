@@ -42,9 +42,15 @@ public sealed class Console
     public async Task<int> StartAsync()
     {
         await using var context = _context;
-        var statement = StandaloneStatement.FromPath(Path.Binaries / "echo", "hello world") /*  | Path.Binaries / "cat"*/;
+        Path path = "/home/user/among.txt";
+        var statement = StandaloneStatement.FromPath(Path.Binaries / "echo", "hello world") > path;
         _shell = new BaShell(context, statement);
-        return await _shell.ExecuteAsync(CancellationToken.None);
+        var code = await _shell.ExecuteAsync(CancellationToken.None);
+        await _context.SourceOutput.WriteAsync("Contents of ");
+        await _context.SourceOutput.WriteLineAsync(path);
+        using var reader = FileSystem.ResolveFile(path).OpenReadOrNull(UserContext);
+        await reader.BaseStream.CopyToAsync(_context.SourceOutput.BaseStream);
+        return code;
     }
 
     public bool TerminateCurrentProcess() => _shell?.Cancel() ?? false;

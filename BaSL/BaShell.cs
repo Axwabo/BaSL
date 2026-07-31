@@ -75,8 +75,39 @@ public sealed class BaShell : App
                 await copy;
                 return code;
             }
+            case RedirectStatement {Source: StandaloneStatement standaloneStatement} redirectStatement:
+            {
+                var file = WorkingDirectory.ResolveFileOrCreate(UserContext, redirectStatement.SinkPath).OpenWrite(UserContext);
+                if (!file.Success)
+                {
+                    await StandardError.WriteAsync("Cannot open '", cancellationToken);
+                    await StandardError.WriteAsync(redirectStatement.SinkPath, cancellationToken);
+                    await StandardError.WriteAsync("' due to: ", cancellationToken);
+                    await StandardError.WriteLineAsync(file.Error.Message);
+                    return 127;
+                }
+
+                await using var stream = file.Value;
+                if (redirectStatement.Overwrite)
+                    stream.SetLength(0);
+                await using var context = ExecutableContext.Redirected(Context, Console, FileSystem, standaloneStatement.Args, new Streams(null, stream, null));
+                var command = ExecuteCommand(standaloneStatement.Location, context, cancellationToken);
+                if (!command.Success)
+                {
+                    await StandardError.WriteAsync("Cannot execute '", cancellationToken);
+                    await StandardError.WriteAsync(standaloneStatement.Location, cancellationToken);
+                    await StandardError.WriteAsync("' due to: ", cancellationToken);
+                    await StandardError.WriteLineAsync(command.Error.Message);
+                    return 127;
+                }
+
+                var copy = context.CopyAsync();
+                var code = await command.Value();
+                await context.CompletePipesAsync();
+                await copy;
+                return code;
+            }
             case PipeStatement pipeStatement:
-            case RedirectStatement redirectStatement:
             default:
                 await StandardError.WriteAsync("Unsupported statement: ", cancellationToken);
                 await StandardError.WriteLineAsync(_statement.ToString(), cancellationToken);
