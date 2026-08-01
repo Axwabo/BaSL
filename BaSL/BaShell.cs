@@ -187,21 +187,20 @@ public sealed class BaShell : App
             LastExitCode = await ExecuteAsync(statement, token);
     }
 
-    private Result<Func<Task<int>>, Error> ExecuteCommand(CommandLocation location, ExecutableContext context, CancellationToken token) => location switch
+    private ExecutableCommand? ExecuteCommand(CommandLocation location, ExecutableContext context, CancellationToken token) => location switch
     {
         PathCommandLocation {FullPath: var path} => Execute(path, context, token),
         AutoCommandLocation {Phrase: var path} when Path.IsExplicitRelativeOrAbsolute(path) => Execute(path, context, token),
-        AutoCommandLocation {Phrase: var name} when BuiltInCommands.TryGetValue(name, out var action) => Result<Func<Task<int>>, Error>.CreateSuccess(async () =>
+        AutoCommandLocation {Phrase: var name} when BuiltInCommands.TryGetValue(name, out var action) => (_, _) => Result<Func<Task<int>>, Error>.CreateSuccess(() =>
         {
             action();
-            await context.CompletePipesAsync();
-            return 0;
+            return Task.FromResult(0);
         }),
         AutoCommandLocation {Phrase: var name} when ResolveFromPath(name).Execute(context, token) is {Success: true, Value: var process} => WaitForExit(context, process),
-        _ => CommandError.NotFound
+        _ => null
     };
 
-    private Result<Func<Task<int>>, Error> Execute(Path path, ExecutableContext context, CancellationToken token)
+    private ExecutableCommand? Execute(Path path, ExecutableContext context, CancellationToken token)
     {
         var command = WorkingDirectory.ResolveFile(path).Execute(context, token);
         return command.Success
@@ -244,6 +243,8 @@ public sealed class BaShell : App
         _cts.Cancel();
         return true;
     }
+
+    private delegate Result<Func<Task<int>>, Error> ExecutableCommand(ExecutableContext context, CancellationToken cancellationToken);
 
 // TODO
     private sealed record CommandError() : Error("Command not found")
