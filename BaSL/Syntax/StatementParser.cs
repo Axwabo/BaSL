@@ -42,12 +42,21 @@ internal static class StatementParser
             if (statement is not ExtendableStatement)
                 return null;
             var current = syntax[i];
-            if (current.Type is Simple or Pipe)
-                statement |= StandaloneStatement.FromArgs(current.Args);
-            else if (current.Type == RedirectStandardOutputOverwrite)
-                return current.Args.Length == 0
-                    ? null
-                    : statement > current.Args[0];
+            var args = current.Args;
+            switch (previous, current.Type)
+            {
+                case (Pipe, _):
+                    statement |= StandaloneStatement.FromArgs(args);
+                    break;
+                case (RedirectStandardOutputOverwrite, Simple):
+                    return args.IsEmpty ? null : statement > args[0];
+                case (RedirectStandardOutputAppend, Simple):
+                    return args.IsEmpty ? null : statement >> args[0];
+                case (Simple, _):
+                    break;
+                default:
+                    return null;
+            }
         }
 
         return statement;
