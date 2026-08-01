@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading.Tasks;
 using BaSL.Executables.Pipes;
@@ -29,13 +30,10 @@ public sealed class ExecutableContext
         return context;
     }
 
-    // TODO: genuinely what is this
     internal static ExecutableContext Piped(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
         => new ExecutableContext(console, fileSystem, args)
             .CreatePipes()
-            .PipeStdin(source)
-            .PipeStdout(source)
-            .PipeStderr(source);
+            .PipeStdin(source.StandardOutput);
 
     internal static ExecutableContext Redirected(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, Streams streams)
     {
@@ -67,7 +65,7 @@ public sealed class ExecutableContext
         return context;
     }
 
-    private static async Task CopyAsync(StreamReader source, StreamWriter destination, PipeWrapper cancellation, bool dispose, string tag)
+    private static async Task CopyAsync(StreamReader source, StreamWriter destination, PipeWrapper cancellation, bool dispose)
     {
         var token = cancellation.CancellationToken;
         try
@@ -89,6 +87,7 @@ public sealed class ExecutableContext
     }
 
     private static T ThrowIfNull<T>(T? returnValue) => returnValue ?? throw new InvalidOperationException("Context has not yet been initialized, this should not happen!");
+    private readonly HashSet<IAsyncDisposable> _completables = [];
 
     private readonly List<(StreamReader, StreamWriter, PipeWrapper, bool, string)> _copy = [];
 
@@ -134,6 +133,13 @@ public sealed class ExecutableContext
 
     internal bool IsRoot { get; private set; }
 
+    private ExecutableContext PipeStdin(PipeWrapper? source)
+    {
+        if (source != null && StandardOutput != null)
+            _copy.Add((source.Reader, _sourceOutput!, StandardOutput, false, "stdout -> stdin"));
+        return this;
+    }
+
     public ExecutableContext PipeStdin(ExecutableContext source)
     {
         /*if (source._sourceInput != null && DestinationInput != null)
@@ -155,7 +161,7 @@ public sealed class ExecutableContext
         return this;
     }
 
-    private PipeWrapper CreatePipe(ref StreamReader? reader, ref StreamWriter? writer)
+    private PipeWrapper CreatePipe([NotNull] ref StreamReader? reader, [NotNull] ref StreamWriter? writer)
     {
         var pipe = new PipeWrapper();
         reader ??= pipe.Reader;
@@ -175,12 +181,14 @@ public sealed class ExecutableContext
     private ExecutableContext CreateStdoutPipe()
     {
         StandardOutput ??= CreatePipe(ref _destinationOutput, ref _sourceOutput);
+        _completables.Add(_sourceOutput!);
         return this;
     }
 
     private ExecutableContext CreateStderrPipe()
     {
         StandardError ??= CreatePipe(ref _destinationError, ref _sourceError);
+        _completables.Add(_sourceError!);
         return this;
     }
 
@@ -194,7 +202,7 @@ public sealed class ExecutableContext
             for (var i = 0; i < copy.Length; i++)
             {
                 var (reader, writer, pipeWrapper, dispose, tag) = _copy[i];
-                copy[i] = CopyAsync(reader, writer, pipeWrapper, dispose, tag);
+                copy[i] = CopyAsync(reader, writer, pipeWrapper, dispose);
             }
 
             await Task.WhenAll(copy);
@@ -214,14 +222,10 @@ public sealed class ExecutableContext
                 disposable.Dispose();
     }
 
-    public async Task CompletePipesAsync()
+    public async ValueTask CompletePipesAsync()
     {
-        if (StandardInput != null)
-            await StandardInput.DisposeAsync();
-        if (StandardOutput != null)
-            await StandardOutput.Writer.DisposeAsync();
-        if (StandardError != null)
-            await StandardError.Writer.DisposeAsync();
+        foreach (var disposable in _completables)
+            await disposable.DisposeAsync();
     }
 
 }
