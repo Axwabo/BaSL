@@ -24,7 +24,12 @@ public sealed class BaShell : App
         }
     };
 
-    private static Result<Func<Task<int>>, Error> WaitForExit(Process process) => Result<Func<Task<int>>, Error>.CreateSuccess(process.WaitForExitAsync);
+    private static Result<Func<Task<int>>, Error> WaitForExit(ExecutableContext context, Process process) => Result<Func<Task<int>>, Error>.CreateSuccess(async () =>
+    {
+        var code = await process.WaitForExitAsync();
+        await context.CompletePipesAsync();
+        return code;
+    });
 
     private readonly ShellStatement? _statement;
 
@@ -77,7 +82,6 @@ public sealed class BaShell : App
 
                 var copy = context.CopyAsync();
                 var code = await command.Value();
-                await context.CompletePipesAsync();
                 await copy;
                 return code;
             }
@@ -109,7 +113,6 @@ public sealed class BaShell : App
 
                 var copy = context.CopyAsync();
                 var code = await command.Value();
-                await context.CompletePipesAsync();
                 await copy;
                 return code;
             }
@@ -140,8 +143,6 @@ public sealed class BaShell : App
 
                 var copy = Task.WhenAll(source.CopyAsync(), target.CopyAsync());
                 var codes = await Task.WhenAll(sourceCommand.Value(), targetCommand.Value());
-                await source.CompletePipesAsync();
-                await target.CompletePipesAsync();
                 await copy;
                 return codes[0];
             }
@@ -190,12 +191,13 @@ public sealed class BaShell : App
     {
         PathCommandLocation {FullPath: var path} => Execute(path, context, token),
         AutoCommandLocation {Phrase: var path} when Path.IsExplicitRelativeOrAbsolute(path) => Execute(path, context, token),
-        AutoCommandLocation {Phrase: var name} when BuiltInCommands.TryGetValue(name, out var action) => Result<Func<Task<int>>, Error>.CreateSuccess(() =>
+        AutoCommandLocation {Phrase: var name} when BuiltInCommands.TryGetValue(name, out var action) => Result<Func<Task<int>>, Error>.CreateSuccess(async () =>
         {
             action();
-            return Task.FromResult(0);
+            await context.CompletePipesAsync();
+            return 0;
         }),
-        AutoCommandLocation {Phrase: var name} when ResolveFromPath(name).Execute(context, token) is {Success: true, Value: var process} => WaitForExit(process),
+        AutoCommandLocation {Phrase: var name} when ResolveFromPath(name).Execute(context, token) is {Success: true, Value: var process} => WaitForExit(context, process),
         _ => CommandError.NotFound
     };
 
@@ -203,7 +205,7 @@ public sealed class BaShell : App
     {
         var command = WorkingDirectory.ResolveFile(path).Execute(context, token);
         return command.Success
-            ? WaitForExit(command.Value)
+            ? WaitForExit(context, command.Value)
             : command.Error;
     }
 
