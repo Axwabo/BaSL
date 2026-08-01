@@ -113,7 +113,38 @@ public sealed class BaShell : App
                 await copy;
                 return code;
             }
-            case PipeStatement pipeStatement:
+            case PipeStatement {Source: StandaloneStatement standaloneStatement} pipeStatement:
+            {
+                await using var source = ExecutableContext.Sub(Context, Console, FileSystem, standaloneStatement.Args);
+                await using var target = ExecutableContext.Piped(source, Console, FileSystem, pipeStatement.TargetArgs);
+                var sourceCommand = ExecuteCommand(standaloneStatement.Location, source, cancellationToken);
+                if (!sourceCommand.Success)
+                {
+                    await StandardError.WriteAsync("Cannot execute '", cancellationToken);
+                    await StandardError.WriteAsync(standaloneStatement.Location, cancellationToken);
+                    await StandardError.WriteAsync("' due to: ", cancellationToken);
+                    await StandardError.WriteLineAsync(sourceCommand.Error.Message);
+                    return 127;
+                }
+
+                // TODO: pre-check each command before executing?
+                var targetCommand = ExecuteCommand(pipeStatement.TargetLocation, target, cancellationToken);
+                if (!targetCommand.Success)
+                {
+                    await StandardError.WriteAsync("Cannot execute '", cancellationToken);
+                    await StandardError.WriteAsync(pipeStatement.TargetLocation, cancellationToken);
+                    await StandardError.WriteAsync("' due to: ", cancellationToken);
+                    await StandardError.WriteLineAsync(targetCommand.Error.Message);
+                    return 127;
+                }
+
+                var copy = Task.WhenAll(source.CopyAsync(), target.CopyAsync());
+                var codes = await Task.WhenAll(sourceCommand.Value(), targetCommand.Value());
+                await source.CompletePipesAsync();
+                await target.CompletePipesAsync();
+                await copy;
+                return codes[0];
+            }
             default:
                 await StandardError.WriteAsync("Statement too complex or invalid: ", cancellationToken);
                 await StandardError.WriteLineAsync(shellStatement.ToString(), cancellationToken);
