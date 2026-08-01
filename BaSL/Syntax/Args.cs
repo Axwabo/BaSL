@@ -13,4 +13,12 @@ public readonly record struct Args(ReadOnlyMemory<string> Value)
     {
     }
 
+    public bool IsEmpty => Value.IsEmpty;
+
+    public int Length => Value.Length;
+
+    public string this[int index] => Value.Span[index];
+
+    public Args this[Range range] => Value[range];
+
 }

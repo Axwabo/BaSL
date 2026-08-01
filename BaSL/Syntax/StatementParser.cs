@@ -22,9 +22,9 @@ internal static class StatementParser
             results.Add(syntax switch
             {
                 [{Type: Simple, Args: var simpleArgs}] => StandaloneStatement.FromArgs(simpleArgs),
-                [{Type: RedirectStandardOutputOverwrite, Args: var sourceArgs}, {Type: Simple, Args: [var target]}] => sourceArgs.AsArgs() > target,
-                [{Type: RedirectStandardOutputAppend, Args: var sourceArgs}, {Type: Simple, Args: [var target]}] => sourceArgs.AsArgs() >> target,
-                [{Type: Pipe, Args: var sourceArgs}, {Type: Simple, Args: var targetArgs}] => sourceArgs.AsArgs() | targetArgs.AsArgs(),
+                [{Type: RedirectStandardOutputOverwrite, Args: var sourceArgs}, {Type: Simple, Args: [var target]}] => sourceArgs > target,
+                [{Type: RedirectStandardOutputAppend, Args: var sourceArgs}, {Type: Simple, Args: [var target]}] => sourceArgs >> target,
+                [{Type: Pipe, Args: var sourceArgs}, {Type: Simple, Args: var targetArgs}] => sourceArgs | targetArgs,
                 [{Type: Pipe, Args: var firstArgs}, ..] => ExpandPipes(firstArgs, syntax),
                 _ => null
             });
@@ -33,7 +33,7 @@ internal static class StatementParser
         return results;
     }
 
-    private static ShellStatement? ExpandPipes(string[] firstArgs, List<Statement> syntax)
+    private static ShellStatement? ExpandPipes(Args firstArgs, List<Statement> syntax)
     {
         ShellStatement? statement = StandaloneStatement.FromArgs(firstArgs);
         var previous = syntax[0].Type;
