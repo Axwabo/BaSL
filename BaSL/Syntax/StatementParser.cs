@@ -25,11 +25,31 @@ internal static class StatementParser
                 [{Type: RedirectStandardOutputOverwrite, Args: var sourceArgs}, {Type: Simple, Args: [var target]}] => new Args(sourceArgs) > target,
                 [{Type: RedirectStandardOutputAppend, Args: var sourceArgs}, {Type: Simple, Args: [var target]}] => new Args(sourceArgs) >> target,
                 [{Type: Pipe, Args: var sourceArgs}, {Type: Simple, Args: var targetArgs}] => new Args(sourceArgs) | new Args(targetArgs),
+                [{Type: Pipe, Args: var firstArgs}, ..] => ExpandPipes(firstArgs, syntax),
                 _ => null
             });
         }
 
         return results;
+    }
+
+    private static ShellStatement? ExpandPipes(string[] firstArgs, List<Statement> syntax)
+    {
+        ShellStatement? statement = StandaloneStatement.FromArgs(firstArgs);
+        for (var i = 1; i < syntax.Count; i++)
+        {
+            if (statement is not ExtendableStatement)
+                return null;
+            var current = syntax[i];
+            if (current.Type is Simple or Pipe)
+                statement |= StandaloneStatement.FromArgs(current.Args);
+            else if (current.Type == RedirectStandardOutputOverwrite)
+                return current.Args.Length == 0
+                    ? null
+                    : statement > current.Args[0];
+        }
+
+        return statement;
     }
 
     private static void ParseStatements(string s, List<Statement> statements, TryParse variables)
