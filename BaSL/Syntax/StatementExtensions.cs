@@ -13,29 +13,29 @@ public static class StatementExtensions
 
         [return: NotNullIfNotNull(nameof(source))]
         public static ShellStatement? operator >(ShellStatement? source, Path sinkPath)
-            => source is RedirectStatement or null
+            => source is not ExtendableStatement extendable
                 ? null
-                : new RedirectStatement(source, sinkPath, true);
+                : new RedirectStatement(extendable, sinkPath, true);
 
         public static ShellStatement operator <(ShellStatement source, Path sinkPath)
             => throw new NotImplementedException();
 
         [return: NotNullIfNotNull(nameof(source))]
         public static ShellStatement? operator >> (ShellStatement? source, Path sinkPath)
-            => source is RedirectStatement or null
+            => source is not ExtendableStatement extendable
                 ? null
-                : new RedirectStatement(source, sinkPath, false);
+                : new RedirectStatement(extendable, sinkPath, false);
 
-        [return: NotNullIfNotNull(nameof(source))] // TODO
+        [return: NotNullIfNotNull(nameof(source))]
         public static ShellStatement? operator |(ShellStatement? source, Path executablePath)
-            => source is RedirectStatement or null
+            => source is not ExtendableStatement extendable
                 ? source
-                : new PipeStatement(source, executablePath);
+                : new PipeStatement(extendable, executablePath);
 
         public static ShellStatement? operator |(ShellStatement? source, StandaloneStatement? target)
-            => target is null || source is RedirectStatement or null
+            => target is null || source is not ExtendableStatement extendable
                 ? source
-                : new PipeStatement(source, target.Location, target.Args);
+                : new PipeStatement(extendable, target.Location, target.Args);
 
     }
 
