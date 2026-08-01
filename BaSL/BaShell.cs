@@ -10,9 +10,13 @@ using BaSL.FileSystems.Errors;
 using BaSL.FileSystems.Extensions;
 using BaSL.Syntax;
 using BaSL.Users;
+using File = BaSL.FileSystems.File;
 using Path = BaSL.FileSystems.Path;
+using RunCommand = System.Func<BaSL.Executables.ExecutableContext, System.Threading.CancellationToken, BaSL.Result<System.Threading.Tasks.Task<int>, BaSL.Error>>;
 
 namespace BaSL;
+
+using LocateCommandResult = Result<RunCommand, Error>;
 
 public sealed class BaShell : App
 {
@@ -24,12 +28,20 @@ public sealed class BaShell : App
         }
     };
 
-    private static Result<Func<Task<int>>, Error> WaitForExit(ExecutableContext context, Process process) => Result<Func<Task<int>>, Error>.CreateSuccess(async () =>
+    private static RunCommand Execute(File file) => (context, token) =>
     {
-        var code = await process.WaitForExitAsync();
-        await context.CompletePipesAsync();
-        return code;
-    });
+        var execute = file.Execute(context, token);
+        if (!execute.Success)
+            return execute.Error;
+        return Result<Task<int>, Error>.CreateSuccess(RunAndComplete(execute.Value));
+
+        async Task<int> RunAndComplete(Process process)
+        {
+            var code = await process.WaitForExitAsync();
+            await context.CompletePipesAsync();
+            return code;
+        }
+    };
 
     private readonly ShellStatement? _statement;
 
@@ -70,18 +82,18 @@ public sealed class BaShell : App
             {
                 // TODO: this sucks
                 await using var context = ExecutableContext.Sub(Context, Console, FileSystem, standaloneStatement.Args);
-                var command = ExecuteCommand(standaloneStatement.Location, context, cancellationToken);
-                if (!command.Success)
+                var process = Execute(standaloneStatement.Location, context, cancellationToken);
+                if (!process.Success)
                 {
                     await StandardError.WriteAsync("Cannot execute '", cancellationToken);
                     await StandardError.WriteAsync(standaloneStatement.Location, cancellationToken);
                     await StandardError.WriteAsync("' due to: ", cancellationToken);
-                    await StandardError.WriteLineAsync(command.Error.Message);
+                    await StandardError.WriteLineAsync(process.Error.Message);
                     return 127;
                 }
 
                 var copy = context.CopyAsync();
-                var code = await command.Value();
+                var code = await process.Value;
                 await copy;
                 return code;
             }
@@ -101,18 +113,18 @@ public sealed class BaShell : App
                 if (redirectStatement.Overwrite)
                     stream.SetLength(0);
                 await using var context = ExecutableContext.Redirected(Context, Console, FileSystem, standaloneStatement.Args, new Streams(null, stream, null));
-                var command = ExecuteCommand(standaloneStatement.Location, context, cancellationToken);
-                if (!command.Success)
+                var process = Execute(standaloneStatement.Location, context, cancellationToken);
+                if (!process.Success)
                 {
                     await StandardError.WriteAsync("Cannot execute '", cancellationToken);
                     await StandardError.WriteAsync(standaloneStatement.Location, cancellationToken);
                     await StandardError.WriteAsync("' due to: ", cancellationToken);
-                    await StandardError.WriteLineAsync(command.Error.Message);
+                    await StandardError.WriteLineAsync(process.Error.Message);
                     return 127;
                 }
 
                 var copy = context.CopyAsync();
-                var code = await command.Value();
+                var code = await process.Value;
                 await copy;
                 return code;
             }
@@ -120,30 +132,23 @@ public sealed class BaShell : App
             {
                 await using var source = ExecutableContext.Sub(Context, Console, FileSystem, standaloneStatement.Args);
                 await using var target = ExecutableContext.Piped(source, Console, FileSystem, pipeStatement.TargetArgs);
-                var sourceCommand = ExecuteCommand(standaloneStatement.Location, source, cancellationToken);
+                var sourceCommand = Locate(standaloneStatement.Location);
                 if (!sourceCommand.Success)
-                {
-                    await StandardError.WriteAsync("Cannot execute '", cancellationToken);
-                    await StandardError.WriteAsync(standaloneStatement.Location, cancellationToken);
-                    await StandardError.WriteAsync("' due to: ", cancellationToken);
-                    await StandardError.WriteLineAsync(sourceCommand.Error.Message);
-                    return 127;
-                }
-
-                // TODO: pre-check each command before executing?
-                var targetCommand = ExecuteCommand(pipeStatement.TargetLocation, target, cancellationToken);
+                    return await WriteExecuteErrorAsync(standaloneStatement.Location, sourceCommand.Error, cancellationToken);
+                var targetCommand = Locate(pipeStatement.TargetLocation);
                 if (!targetCommand.Success)
-                {
-                    await StandardError.WriteAsync("Cannot execute '", cancellationToken);
-                    await StandardError.WriteAsync(pipeStatement.TargetLocation, cancellationToken);
-                    await StandardError.WriteAsync("' due to: ", cancellationToken);
-                    await StandardError.WriteLineAsync(targetCommand.Error.Message);
-                    return 127;
-                }
-
+                    return await WriteExecuteErrorAsync(pipeStatement.TargetLocation, targetCommand.Error, cancellationToken);
+                var sourceProcess = sourceCommand.Value(source, cancellationToken);
+                if (!sourceProcess.Success)
+                    return await WriteExecuteErrorAsync(standaloneStatement.Location, sourceProcess.Error, cancellationToken);
+                var targetProcess = targetCommand.Value(target, cancellationToken);
+                if (!targetProcess.Success)
+                    return await WriteExecuteErrorAsync(pipeStatement.TargetLocation, targetProcess.Error, cancellationToken);
                 var copy = Task.WhenAll(source.CopyAsync(), target.CopyAsync());
-                var codes = await Task.WhenAll(sourceCommand.Value(), targetCommand.Value());
+                var codes = await Task.WhenAll(sourceProcess.Value, targetProcess.Value);
                 await copy;
+                await source.CompletePipesAsync();
+                await target.CompletePipesAsync();
                 return codes[0];
             }
             default:
@@ -151,6 +156,15 @@ public sealed class BaShell : App
                 await StandardError.WriteLineAsync(shellStatement.ToString(), cancellationToken);
                 return 1;
         }
+    }
+
+    private async Task<int> WriteExecuteErrorAsync(CommandLocation location, Error error, CancellationToken cancellationToken)
+    {
+        await StandardError.WriteAsync("Cannot execute '", cancellationToken);
+        await StandardError.WriteAsync(location, cancellationToken);
+        await StandardError.WriteAsync("' due to: ", cancellationToken);
+        await StandardError.WriteLineAsync(error.Message);
+        return 127;
     }
 
     private async Task<int> ExecuteInteractiveAsync()
@@ -187,25 +201,29 @@ public sealed class BaShell : App
             LastExitCode = await ExecuteAsync(statement, token);
     }
 
-    private ExecutableCommand? ExecuteCommand(CommandLocation location, ExecutableContext context, CancellationToken token) => location switch
+    private LocateCommandResult Locate(CommandLocation location) => location switch
     {
-        PathCommandLocation {FullPath: var path} => Execute(path, context, token),
-        AutoCommandLocation {Phrase: var path} when Path.IsExplicitRelativeOrAbsolute(path) => Execute(path, context, token),
-        AutoCommandLocation {Phrase: var name} when BuiltInCommands.TryGetValue(name, out var action) => (_, _) => Result<Func<Task<int>>, Error>.CreateSuccess(() =>
+        PathCommandLocation {FullPath: var path} => Execute(path),
+        AutoCommandLocation {Phrase: var path} when Path.IsExplicitRelativeOrAbsolute(path) => Execute(path),
+        AutoCommandLocation {Phrase: var name} when BuiltInCommands.TryGetValue(name, out var action) => (RunCommand) ((_, _) =>
         {
             action();
             return Task.FromResult(0);
         }),
-        AutoCommandLocation {Phrase: var name} when ResolveFromPath(name).Execute(context, token) is {Success: true, Value: var process} => WaitForExit(context, process),
-        _ => null
+        AutoCommandLocation {Phrase: var name} when ResolveFromPath(name) is {Success: true, Value: var file} => Execute(file),
+        _ => CommandError.NotFound
     };
 
-    private ExecutableCommand? Execute(Path path, ExecutableContext context, CancellationToken token)
+    private LocateCommandResult Execute(Path path)
     {
-        var command = WorkingDirectory.ResolveFile(path).Execute(context, token);
-        return command.Success
-            ? WaitForExit(context, command.Value)
-            : command.Error;
+        var file = WorkingDirectory.ResolveFile(path);
+        return file.Success ? Execute(file.Value) : file.Error;
+    }
+
+    private Result<Task<int>, Error> Execute(CommandLocation location, ExecutableContext context, CancellationToken cancellationToken)
+    {
+        var locate = Locate(location);
+        return locate.Success ? locate.Value(context, cancellationToken) : locate.Error;
     }
 
     private GetFileResult ResolveFromPath(FileSystemEntryName arg)
@@ -243,8 +261,6 @@ public sealed class BaShell : App
         _cts.Cancel();
         return true;
     }
-
-    private delegate Result<Func<Task<int>>, Error> ExecutableCommand(ExecutableContext context, CancellationToken cancellationToken);
 
 // TODO
     private sealed record CommandError() : Error("Command not found")
