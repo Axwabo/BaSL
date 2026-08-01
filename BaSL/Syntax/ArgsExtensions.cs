@@ -9,6 +9,13 @@ namespace BaSL.Syntax;
 public static class ArgsExtensions
 {
 
+    extension(string[] args)
+    {
+
+        public Args AsArgs() => new(args);
+
+    }
+
     extension(Args)
     {
 
