@@ -53,24 +53,24 @@ public static class PathExtensions
 
         public static string RemoveRelativeSegments(string path)
         {
-            var stack = new Stack<string>();
+            var list = new List<string>();
             if (path.StartsWith('/'))
-                stack.Push("");
+                list.Add("");
             foreach (var s in path.Split("/", StringSplitOptions.RemoveEmptyEntries))
             {
                 if (s == ".")
                     continue;
                 if (s != "..")
                 {
-                    stack.Push(s);
+                    list.Add(s);
                     continue;
                 }
 
-                if (stack.Count > 1)
-                    stack.Pop();
+                if (list.Count > 1)
+                    list.RemoveAt(list.Count - 1);
             }
 
-            return string.Join("/", stack);
+            return string.Join("/", list);
         }
 
     }
