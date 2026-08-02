@@ -55,13 +55,13 @@ public readonly record struct Path(string Value)
     public Path ToAbsolute(Path basePath)
     {
         if (basePath.IsEmpty || this.IsAbsolute)
-            return this;
+            return Path.RemoveRelativeSegments(this.IsEmpty ? "" : Value);
         var thisQualified = Path.RemoveRelativeSegments(this.IsEmpty ? "" : Value);
         var baseQualified = Path.RemoveRelativeSegments(basePath.Value);
-        var common = Path.GetCommonAncestor(thisQualified, baseQualified);
+        var common = Path.GetCommonAncestor(thisQualified, baseQualified); // TODO: is this good?
         return common.IsEmpty
-            ? Combine(basePath, Value)
-            : Combine(basePath.Value, Value.AsSpan(common.Length));
+            ? Combine(baseQualified, thisQualified)
+            : Combine(baseQualified, thisQualified.AsSpan(common.Length));
     }
 
 }

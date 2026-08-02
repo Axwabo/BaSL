@@ -94,4 +94,41 @@ public sealed class PathTests
         Assert.Equal("/", removed);
     }
 
+    [Fact]
+    public void ToAbsoluteWhenAbsolute()
+    {
+        const string original = "/among/us/in";
+        var partial = new Path(original);
+        var basePath = new Path("/real/life");
+        var absolute = partial.ToAbsolute(basePath);
+        Assert.Equal(original, absolute.Value);
+    }
+
+    [Fact]
+    public void ToAbsolute()
+    {
+        var partial = new Path("among/us/in");
+        var basePath = new Path("/real/life");
+        var absolute = partial.ToAbsolute(basePath);
+        Assert.Equal("/real/life/among/us/in", absolute.Value);
+    }
+
+    [Fact]
+    public void ToAbsoluteIncludingRelative()
+    {
+        var partial = new Path("among/us/../us/in");
+        var basePath = new Path("/real/life");
+        var absolute = partial.ToAbsolute(basePath);
+        Assert.Equal("/real/life/among/us/in", absolute.Value);
+    }
+
+    [Fact]
+    public void ToAbsoluteCommon()
+    {
+        var partial = new Path("life/among/us");
+        var basePath = new Path("/real/life");
+        var absolute = partial.ToAbsolute(basePath);
+        Assert.Equal("/real/life/life/among/us", absolute.Value);
+    }
+
 }

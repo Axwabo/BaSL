@@ -32,6 +32,7 @@ public static class PathExtensions
             return slash != -1 ? span[(slash + 1)..] : default;
         }
 
+        // TODO: doesn't work xd
         public static ReadOnlySpan<char> GetCommonAncestor(ReadOnlySpan<char> partialPath, ReadOnlySpan<char> basePath)
         {
             if (!partialPath.StartsWith(basePath))
