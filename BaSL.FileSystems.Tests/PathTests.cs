@@ -1,6 +1,8 @@
-﻿namespace BaSL.FileSystems.Tests;
+﻿using BaSL.FileSystems.Extensions;
 
-public sealed class PathTest
+namespace BaSL.FileSystems.Tests;
+
+public sealed class PathTests
 {
 
     [Fact]
@@ -46,6 +48,22 @@ public sealed class PathTest
         var us = new Path("/us/sus");
         var absolute = left.ToPartialAbsolute(us);
         Assert.Equal("/among", absolute.Value);
+    }
+
+    [Fact]
+    public void RemoveRelativeSegmentsNoneRelative()
+    {
+        const string path = "among/us";
+        var removed = Path.RemoveRelativeSegments(path);
+        Assert.Equal(path, removed);
+    }
+
+    [Fact]
+    public void RemoveRelativeSegmentsNoneAbsolute()
+    {
+        const string path = "/among/us";
+        var removed = Path.RemoveRelativeSegments(path);
+        Assert.Equal(path, removed);
     }
 
 }

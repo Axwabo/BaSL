@@ -56,7 +56,12 @@ public readonly record struct Path(string Value)
     {
         if (basePath.IsEmpty || this.IsAbsolute)
             return this;
-        var common = Path.GetCommonAncestor(Value, basePath.Value);
+        var thisQualified = Path.RemoveRelativeSegments(this.IsEmpty ? "" : Value);
+        var baseQualified = Path.RemoveRelativeSegments(basePath.Value);
+        var common = Path.GetCommonAncestor(thisQualified, baseQualified);
+        return common.IsEmpty
+            ? Combine(basePath, Value)
+            : Combine(basePath.Value, Value.AsSpan(common.Length));
     }
 
 }

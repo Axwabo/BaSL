@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 // ReSharper disable InvokeAsExtensionMemberFromSameClass
 
@@ -48,6 +49,28 @@ public static class PathExtensions
                     return default;
                 previous = partialSlash;
             }
+        }
+
+        public static string RemoveRelativeSegments(string path)
+        {
+            var stack = new Stack<string>();
+            if (path.StartsWith('/'))
+                stack.Push("");
+            foreach (var s in path.Split("/", StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (s == ".")
+                    continue;
+                if (s != "..")
+                {
+                    stack.Push(s);
+                    continue;
+                }
+
+                if (stack.Count > 1)
+                    stack.Pop();
+            }
+
+            return string.Join("/", stack);
         }
 
     }
