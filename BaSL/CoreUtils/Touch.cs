@@ -19,7 +19,7 @@ public sealed class Touch : App
         {
             if (cancellationToken.IsCancellationRequested)
                 break;
-            var path = Path.ToAbsolutePath(arg, WorkingDirectory);
+            var path = Path.ToPartialAbsolutePath(arg, WorkingDirectory);
             var directory = FileSystem.ResolveDirectory(path.Parent);
             if (!directory.Success)
             {

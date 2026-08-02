@@ -54,7 +54,7 @@ public static class DirectoryExtensions
         }
 
         public GetEntryResult Resolve(Path relativeOrAbsolute)
-            => directory.FileSystem.Resolve(relativeOrAbsolute.ToAbsolute(directory.FullPath));
+            => directory.FileSystem.Resolve(relativeOrAbsolute.ToPartialAbsolute(directory.FullPath));
 
         public GetDirectoryResult ResolveDirectory(Path relativeOrAbsolute)
             => directory.Resolve(relativeOrAbsolute).AsDirectory();
@@ -64,7 +64,7 @@ public static class DirectoryExtensions
 
         public Result<File, FileSystemError> ResolveFileOrCreate(UserContext context, Path relativeOrAbsolute)
         {
-            var absolute = relativeOrAbsolute.ToAbsolute(directory.FullPath);
+            var absolute = relativeOrAbsolute.ToPartialAbsolute(directory.FullPath);
             var existing = directory.ResolveFile(absolute);
             if (existing.Success)
                 return existing.Value;

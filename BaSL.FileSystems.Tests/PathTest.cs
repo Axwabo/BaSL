@@ -30,4 +30,22 @@ public sealed class PathTest
         Assert.Equal("among/us", combined.Value);
     }
 
+    [Fact]
+    public void ToPartialAbsoluteWhenSelfIsRelative()
+    {
+        var left = new Path("among");
+        var us = new Path("/us/sus");
+        var absolute = left.ToPartialAbsolute(us);
+        Assert.Equal("/us/sus/among", absolute.Value);
+    }
+
+    [Fact]
+    public void ToPartialAbsoluteWhenSelfIsAbsolute()
+    {
+        var left = new Path("/among");
+        var us = new Path("/us/sus");
+        var absolute = left.ToPartialAbsolute(us);
+        Assert.Equal("/among", absolute.Value);
+    }
+
 }
