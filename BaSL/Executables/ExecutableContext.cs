@@ -23,11 +23,21 @@ public sealed class ExecutableContext
     internal static ExecutableContext Sub(ExecutableContext parent, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
     {
         var context = new ExecutableContext(console, fileSystem, args).CreatePipes();
+        SubStdout(parent, context);
+        SubStderr(parent, context);
+        return context;
+    }
+
+    private static void SubStdout(ExecutableContext parent, ExecutableContext context)
+    {
         if (parent.StandardOutput != null)
             context._copy.Add((context.DestinationOutput!, parent.SourceOutput, context.StandardOutput!, false, "stdout"));
+    }
+
+    private static void SubStderr(ExecutableContext parent, ExecutableContext context)
+    {
         if (parent.StandardError != null)
-            context._copy.Add((context.DestinationError!, parent.SourceError, context.StandardError!, false, "sterr"));
-        return context;
+            context._copy.Add((context.DestinationError!, parent.SourceError, context.StandardError!, false, "stderr"));
     }
 
     internal static ExecutableContext Piped(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
@@ -44,7 +54,7 @@ public sealed class ExecutableContext
             context._disposables.Add(stdin);
         }
         else
-            context.CreateStdinPipe().PipeStdin(source);
+            context.CreateStdinPipe().PipeStdin(source); // TODO: idk bruh :sob:
 
         if (streams.StandardOutput is { } stdout)
         {
@@ -52,7 +62,7 @@ public sealed class ExecutableContext
             context._disposables.Add(stdout);
         }
         else
-            context.CreateStdoutPipe().PipeStdout(source);
+            SubStdout(source, context.CreateStdoutPipe());
 
         if (streams.StandardError is { } stderr)
         {
@@ -60,7 +70,7 @@ public sealed class ExecutableContext
             context._disposables.Add(stderr);
         }
         else
-            context.CreateStderrPipe().PipeStderr(source);
+            SubStderr(source, context.CreateStderrPipe());
 
         return context;
     }
@@ -135,8 +145,8 @@ public sealed class ExecutableContext
 
     private ExecutableContext PipeStdin(PipeWrapper? source)
     {
-        if (source != null && StandardOutput != null)
-            _copy.Add((source.Reader, _sourceOutput!, StandardOutput, false, "stdout -> stdin"));
+        if (source != null)
+            _sourceInput = source.Reader; // TODO: probably use this in other places instead of copying
         return this;
     }
 
@@ -144,20 +154,6 @@ public sealed class ExecutableContext
     {
         /*if (source._sourceInput != null && DestinationInput != null)
             _copy.Add((source._sourceInput, DestinationInput, StandardInput!, false, "stdin"));*/
-        return this;
-    }
-
-    public ExecutableContext PipeStdout(ExecutableContext source)
-    {
-        if (source.StandardOutput != null)
-            _sourceOutput = source.StandardOutput.Writer;
-        return this;
-    }
-
-    private ExecutableContext PipeStderr(ExecutableContext source)
-    {
-        /*if (source.StandardError != null)
-            _copy.Add((source._destinationError, SourceError, StandardError!, false, "stdout"));*/
         return this;
     }
 
