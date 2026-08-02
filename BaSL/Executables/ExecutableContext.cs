@@ -41,9 +41,13 @@ public sealed class ExecutableContext
     }
 
     internal static ExecutableContext Piped(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
-        => new ExecutableContext(console, fileSystem, args)
+    {
+        var context = new ExecutableContext(console, fileSystem, args)
             .CreatePipes()
             .PipeStdin(source.StandardOutput);
+        SubStdout(); // TODO: where
+        return context;
+    }
 
     internal static ExecutableContext Redirected(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, Streams streams)
     {
