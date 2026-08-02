@@ -1,3 +1,3 @@
-namespace BaSL.FileSystems.Tests;
+namespace BaSL.Tests;
 
 public sealed class VfsTest; // TODO

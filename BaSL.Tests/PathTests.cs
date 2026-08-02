@@ -1,6 +1,7 @@
 ﻿using BaSL.FileSystems.Extensions;
+using Path = BaSL.FileSystems.Path;
 
-namespace BaSL.FileSystems.Tests;
+namespace BaSL.Tests;
 
 public sealed class PathTests
 {
