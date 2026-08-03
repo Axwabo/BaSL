@@ -1,9 +1,11 @@
 using System;
 
-namespace BaSL.Syntax;
+namespace BaSL;
 
 public readonly record struct Args(ReadOnlyMemory<string> Value)
 {
+
+    public static implicit operator Args(Memory<string> args) => new(args);
 
     public static implicit operator Args(ReadOnlyMemory<string> args) => new(args);
 

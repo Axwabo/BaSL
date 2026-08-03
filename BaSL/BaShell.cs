@@ -28,7 +28,7 @@ public sealed class BaShell : App
             "export", (shell, context) =>
             {
                 if (context.Args.Length == 2)
-                    shell.ExportedVariables[context.Args.Span[0]] = context.Args.Span[1];
+                    shell.ExportedVariables[context.Args[0]] = context.Args[1];
             }
         }
     };

@@ -12,7 +12,7 @@ namespace BaSL.Executables;
 public sealed class ExecutableContext
 {
 
-    internal static ExecutableContext Root(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, StreamWriter standardOutput, StreamWriter standardError)
+    internal static ExecutableContext Root(Console console, FileSystem fileSystem, Args args, StreamWriter standardOutput, StreamWriter standardError)
         => new ExecutableContext(console, fileSystem, args)
         {
             IsRoot = true,
@@ -20,7 +20,7 @@ public sealed class ExecutableContext
             _sourceError = standardError
         }.CreatePipes();
 
-    internal static ExecutableContext Sub(ExecutableContext parent, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, bool copyStdout = true)
+    internal static ExecutableContext Sub(ExecutableContext parent, Console console, FileSystem fileSystem, Args args, bool copyStdout = true)
     {
         var context = new ExecutableContext(console, fileSystem, args).CreatePipes();
         if (copyStdout)
@@ -29,7 +29,7 @@ public sealed class ExecutableContext
         return context;
     }
 
-    internal static ExecutableContext Piped(ExecutableContext source, ExecutableContext parent, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
+    internal static ExecutableContext Piped(ExecutableContext source, ExecutableContext parent, Console console, FileSystem fileSystem, Args args)
     {
         var context = new ExecutableContext(console, fileSystem, args)
             .CreatePipes()
@@ -38,7 +38,7 @@ public sealed class ExecutableContext
         return context;
     }
 
-    internal static ExecutableContext Redirected(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, Streams streams)
+    internal static ExecutableContext Redirected(ExecutableContext source, Console console, FileSystem fileSystem, Args args, Streams streams)
     {
         var context = new ExecutableContext(console, fileSystem, args);
         if (streams.StandardInput is { } stdin)
@@ -105,7 +105,7 @@ public sealed class ExecutableContext
     private StreamReader? _sourceInput;
     private StreamWriter? _sourceOutput;
 
-    internal ExecutableContext(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
+    internal ExecutableContext(Console console, FileSystem fileSystem, Args args)
     {
         Console = console;
         FileSystem = fileSystem;
@@ -116,7 +116,7 @@ public sealed class ExecutableContext
     internal Console Console { get; }
     internal FileSystem FileSystem { get; }
     internal Directory WorkingDirectory { get; }
-    internal ReadOnlyMemory<string> Args { get; }
+    internal Args Args { get; }
 
     internal PipeWrapper? StandardInput { get; private set; }
     internal PipeWrapper? StandardOutput { get; private set; }

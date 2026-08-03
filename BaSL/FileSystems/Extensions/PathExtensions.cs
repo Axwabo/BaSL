@@ -104,4 +104,11 @@ public static class PathExtensions
 
     }
 
+    extension(Args args)
+    {
+
+        public Path FirstOrDefault(Path other) => args.Value.FirstOrDefault(other);
+
+    }
+
 }

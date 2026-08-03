@@ -1,10 +1,12 @@
 using System;
+using BaSL.Executables;
 using BaSL.FileSystems;
+using BaSL.Syntax;
 using static BaSL.Syntax.StatementExtensions;
 
 // ReSharper disable InvokeAsExtensionMember
 
-namespace BaSL.Syntax;
+namespace BaSL;
 
 public static class ArgsExtensions
 {
@@ -30,6 +32,13 @@ public static class ArgsExtensions
         public static ShellStatement? operator |(Args source, StandaloneStatement? target) => FromArgs(source) | target;
 
         public static ShellStatement? operator |(Args source, Args target) => source | FromArgs(target);
+
+    }
+
+    extension(Args args)
+    {
+
+        public ReadOnlyMemoryEnumerator<string> GetEnumerator() => args.Value.GetEnumerator();
 
     }
 

@@ -23,8 +23,8 @@ public sealed class Chmod : App
             return 1;
         }
 
-        var tuple = ParseModeChange(Args.Span[0]);
-        var recursive = Args.Span[1] is "-R";
+        var tuple = ParseModeChange(Args[0]);
+        var recursive = Args[1] is "-R";
         foreach (var arg in Args[(recursive ? 2 : 1)..])
         {
             if (cancellationToken.IsCancellationRequested)
@@ -65,7 +65,7 @@ public sealed class Chmod : App
     private ModeDeltas ParseModeChange(string s)
         => Modes.TryParseOctal(s, out var modes)
             ? (modes.Owner, modes.Others, ~modes.Owner, ~modes.Others)
-            : Args.Span[0] switch
+            : Args[0] switch
             {
                 // TODO
                 "+x" => (Mode.Execute, Mode.Execute, 0, 0),

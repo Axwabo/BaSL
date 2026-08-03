@@ -16,7 +16,7 @@ public sealed class Bytes : App
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        var entry = FileSystem.ResolveFile(Args.Span[0]);
+        var entry = FileSystem.ResolveFile(Args[0]);
         if (!entry.Success)
         {
             await StandardError.WriteLineAsync(entry.Error.Message);

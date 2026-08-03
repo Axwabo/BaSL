@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,7 +21,7 @@ public sealed class Console
         OperatingSystem = operatingSystem;
         UserContext = new UserContext(operatingSystem.Users[username]);
         CurrentDirectory = FileSystem.ResolveDirectory(User.Home).Unwrap();
-        _context = ExecutableContext.Root(this, FileSystem, ReadOnlyMemory<string>.Empty, standardOutput, standardError);
+        _context = ExecutableContext.Root(this, FileSystem, default, standardOutput, standardError);
     }
 
     public OperatingSystem OperatingSystem { get; }

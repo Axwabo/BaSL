@@ -26,7 +26,7 @@ public sealed class Echo : App
         var args = Args;
         for (var i = 0; i < args.Length; i++)
         {
-            var arg = args.Span[i];
+            var arg = args[i];
             await WriteAsync(cancellationToken, arg);
             if (i != args.Length - 1)
                 await StandardOutput.WriteAsync(" ", cancellationToken);

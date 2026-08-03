@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,7 +29,7 @@ public abstract class App
 
     protected internal StreamWriter StandardError => Context.SourceError;
 
-    protected ReadOnlyMemory<string> Args => Context.Args;
+    protected Args Args => Context.Args;
 
     public abstract Task<int> ExecuteAsync(CancellationToken cancellationToken);
 

@@ -21,7 +21,7 @@ public sealed class Rmdir : App
             return 1;
         }
 
-        var entry = WorkingDirectory.ResolveDirectory(Args.Span[0]);
+        var entry = WorkingDirectory.ResolveDirectory(Args[0]);
         if (!entry.Success)
         {
             await StandardOutput.WriteLineAsync(RemoveChildError.NothingToRemove.Message, cancellationToken);

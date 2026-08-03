@@ -20,7 +20,7 @@ public sealed class Mkdir : App
             return 1;
         }
 
-        var result = WorkingDirectory.CreateDirectories(UserContext, Args.Span[0]);
+        var result = WorkingDirectory.CreateDirectories(UserContext, Args[0]);
         if (result.Success)
             return 0;
         await StandardError.WriteLineAsync(result.Error.Message, cancellationToken);

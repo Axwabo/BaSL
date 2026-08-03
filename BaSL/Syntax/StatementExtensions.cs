@@ -45,7 +45,7 @@ public static class StatementExtensions
         public static StandaloneStatement? FromArgs(List<string> args)
             => args.Count == 0
                 ? null
-                : new StandaloneStatement(args[0], args.ToArray().AsMemory()[1..]);
+                : new StandaloneStatement(args[0], args.ToArray().AsMemory(1));
 
         public static StandaloneStatement? FromArgs(ReadOnlyMemory<string> args)
             => args.Length == 0

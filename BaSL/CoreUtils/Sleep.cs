@@ -15,7 +15,7 @@ public sealed class Sleep : App
     {
         if (Args.Length == 0)
             return 1;
-        if (!int.TryParse(Args.Span[0], out var seconds))
+        if (!int.TryParse(Args[0], out var seconds))
             return 1;
         await Task.Delay(seconds * 1000, cancellationToken);
         return 0;
