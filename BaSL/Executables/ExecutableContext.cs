@@ -24,21 +24,9 @@ public sealed class ExecutableContext
     {
         var context = new ExecutableContext(console, fileSystem, args).CreatePipes();
         if (copyStdout)
-            SubStdout(parent, context);
-        SubStderr(parent, context);
+            context.SubStdout(parent);
+        context.SubStderr(parent);
         return context;
-    }
-
-    private static void SubStdout(ExecutableContext parent, ExecutableContext context)
-    {
-        if (parent.StandardOutput != null)
-            context._copy.Add((context.DestinationOutput!, parent.SourceOutput, context.StandardOutput!, false, "stdout"));
-    }
-
-    private static void SubStderr(ExecutableContext parent, ExecutableContext context)
-    {
-        if (parent.StandardError != null)
-            context._copy.Add((context.DestinationError!, parent.SourceError, context.StandardError!, false, "stderr"));
     }
 
     internal static ExecutableContext Piped(ExecutableContext source, ExecutableContext parent, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
@@ -46,7 +34,7 @@ public sealed class ExecutableContext
         var context = new ExecutableContext(console, fileSystem, args)
             .CreatePipes()
             .PipeStdin(source.StandardOutput);
-        SubStdout(parent, context); // TODO: where
+        context.SubStdout(parent); // TODO: where
         return context;
     }
 
@@ -67,7 +55,7 @@ public sealed class ExecutableContext
             context._completables.Add(stdout);
         }
         else
-            SubStdout(source, context.CreateStdoutPipe());
+            context.CreateStdoutPipe().SubStdout(source);
 
         if (streams.StandardError is { } stderr)
         {
@@ -75,7 +63,7 @@ public sealed class ExecutableContext
             context._completables.Add(stderr);
         }
         else
-            SubStderr(source, context.CreateStderrPipe());
+            context.CreateStderrPipe().SubStderr(source);
 
         return context;
     }
@@ -117,7 +105,7 @@ public sealed class ExecutableContext
     private StreamReader? _sourceInput;
     private StreamWriter? _sourceOutput;
 
-    private ExecutableContext(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
+    internal ExecutableContext(Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
     {
         Console = console;
         FileSystem = fileSystem;
@@ -147,6 +135,18 @@ public sealed class ExecutableContext
     internal StreamReader? DestinationError => _destinationError;
 
     internal bool IsRoot { get; private set; }
+
+    public void SubStdout(ExecutableContext parent)
+    {
+        if (parent.StandardOutput != null)
+            _copy.Add((DestinationOutput!, parent.SourceOutput, StandardOutput!, false, "stdout"));
+    }
+
+    public void SubStderr(ExecutableContext parent)
+    {
+        if (parent.StandardError != null)
+            _copy.Add((DestinationError!, parent.SourceError, StandardError!, false, "stderr"));
+    }
 
     internal ExecutableContext PipeStdin(PipeWrapper? source)
     {
