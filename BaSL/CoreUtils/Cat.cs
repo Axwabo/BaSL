@@ -44,6 +44,7 @@ public sealed class Cat : App
 
     private async Task<int> ReadStandardInputAsync(CancellationToken cancellationToken)
     {
+        // TODO: why is the stream not ending??
         while (!cancellationToken.IsCancellationRequested)
             await StandardOutput.WriteLineAsync(await StandardInput.ReadLineAsync(), cancellationToken);
         return 0;
