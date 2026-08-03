@@ -31,24 +31,19 @@ internal static class StatementParser
     private static ShellStatement? ExpandPipes(Args firstArgs, List<Segment> syntax)
     {
         ShellStatement? statement = StandaloneStatement.FromArgs(firstArgs);
-        var previous = syntax[0].Type;
-        for (var i = 1; i < syntax.Count; i++)
+        for (var i = 1; i < syntax.Count; i += 2)
         {
-            if (statement is not ExtendableStatement)
+            if (statement is not ExtendableStatement || syntax[i] is not ArgsSegment {Args: var args})
                 return null;
-            var current = syntax[i];
-            var args = current.Args;
-            switch (previous, current.Type)
+            switch (syntax[i - 1])
             {
-                case (Pipe, _):
+                case PipeSegment:
                     statement |= StandaloneStatement.FromArgs(args);
                     break;
-                case (RedirectStandardOutputOverwrite, Simple):
+                case RedirectOverwriteSegment:
                     return args.IsEmpty ? null : statement > args[0];
-                case (RedirectStandardOutputAppend, Simple):
+                case RedirectAppendSegment:
                     return args.IsEmpty ? null : statement >> args[0];
-                case (Simple, _):
-                    break;
                 default:
                     return null;
             }
@@ -95,14 +90,14 @@ internal static class StatementParser
                     AddArg(SyntaxType.QuotedString);
                     break;
                 case (SyntaxType.Text, '|'):
-                    AddStatement(Pipe);
+                    AddStatement(Segment.Pipe);
                     break;
                 case (SyntaxType.Text, '>') when next == '>':
-                    AddStatement(RedirectStandardOutputAppend);
+                    AddStatement(Segment.RedirectAppend);
                     i++;
                     break;
                 case (SyntaxType.Text, '>'):
-                    AddStatement(RedirectStandardOutputOverwrite);
+                    AddStatement(Segment.RedirectOverwrite);
                     break;
                 case (SyntaxType.Text or SyntaxType.QuotedString, '$'):
                     outerSyntax = syntax;
@@ -130,7 +125,7 @@ internal static class StatementParser
         if (argBuzilder.Length != 0)
             AddArg();
         if (args.Count != 0)
-            AddStatement(Simple);
+            AddStatement();
 
         return;
 
@@ -145,13 +140,11 @@ internal static class StatementParser
             syntax = next;
         }
 
-        void AddStatement(StatementType type)
+        void AddStatement(Segment? segment = null)
         {
-            statements.Add(new Statement
-            {
-                Args = args.ToArray(),
-                Type = type
-            });
+            statements.Add(new ArgsSegment(args.ToArray()));
+            if (segment is not null)
+                statements.Add(segment);
             args.Clear();
             outerSyntax = syntax = SyntaxType.Text;
         }
