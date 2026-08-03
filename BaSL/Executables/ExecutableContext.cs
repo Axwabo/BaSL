@@ -20,10 +20,11 @@ public sealed class ExecutableContext
             _sourceError = standardError
         }.CreatePipes();
 
-    internal static ExecutableContext Sub(ExecutableContext parent, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
+    internal static ExecutableContext Sub(ExecutableContext parent, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args, bool copyStdout = true)
     {
         var context = new ExecutableContext(console, fileSystem, args).CreatePipes();
-        SubStdout(parent, context);
+        if (copyStdout)
+            SubStdout(parent, context);
         SubStderr(parent, context);
         return context;
     }

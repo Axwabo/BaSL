@@ -130,7 +130,7 @@ public sealed class BaShell : App
             }
             case PipeStatement {Source: StandaloneStatement standaloneStatement} pipeStatement:
             {
-                await using var source = ExecutableContext.Sub(Context, Console, FileSystem, standaloneStatement.Args);
+                await using var source = ExecutableContext.Sub(Context, Console, FileSystem, standaloneStatement.Args, false);
                 await using var target = ExecutableContext.Piped(source, Context, Console, FileSystem, pipeStatement.TargetArgs);
                 var sourceCommand = Locate(standaloneStatement.Location);
                 if (!sourceCommand.Success)
