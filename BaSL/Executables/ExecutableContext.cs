@@ -45,7 +45,7 @@ public sealed class ExecutableContext
         var context = new ExecutableContext(console, fileSystem, args)
             .CreatePipes()
             .PipeStdin(source.StandardOutput);
-        SubStdout(); // TODO: where
+        SubStdout(source, context); // TODO: where
         return context;
     }
 
@@ -55,7 +55,7 @@ public sealed class ExecutableContext
         if (streams.StandardInput is { } stdin)
         {
             context._sourceInput = new StreamReader(stdin);
-            context._disposables.Add(stdin);
+            context._completables.Add(stdin);
         }
         else
             context.CreateStdinPipe().PipeStdin(source); // TODO: idk bruh :sob:
@@ -63,7 +63,7 @@ public sealed class ExecutableContext
         if (streams.StandardOutput is { } stdout)
         {
             context._sourceOutput = new StreamWriter(stdout) {AutoFlush = true};
-            context._disposables.Add(stdout);
+            context._completables.Add(stdout);
         }
         else
             SubStdout(source, context.CreateStdoutPipe());
@@ -71,7 +71,7 @@ public sealed class ExecutableContext
         if (streams.StandardError is { } stderr)
         {
             context._sourceError = new StreamWriter(stderr) {AutoFlush = true};
-            context._disposables.Add(stderr);
+            context._completables.Add(stderr);
         }
         else
             SubStderr(source, context.CreateStderrPipe());

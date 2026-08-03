@@ -54,6 +54,8 @@ file sealed class VirtualFileStream : Stream
 
     private readonly MemoryStream _stream;
 
+    private bool _disposed;
+
     public VirtualFileStream(VirtualFile file, byte[] data, int length, bool canWrite)
     {
         _file = file;
@@ -66,38 +68,77 @@ file sealed class VirtualFileStream : Stream
             _stream = new MemoryStream(data, 0, length, false);
     }
 
-    public override bool CanRead => _stream.CanRead;
+    public override bool CanRead => ThrowIfDisposed(_stream.CanRead);
 
-    public override bool CanSeek => _stream.CanSeek;
+    public override bool CanSeek => ThrowIfDisposed(_stream.CanSeek);
 
-    public override bool CanWrite => _stream.CanWrite;
+    public override bool CanWrite => ThrowIfDisposed(_stream.CanWrite);
 
-    public override long Length => _stream.Length;
+    public override long Length => ThrowIfDisposed(_stream.Length);
 
     public override long Position
     {
         get => _stream.Position;
-        set => _stream.Position = value;
+        set
+        {
+            ThrowIfDisposed();
+            _stream.Position = value;
+        }
     }
 
-    public override void Flush() => _stream.Flush();
+    public override void Flush()
+    {
+        ThrowIfDisposed();
+        _stream.Flush();
+    }
 
-    public override int Read(byte[] buffer, int offset, int count) => _stream.Read(buffer, offset, count);
+    public override int Read(byte[] buffer, int offset, int count)
+    {
+        ThrowIfDisposed();
+        return _stream.Read(buffer, offset, count);
+    }
 
-    public override long Seek(long offset, SeekOrigin origin) => _stream.Seek(offset, origin);
+    public override long Seek(long offset, SeekOrigin origin)
+    {
+        ThrowIfDisposed();
+        return _stream.Seek(offset, origin);
+    }
 
-    public override void SetLength(long value) => _stream.SetLength(value);
+    public override void SetLength(long value)
+    {
+        ThrowIfDisposed();
+        _stream.SetLength(value);
+    }
 
-    public override void Write(byte[] buffer, int offset, int count) => _stream.Write(buffer, offset, count);
+    public override void Write(byte[] buffer, int offset, int count)
+    {
+        ThrowIfDisposed();
+        _stream.Write(buffer, offset, count);
+    }
 
     protected override void Dispose(bool disposing)
     {
+        if (_disposed)
+            return;
         GC.SuppressFinalize(this);
         if (disposing && CanWrite) // TODO: ???
             _file.Release(_stream.GetBuffer(), (int) _stream.Length);
         _stream.Dispose();
+        _disposed = true;
     }
 
     ~VirtualFileStream() => Dispose(false);
+
+    private void ThrowIfDisposed()
+    {
+        if (_disposed)
+            throw new ObjectDisposedException("VirtualFileStream");
+    }
+
+    private T ThrowIfDisposed<T>(T returnValue)
+    {
+        ThrowIfDisposed();
+        return returnValue;
+    }
 
 }

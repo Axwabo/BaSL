@@ -69,9 +69,23 @@ internal static class StatementParser
         var args = new List<string>();
         var syntax = SyntaxType.Text;
         var outerSyntax = SyntaxType.Text;
+        var escaped = false;
         for (var i = 0; i < s.Length; i++)
         {
             var c = s[i];
+            if (escaped)
+            {
+                argBuzilder.Append(c);
+                escaped = false;
+                continue;
+            }
+
+            if (c == '\\')
+            {
+                escaped = true;
+                continue;
+            }
+
             char? next = i < s.Length - 1 ? s[i + 1] : null;
             switch (syntax, c)
             {
