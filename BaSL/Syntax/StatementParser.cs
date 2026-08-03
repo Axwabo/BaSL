@@ -15,20 +15,16 @@ internal static class StatementParser
     {
         var results = new List<ShellStatement?>();
         var syntax = new List<Statement>();
-        foreach (var s in line.Split(';'))
+        ParseStatements(line, syntax, variables);
+        results.Add(syntax switch
         {
-            syntax.Clear();
-            ParseStatements(s, syntax, variables);
-            results.Add(syntax switch
-            {
-                [{Type: Simple, Args: var simpleArgs}] => StandaloneStatement.FromArgs(simpleArgs),
-                [{Type: RedirectStandardOutputOverwrite, Args: var sourceArgs}, {Type: Simple, Args: [var target]}] => sourceArgs > target,
-                [{Type: RedirectStandardOutputAppend, Args: var sourceArgs}, {Type: Simple, Args: [var target]}] => sourceArgs >> target,
-                [{Type: Pipe, Args: var sourceArgs}, {Type: Simple, Args: var targetArgs}] => sourceArgs | targetArgs,
-                [{Type: Pipe, Args: var firstArgs}, ..] => ExpandPipes(firstArgs, syntax),
-                _ => null
-            });
-        }
+            [{Type: Simple, Args: var simpleArgs}] => StandaloneStatement.FromArgs(simpleArgs),
+            [{Type: RedirectStandardOutputOverwrite, Args: var sourceArgs}, {Type: Simple, Args: [var target]}] => sourceArgs > target,
+            [{Type: RedirectStandardOutputAppend, Args: var sourceArgs}, {Type: Simple, Args: [var target]}] => sourceArgs >> target,
+            [{Type: Pipe, Args: var sourceArgs}, {Type: Simple, Args: var targetArgs}] => sourceArgs | targetArgs,
+            [{Type: Pipe, Args: var firstArgs}, ..] => ExpandPipes(firstArgs, syntax),
+            _ => null
+        });
 
         return results;
     }
