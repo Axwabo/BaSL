@@ -40,12 +40,12 @@ public sealed class ExecutableContext
             context._copy.Add((context.DestinationError!, parent.SourceError, context.StandardError!, false, "stderr"));
     }
 
-    internal static ExecutableContext Piped(ExecutableContext source, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
+    internal static ExecutableContext Piped(ExecutableContext source, ExecutableContext parent, Console console, FileSystem fileSystem, ReadOnlyMemory<string> args)
     {
         var context = new ExecutableContext(console, fileSystem, args)
             .CreatePipes()
             .PipeStdin(source.StandardOutput);
-        SubStdout(source, context); // TODO: where
+        SubStdout(parent, context); // TODO: where
         return context;
     }
 
@@ -147,14 +147,14 @@ public sealed class ExecutableContext
 
     internal bool IsRoot { get; private set; }
 
-    private ExecutableContext PipeStdin(PipeWrapper? source)
+    internal ExecutableContext PipeStdin(PipeWrapper? source)
     {
         if (source != null)
             _sourceInput = source.Reader; // TODO: probably use this in other places instead of copying
         return this;
     }
 
-    public ExecutableContext PipeStdin(ExecutableContext source)
+    internal ExecutableContext PipeStdin(ExecutableContext source)
     {
         /*if (source._sourceInput != null && DestinationInput != null)
             _copy.Add((source._sourceInput, DestinationInput, StandardInput!, false, "stdin"));*/
@@ -170,22 +170,22 @@ public sealed class ExecutableContext
         return pipe;
     }
 
-    private ExecutableContext CreatePipes() => CreateStdinPipe().CreateStdoutPipe().CreateStderrPipe();
+    internal ExecutableContext CreatePipes() => CreateStdinPipe().CreateStdoutPipe().CreateStderrPipe();
 
-    private ExecutableContext CreateStdinPipe()
+    internal ExecutableContext CreateStdinPipe()
     {
         StandardInput ??= CreatePipe(ref _sourceInput, ref _destinationInput);
         return this;
     }
 
-    private ExecutableContext CreateStdoutPipe()
+    internal ExecutableContext CreateStdoutPipe()
     {
         StandardOutput ??= CreatePipe(ref _destinationOutput, ref _sourceOutput);
         _completables.Add(_sourceOutput!);
         return this;
     }
 
-    private ExecutableContext CreateStderrPipe()
+    internal ExecutableContext CreateStderrPipe()
     {
         StandardError ??= CreatePipe(ref _destinationError, ref _sourceError);
         _completables.Add(_sourceError!);
