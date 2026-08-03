@@ -131,7 +131,8 @@ public sealed class BaShell : App
             case PipeStatement {Source: StandaloneStatement standaloneStatement} pipeStatement:
             {
                 await using var source = new ExecutableContext(Console, FileSystem, standaloneStatement.Args).CreatePipes();
-                await using var target = new ExecutableContext(Console, FileSystem, standaloneStatement.Args);
+                await using var target = new ExecutableContext(Console, FileSystem, pipeStatement.TargetArgs);
+                source.SubStderr(Context);
                 target.CreateStdinPipe();
                 target.PipeStdin(source.StandardOutput);
                 target.CreateStdoutPipe().CreateStderrPipe();
