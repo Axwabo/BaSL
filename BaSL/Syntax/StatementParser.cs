@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using static BaSL.Syntax.StatementType;
 
 namespace BaSL.Syntax;
 
@@ -14,22 +13,22 @@ internal static class StatementParser
     public static List<ShellStatement?> Parse(string line, TryParse variables)
     {
         var results = new List<ShellStatement?>();
-        var syntax = new List<Statement>();
+        var syntax = new List<Segment>();
         ParseStatements(line, syntax, variables);
         results.Add(syntax switch
         {
-            [{Type: Simple, Args: var simpleArgs}] => StandaloneStatement.FromArgs(simpleArgs),
-            [{Type: RedirectStandardOutputOverwrite, Args: var sourceArgs}, {Type: Simple, Args: [var target]}] => sourceArgs > target,
-            [{Type: RedirectStandardOutputAppend, Args: var sourceArgs}, {Type: Simple, Args: [var target]}] => sourceArgs >> target,
-            [{Type: Pipe, Args: var sourceArgs}, {Type: Simple, Args: var targetArgs}] => sourceArgs | targetArgs,
-            [{Type: Pipe, Args: var firstArgs}, ..] => ExpandPipes(firstArgs, syntax),
+            [ArgsSegment {Args: var simpleArgs}] => StandaloneStatement.FromArgs(simpleArgs),
+            [ArgsSegment {Args: var sourceArgs}, RedirectOverwriteSegment, ArgsSegment {Args: [var target]}] => sourceArgs > target,
+            [ArgsSegment {Args: var sourceArgs}, RedirectAppendSegment, ArgsSegment {Args: [var target]}] => sourceArgs >> target,
+            [ArgsSegment {Args: var sourceArgs}, PipeSegment, ArgsSegment {Args: var targetArgs}] => sourceArgs | targetArgs,
+            [ArgsSegment {Args: var firstArgs}, PipeSegment, ..] => ExpandPipes(firstArgs, syntax),
             _ => null
         });
 
         return results;
     }
 
-    private static ShellStatement? ExpandPipes(Args firstArgs, List<Statement> syntax)
+    private static ShellStatement? ExpandPipes(Args firstArgs, List<Segment> syntax)
     {
         ShellStatement? statement = StandaloneStatement.FromArgs(firstArgs);
         var previous = syntax[0].Type;
@@ -58,7 +57,7 @@ internal static class StatementParser
         return statement;
     }
 
-    private static void ParseStatements(string s, List<Statement> statements, TryParse variables)
+    private static void ParseStatements(string s, List<Segment> statements, TryParse variables)
     {
         var argBuzilder = new StringBuilder();
         var variableBuilder = new StringBuilder();
