@@ -21,10 +21,15 @@ using LocateCommandResult = Result<RunCommand, Error>;
 public sealed class BaShell : App
 {
 
-    private static readonly Dictionary<string, Action> BuiltInCommands = new()
+    private static readonly Dictionary<string, Action<BaShell, ExecutableContext>> BuiltInCommands = new()
     {
+        {"clear", (_, _) => System.Console.Clear()},
         {
-            "clear", System.Console.Clear
+            "export", (shell, context) =>
+            {
+                if (context.Args.Length == 2)
+                    shell.ExportedVariables[context.Args.Span[0]] = context.Args.Span[1];
+            }
         }
     };
 
@@ -55,7 +60,7 @@ public sealed class BaShell : App
 
     public BaShell(ExecutableContext context, ShellStatement statement) : this(context) => _statement = statement;
 
-    private int? LastExitCode
+    private int LastExitCode
     {
         set => ExportedVariables["$"] = value.ToString();
     }
@@ -211,9 +216,9 @@ public sealed class BaShell : App
     {
         PathCommandLocation {FullPath: var path} => Execute(path),
         AutoCommandLocation {Phrase: var path} when Path.IsExplicitRelativeOrAbsolute(path) => Execute(path),
-        AutoCommandLocation {Phrase: var name} when BuiltInCommands.TryGetValue(name, out var action) => (RunCommand) ((_, _) =>
+        AutoCommandLocation {Phrase: var name} when BuiltInCommands.TryGetValue(name, out var action) => (RunCommand) ((context, _) =>
         {
-            action();
+            action(this, context);
             return Task.FromResult(0);
         }),
         AutoCommandLocation {Phrase: var name} when ResolveFromPath(name) is {Success: true, Value: var file} => Execute(file),
