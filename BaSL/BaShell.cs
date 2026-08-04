@@ -189,6 +189,9 @@ public sealed class BaShell : App
                     {
                         var args = run[i].Item3;
                         var intermediate = new ExecutableContext(Console, FileSystem, args);
+                        intermediate.PipeStdin(contexts[^1]);
+                        intermediate.CreateStdoutPipe();
+                        intermediate.CreateStderrPipe().SubStderr(Context); // TODO: concurrent writes are most likely not possible
                     }
 
                     var target = new ExecutableContext(Console, FileSystem, run[0].Item3);
