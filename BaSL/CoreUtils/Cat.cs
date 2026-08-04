@@ -46,7 +46,13 @@ public sealed class Cat : App
     {
         // TODO: why is the stream not ending??
         while (!cancellationToken.IsCancellationRequested)
-            await StandardOutput.WriteLineAsync(await StandardInput.ReadLineAsync(), cancellationToken);
+        {
+            var line = await StandardInput.ReadLineAsync();
+            if (line == null)
+                break;
+            await StandardOutput.WriteLineAsync(line, cancellationToken);
+        }
+
         return 0;
     }
 
