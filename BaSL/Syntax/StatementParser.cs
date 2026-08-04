@@ -31,7 +31,7 @@ internal static class StatementParser
     private static ShellStatement? ExpandPipes(Args firstArgs, List<Segment> syntax)
     {
         ShellStatement? statement = StandaloneStatement.FromArgs(firstArgs);
-        for (var i = 1; i < syntax.Count; i += 2)
+        for (var i = 2; i < syntax.Count; i += 2)
         {
             if (statement is not ExtendableStatement || syntax[i] is not ArgsSegment {Args: var args})
                 return null;
