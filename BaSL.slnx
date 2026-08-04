@@ -2,4 +2,5 @@
     <Project Path="BaSL.Shell.Console/BaSL.Shell.Console.csproj" />
     <Project Path="BaSL.Tests\BaSL.Tests.csproj" />
     <Project Path="BaSL\BaSL.csproj" />
+    <Project Path="Experiments/Experiments.csproj" />
 </Solution>
