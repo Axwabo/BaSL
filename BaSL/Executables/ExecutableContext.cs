@@ -157,6 +157,8 @@ public sealed class ExecutableContext
 
     internal ExecutableContext PipeStdin(ExecutableContext source)
     {
+        source._completables.Add(source.StandardOutput!.Writer);
+        _sourceInput = source.StandardOutput!.Reader;
         /*if (source._sourceInput != null && DestinationInput != null)
             _copy.Add((source._sourceInput, DestinationInput, StandardInput!, false, "stdin"));*/
         return this;

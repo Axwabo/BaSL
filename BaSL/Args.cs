@@ -21,6 +21,8 @@ public readonly record struct Args(ReadOnlyMemory<string> Value)
 
     public string this[int index] => Value.Span[index];
 
+    public string this[Index index] => Value.Span[index];
+
     public Args this[Range range] => Value[range];
 
 }

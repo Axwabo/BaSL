@@ -36,9 +36,9 @@ public sealed class BaShell : App
     private static RunCommand Execute(File file) => (context, token) =>
     {
         var execute = file.Execute(context, token);
-        if (!execute.Success)
-            return execute.Error;
-        return Result<Task<int>, Error>.CreateSuccess(RunAndComplete(execute.Value));
+        return !execute.Success
+            ? execute.Error
+            : Result<Task<int>, Error>.CreateSuccess(RunAndComplete(execute.Value));
 
         async Task<int> RunAndComplete(Process process)
         {
@@ -138,11 +138,9 @@ public sealed class BaShell : App
                 await using var source = new ExecutableContext(Console, FileSystem, standaloneStatement.Args).CreatePipes();
                 await using var target = new ExecutableContext(Console, FileSystem, pipeStatement.TargetArgs);
                 source.SubStderr(Context);
-                target.CreateStdinPipe();
-                target.PipeStdin(source.StandardOutput);
-                target.CreateStdoutPipe().CreateStderrPipe();
-                target.SubStdout(Context);
-                target.SubStderr(Context);
+                target.PipeStdin(source);
+                target.CreateStdoutPipe().SubStdout(Context);
+                target.CreateStderrPipe().SubStderr(Context);
                 var sourceCommand = Locate(standaloneStatement.Location);
                 if (!sourceCommand.Success)
                     return await WriteExecuteErrorAsync(standaloneStatement.Location, sourceCommand.Error, cancellationToken);
@@ -158,8 +156,6 @@ public sealed class BaShell : App
                 var copy = Task.WhenAll(source.CopyAsync(), target.CopyAsync());
                 var codes = await Task.WhenAll(sourceProcess.Value, targetProcess.Value);
                 await copy;
-                await source.CompletePipesAsync();
-                await target.CompletePipesAsync();
                 return codes[0];
             }
             default:
