@@ -135,18 +135,18 @@ public sealed class BaShell : App
             }
             case PipeStatement {Source: StandaloneStatement standaloneStatement} pipeStatement:
             {
-                await using var source = new ExecutableContext(Console, FileSystem, standaloneStatement.Args).CreatePipes();
-                await using var target = new ExecutableContext(Console, FileSystem, pipeStatement.TargetArgs);
-                source.SubStderr(Context);
-                target.PipeStdin(source);
-                target.CreateStdoutPipe().SubStdout(Context);
-                target.CreateStderrPipe().SubStderr(Context);
                 var sourceCommand = Locate(standaloneStatement.Location);
                 if (!sourceCommand.Success)
                     return await WriteExecuteErrorAsync(standaloneStatement.Location, sourceCommand.Error, cancellationToken);
                 var targetCommand = Locate(pipeStatement.TargetLocation);
                 if (!targetCommand.Success)
                     return await WriteExecuteErrorAsync(pipeStatement.TargetLocation, targetCommand.Error, cancellationToken);
+                await using var source = new ExecutableContext(Console, FileSystem, standaloneStatement.Args).CreatePipes();
+                await using var target = new ExecutableContext(Console, FileSystem, pipeStatement.TargetArgs);
+                source.SubStderr(Context);
+                target.PipeStdin(source);
+                target.CreateStdoutPipe().SubStdout(Context);
+                target.CreateStderrPipe().SubStderr(Context);
                 var sourceProcess = sourceCommand.Value(source, cancellationToken);
                 if (!sourceProcess.Success)
                     return await WriteExecuteErrorAsync(standaloneStatement.Location, sourceProcess.Error, cancellationToken);
@@ -156,7 +156,38 @@ public sealed class BaShell : App
                 var copy = Task.WhenAll(source.CopyAsync(), target.CopyAsync());
                 var codes = await Task.WhenAll(sourceProcess.Value, targetProcess.Value);
                 await copy;
-                return codes[0];
+                return codes[^1];
+            }
+            case PipeStatement pipeStatement:
+            {
+                var run = new List<(RunCommand, Args)>();
+                ExtendableStatement? statement = pipeStatement;
+                do
+                {
+                    var (location, args) = statement switch
+                    {
+                        PipeStatement {TargetLocation: var targetLocation, TargetArgs: var targetArgs} => (targetLocation, targetArgs),
+                        StandaloneStatement {Location: var standaloneLocation, Args: var standaloneArgs} => (standaloneLocation, standaloneArgs),
+                        _ => throw new ArgumentOutOfRangeException(nameof(statement))
+                    };
+                    var result = Locate(location);
+                    if (!result.Success)
+                        return await WriteExecuteErrorAsync(location, result.Error, cancellationToken);
+                    run.Add((result.Value, args));
+                    statement = (statement as PipeStatement)?.Source;
+                    // TODO: redirect last
+                }
+                while (statement is not null);
+
+                var contexts = new List<ExecutableContext>();
+                try
+                {
+                }
+                finally
+                {
+                    foreach (var context in contexts)
+                        await context.DisposeAsync();
+                }
             }
             default:
                 await StandardError.WriteAsync("Statement too complex or invalid: ", cancellationToken);
