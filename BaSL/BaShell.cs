@@ -160,7 +160,7 @@ public sealed class BaShell : App
             }
             case PipeStatement pipeStatement:
             {
-                var run = new List<(RunCommand, Args)>();
+                var run = new List<(CommandLocation, RunCommand, Args)>();
                 ExtendableStatement? statement = pipeStatement;
                 do
                 {
@@ -173,15 +173,47 @@ public sealed class BaShell : App
                     var result = Locate(location);
                     if (!result.Success)
                         return await WriteExecuteErrorAsync(location, result.Error, cancellationToken);
-                    run.Add((result.Value, args));
+                    run.Add((location, result.Value, args));
                     statement = (statement as PipeStatement)?.Source;
-                    // TODO: redirect last
+                    // TODO: ability to redirect last
                 }
                 while (statement is not null);
 
                 var contexts = new List<ExecutableContext>();
                 try
                 {
+                    var source = new ExecutableContext(Console, FileSystem, run[^1].Item3).CreatePipes();
+                    source.SubStderr(Context);
+                    contexts.Add(source);
+                    for (var i = run.Count - 2; i >= 1; i--)
+                    {
+                        var args = run[i].Item3;
+                        var intermediate = new ExecutableContext(Console, FileSystem, args);
+                    }
+
+                    var target = new ExecutableContext(Console, FileSystem, run[0].Item3);
+                    target.PipeStdin(contexts[^1]);
+                    target.CreateStdoutPipe().SubStdout(Context);
+                    target.CreateStderrPipe().SubStderr(Context);
+                    contexts.Add(target);
+
+                    var copies = new List<Task>();
+                    var codes = new List<Task<int>>();
+
+                    for (var i = 0; i < contexts.Count; i++)
+                    {
+                        var (location, func, _) = run[contexts.Count - i - 1];
+                        var execute = func(contexts[i], cancellationToken);
+                        if (!execute.Success)
+                            return await WriteExecuteErrorAsync(location, execute.Error, cancellationToken);
+                        codes.Add(execute.Value);
+                        copies.Add(contexts[i].CopyAsync());
+                    }
+
+                    var copy = Task.WhenAll(copies.ToArray());
+                    var codeResults = await Task.WhenAll(codes.ToArray());
+                    await copy;
+                    return codeResults[^1];
                 }
                 finally
                 {
