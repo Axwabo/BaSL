@@ -1,6 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-<ItemGroup>
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.1;net10.0</TargetFrameworks>
+    </PropertyGroup>
+
+    <ItemGroup>
         <PackageReference Include="System.IO.Pipelines" Version="10.0.10" />
     </ItemGroup>
 

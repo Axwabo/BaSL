@@ -180,6 +180,8 @@ public sealed class BaShell : App
         {
             await StandardOutput.WriteAsync($"{User.Username}@{Console.OperatingSystem.Hostname}:{FormatCurrentDirectory()}{(User.IsSuperuser ? "# " : "$ ")}");
             var line = await StandardInput.ReadLineAsync();
+            if (line == null)
+                return 0;
             if (string.IsNullOrEmpty(line))
                 continue;
             if (line.AsSpan().Trim().Equals("exit", StringComparison.OrdinalIgnoreCase))
