@@ -49,6 +49,11 @@ public sealed class BaShell : App
         }
     };
 
+    internal static (ExecutableContext, BaShell) CreateRoot(Console console, StreamWriter standardOutput, StreamWriter standardError)
+    {
+        var shell = new BaShell(ExecutableContext.Root())
+    }
+
     private readonly ShellStatement? _statement;
 
     private CancellationTokenSource? _cts;
@@ -57,6 +62,8 @@ public sealed class BaShell : App
     {
         foreach (var kvp in context.Shell.User.Environment)
             ExportedVariables[kvp.Key] = kvp.Value;
+        User = context.Shell.User;
+        UserContext = context.Shell.UserContext;
     }
 
     public BaShell(ExecutableContext context, ShellStatement statement) : this(context) => _statement = statement;
@@ -68,7 +75,9 @@ public sealed class BaShell : App
 
     public Dictionary<string, string> ExportedVariables { get; } = [];
 
-    private User User => Shell.User;
+    public User User { get; }
+
+    public new UserContext UserContext { get; }
 
     private new StreamWriter StandardError => Context.IsRoot ? StandardOutput : base.StandardError;
 
@@ -248,7 +257,7 @@ public sealed class BaShell : App
     {
         while (true)
         {
-            await StandardOutput.WriteAsync($"{User.Username}@{Shell.OperatingSystem.Hostname}:{FormatCurrentDirectory()}{(User.IsSuperuser ? "# " : "$ ")}");
+            await StandardOutput.WriteAsync($"{User.Username}@{Shell.Hostname}:{FormatCurrentDirectory()}{(User.IsSuperuser ? "# " : "$ ")}");
             var line = await StandardInput.ReadLineAsync();
             if (string.IsNullOrEmpty(line))
                 continue;

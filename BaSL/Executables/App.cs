@@ -11,9 +11,9 @@ namespace BaSL.Executables;
 public abstract class App
 {
 
-    private protected readonly ExecutableContext Context;
-
     protected App(ExecutableContext context) => Context = context;
+
+    private protected ExecutableContext Context { get; init; }
 
     protected BaShell Shell => Context.Shell;
 
