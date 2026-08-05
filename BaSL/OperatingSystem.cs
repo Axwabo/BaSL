@@ -26,7 +26,7 @@ public sealed class OperatingSystem
         var ctx = new UserContext(Root);
         Users["root"] = Root;
         FileSystem = FileSystem.CreateVirtual(Root);
-        ((IMountSupport) FileSystem.Root).Mount(ctx, new DevFileSystem(Root), "dev");
+        FileSystem.Root.Mount(ctx, new DevFileSystem(Root), "dev");
         _homes = (IMountSupport) FileSystem.Root.CreateDirectory(ctx, "home").Unwrap();
     }
 

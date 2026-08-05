@@ -96,6 +96,17 @@ public static class DirectoryExtensions
                 yield return selfError;
         }
 
+        public Result<Directory, Error> Mount(UserContext context, FileSystem fileSystem, FileSystemEntryName name)
+        {
+            if (directory is not IMountSupport mountSupport)
+                return new MountError();
+            var result = mountSupport.Mount(context, fileSystem, name);
+            return result.Success ? result.Value : result.Error;
+        }
+
     }
 
 }
+
+// TODO
+file sealed record MountError() : Error("Directory does not support mounting");
