@@ -12,35 +12,35 @@ namespace BaSL.Executables;
 public sealed class ExecutableContext
 {
 
-    internal static ExecutableContext Root(Console console, FileSystem fileSystem, Args args, StreamWriter standardOutput, StreamWriter standardError)
-        => new ExecutableContext(console, fileSystem, args)
+    internal static ExecutableContext Root(BaShell shell, FileSystem fileSystem, Args args, StreamWriter standardOutput, StreamWriter standardError)
+        => new ExecutableContext(shell, fileSystem, args)
         {
             IsRoot = true,
             _sourceOutput = standardOutput,
             _sourceError = standardError
         }.CreatePipes();
 
-    internal static ExecutableContext Sub(ExecutableContext parent, Console console, FileSystem fileSystem, Args args, bool copyStdout = true)
+    internal static ExecutableContext Sub(ExecutableContext parent, BaShell shell, FileSystem fileSystem, Args args, bool copyStdout = true)
     {
-        var context = new ExecutableContext(console, fileSystem, args).CreatePipes();
+        var context = new ExecutableContext(shell, fileSystem, args).CreatePipes();
         if (copyStdout)
             context.SubStdout(parent);
         context.SubStderr(parent);
         return context;
     }
 
-    internal static ExecutableContext Piped(ExecutableContext source, ExecutableContext parent, Console console, FileSystem fileSystem, Args args)
+    internal static ExecutableContext Piped(ExecutableContext source, ExecutableContext parent, BaShell shell, FileSystem fileSystem, Args args)
     {
-        var context = new ExecutableContext(console, fileSystem, args)
+        var context = new ExecutableContext(shell, fileSystem, args)
             .CreatePipes()
             .PipeStdin(source.StandardOutput);
         context.SubStdout(parent); // TODO: where
         return context;
     }
 
-    internal static ExecutableContext Redirected(ExecutableContext source, Console console, FileSystem fileSystem, Args args, Streams streams)
+    internal static ExecutableContext Redirected(ExecutableContext source, BaShell shell, FileSystem fileSystem, Args args, Streams streams)
     {
-        var context = new ExecutableContext(console, fileSystem, args);
+        var context = new ExecutableContext(shell, fileSystem, args);
         if (streams.StandardInput is { } stdin)
         {
             context._sourceInput = new StreamReader(stdin);
@@ -105,15 +105,15 @@ public sealed class ExecutableContext
     private StreamReader? _sourceInput;
     private StreamWriter? _sourceOutput;
 
-    internal ExecutableContext(Console console, FileSystem fileSystem, Args args)
+    internal ExecutableContext(BaShell shell, FileSystem fileSystem, Args args)
     {
-        Console = console;
+        Shell = shell;
         FileSystem = fileSystem;
-        WorkingDirectory = console.CurrentDirectory;
+        WorkingDirectory = shell.CurrentDirectory;
         Args = args;
     }
 
-    internal Console Console { get; }
+    internal BaShell Shell { get; }
     internal FileSystem FileSystem { get; }
     internal Directory WorkingDirectory { get; }
     internal Args Args { get; }

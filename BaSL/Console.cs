@@ -5,7 +5,6 @@ using BaSL.Executables;
 using BaSL.FileSystems;
 using BaSL.FileSystems.Extensions;
 using BaSL.Users;
-using Directory = BaSL.FileSystems.Directory;
 
 namespace BaSL;
 
@@ -33,8 +32,6 @@ public sealed class Console
     public FileSystem FileSystem => OperatingSystem.FileSystem;
 
     public StreamWriter StandardInput => _context.DestinationInput;
-
-    public Directory CurrentDirectory { get; internal set; }
 
     public async Task<int> StartAsync()
     {

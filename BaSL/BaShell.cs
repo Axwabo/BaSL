@@ -10,6 +10,7 @@ using BaSL.FileSystems.Errors;
 using BaSL.FileSystems.Extensions;
 using BaSL.Syntax;
 using BaSL.Users;
+using Directory = BaSL.FileSystems.Directory;
 using File = BaSL.FileSystems.File;
 using Path = BaSL.FileSystems.Path;
 using RunCommand = System.Func<BaSL.Executables.ExecutableContext, System.Threading.CancellationToken, BaSL.Result<System.Threading.Tasks.Task<int>, BaSL.Error>>;
@@ -54,7 +55,7 @@ public sealed class BaShell : App
 
     public BaShell(ExecutableContext context) : base(context)
     {
-        foreach (var kvp in context.Console.User.Environment)
+        foreach (var kvp in context.Shell.User.Environment)
             ExportedVariables[kvp.Key] = kvp.Value;
     }
 
@@ -67,9 +68,11 @@ public sealed class BaShell : App
 
     public Dictionary<string, string> ExportedVariables { get; } = [];
 
-    private User User => Console.User;
+    private User User => Shell.User;
 
     private new StreamWriter StandardError => Context.IsRoot ? StandardOutput : base.StandardError;
+
+    public Directory CurrentDirectory { get; internal set; }
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
         => _statement is null
@@ -86,7 +89,7 @@ public sealed class BaShell : App
             case StandaloneStatement standaloneStatement:
             {
                 // TODO: this sucks
-                await using var context = ExecutableContext.Sub(Context, Console, FileSystem, standaloneStatement.Args);
+                await using var context = ExecutableContext.Sub(Context, this, FileSystem, standaloneStatement.Args);
                 var process = Execute(standaloneStatement.Location, context, cancellationToken);
                 if (!process.Success)
                 {
@@ -117,7 +120,7 @@ public sealed class BaShell : App
                 await using var stream = file.Value;
                 if (redirectStatement.Overwrite)
                     stream.SetLength(0);
-                await using var context = ExecutableContext.Redirected(Context, Console, FileSystem, standaloneStatement.Args, new Streams(null, stream, null));
+                await using var context = ExecutableContext.Redirected(Context, Shell, FileSystem, standaloneStatement.Args, new Streams(null, stream, null));
                 var process = Execute(standaloneStatement.Location, context, cancellationToken);
                 if (!process.Success)
                 {
@@ -141,8 +144,8 @@ public sealed class BaShell : App
                 var targetCommand = Locate(pipeStatement.TargetLocation);
                 if (!targetCommand.Success)
                     return await WriteExecuteErrorAsync(pipeStatement.TargetLocation, targetCommand.Error, cancellationToken);
-                await using var source = new ExecutableContext(Console, FileSystem, standaloneStatement.Args).CreatePipes();
-                await using var target = new ExecutableContext(Console, FileSystem, pipeStatement.TargetArgs);
+                await using var source = new ExecutableContext(Shell, FileSystem, standaloneStatement.Args).CreatePipes();
+                await using var target = new ExecutableContext(Shell, FileSystem, pipeStatement.TargetArgs);
                 source.SubStderr(Context);
                 target.PipeStdin(source);
                 target.CreateStdoutPipe().SubStdout(Context);
@@ -182,20 +185,20 @@ public sealed class BaShell : App
                 var contexts = new List<ExecutableContext>();
                 try
                 {
-                    var source = new ExecutableContext(Console, FileSystem, run[^1].Item3).CreatePipes();
+                    var source = new ExecutableContext(Shell, FileSystem, run[^1].Item3).CreatePipes();
                     source.SubStderr(Context);
                     contexts.Add(source);
                     for (var i = run.Count - 2; i >= 1; i--)
                     {
                         var args = run[i].Item3;
-                        var intermediate = new ExecutableContext(Console, FileSystem, args);
+                        var intermediate = new ExecutableContext(Shell, FileSystem, args);
                         intermediate.PipeStdin(contexts[^1]);
                         intermediate.CreateStdoutPipe();
                         intermediate.CreateStderrPipe().SubStderr(Context); // TODO: concurrent writes are most likely not possible
                         contexts.Add(intermediate);
                     }
 
-                    var target = new ExecutableContext(Console, FileSystem, run[0].Item3);
+                    var target = new ExecutableContext(Shell, FileSystem, run[0].Item3);
                     target.PipeStdin(contexts[^1]);
                     target.CreateStdoutPipe().SubStdout(Context);
                     target.CreateStderrPipe().SubStderr(Context);
@@ -245,7 +248,7 @@ public sealed class BaShell : App
     {
         while (true)
         {
-            await StandardOutput.WriteAsync($"{User.Username}@{Console.OperatingSystem.Hostname}:{FormatCurrentDirectory()}{(User.IsSuperuser ? "# " : "$ ")}");
+            await StandardOutput.WriteAsync($"{User.Username}@{Shell.OperatingSystem.Hostname}:{FormatCurrentDirectory()}{(User.IsSuperuser ? "# " : "$ ")}");
             var line = await StandardInput.ReadLineAsync();
             if (string.IsNullOrEmpty(line))
                 continue;
@@ -318,10 +321,10 @@ public sealed class BaShell : App
 
     private string FormatCurrentDirectory()
     {
-        var path = Console.CurrentDirectory.FullPath.Value.AsSpan();
+        var path = Shell.CurrentDirectory.FullPath.Value.AsSpan();
         var home = User.Home.Value.AsSpan();
         if (!path.StartsWith(home))
-            return Console.CurrentDirectory.FullPath.Value;
+            return Shell.CurrentDirectory.FullPath.Value;
         Span<char> span = stackalloc char[path.Length - home.Length + 1];
         span[0] = '~';
         path[home.Length..].CopyTo(span[1..]);

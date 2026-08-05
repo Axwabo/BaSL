@@ -27,11 +27,11 @@ public abstract class File : FileSystemEntry
 
     public ExecuteFileResult Execute(ExecutableContext context, CancellationToken cancellationToken)
     {
-        if (!Metadata.CanExecute(context.Console.User))
+        if (!Metadata.CanExecute(context.Shell.User))
             return OpenFileError.AccessDenied;
         if (Executable != null)
             return Process.Start(Executable, context, cancellationToken);
-        var openResult = Open(context.Console.UserContext, OpenMode.Read);
+        var openResult = Open(context.Shell.UserContext, OpenMode.Read);
         if (!openResult.Success)
             return openResult.Error;
         using var reader = new StreamReader(openResult.Value);

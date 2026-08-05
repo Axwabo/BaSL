@@ -21,7 +21,7 @@ public sealed class Cd : App
             return 1;
         }
 
-        Console.CurrentDirectory = result.Value;
+        Shell.CurrentDirectory = result.Value;
         return 0;
     }
 

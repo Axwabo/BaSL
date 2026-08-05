@@ -15,9 +15,9 @@ public abstract class App
 
     protected App(ExecutableContext context) => Context = context;
 
-    protected Console Console => Context.Console;
+    protected BaShell Shell => Context.Shell;
 
-    protected UserContext UserContext => Console.UserContext;
+    protected UserContext UserContext => Shell.UserContext;
 
     protected FileSystem FileSystem => Context.FileSystem;
 
