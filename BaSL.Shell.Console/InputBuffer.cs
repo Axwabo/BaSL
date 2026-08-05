@@ -71,7 +71,7 @@ public static class InputBuffer
             _index = PreviousInputs.Count;
             result = sb.ToString();
             if (PreviousInputs.Count == 0 || result != PreviousInputs[^1])
-                PreviousInputs.Insert(0, result);
+                PreviousInputs.Add(result);
             _unsubmitted = "";
             return true;
         }
@@ -106,10 +106,10 @@ public static class InputBuffer
 
     private static void Navigate(int offset, StringBuilder sb)
     {
-        var nextIndex = _index + offset;
-        if (nextIndex >= PreviousInputs.Count)
-            return;
+        var nextIndex = _index == -1 && offset == -1 ? PreviousInputs.Count - 1 : _index + offset;
         if (nextIndex < 0)
+            return;
+        if (nextIndex >= PreviousInputs.Count)
             nextIndex = -1;
         if (_index == -1 && nextIndex != -1)
             _unsubmitted = sb.ToString();
