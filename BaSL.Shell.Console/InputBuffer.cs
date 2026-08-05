@@ -8,7 +8,8 @@ public static class InputBuffer
 {
 
     private static readonly List<string> PreviousInputs = [];
-    private static int _index;
+    private static int _index = -1;
+    private static string _unsubmitted = "";
 
     public static async Task ReadAsync(BaSL.Console console, CancellationToken cancellationToken)
     {
@@ -51,23 +52,27 @@ public static class InputBuffer
     private static async Task InputAsync(StreamWriter stdin, CancellationToken cancellationToken)
     {
         var sb = new StringBuilder();
+        string? result = null;
         while (!cancellationToken.IsCancellationRequested)
         {
             var key = await ReadKeyAsync(cancellationToken);
-            if (CompleteStatement(key, sb))
+            if (CompleteStatement(key, sb, out result))
                 break;
         }
 
-        await stdin.WriteLineAsync(sb.ToString());
+        await stdin.WriteLineAsync(result);
     }
 
-    private static bool CompleteStatement(ConsoleKeyInfo key, StringBuilder sb)
+    private static bool CompleteStatement(ConsoleKeyInfo key, StringBuilder sb, out string? result)
     {
         if (key.Key == ConsoleKey.Enter)
         {
             Console.WriteLine();
             _index = PreviousInputs.Count;
-            PreviousInputs.Add(sb.ToString());
+            result = sb.ToString();
+            if (PreviousInputs.Count == 0 || result != PreviousInputs[^1])
+                PreviousInputs.Insert(0, result);
+            _unsubmitted = "";
             return true;
         }
 
@@ -95,16 +100,21 @@ public static class InputBuffer
                 break;
         }
 
+        result = null;
         return false;
     }
 
     private static void Navigate(int offset, StringBuilder sb)
     {
         var nextIndex = _index + offset;
-        if (nextIndex < 0 || nextIndex >= PreviousInputs.Count)
+        if (nextIndex >= PreviousInputs.Count)
             return;
+        if (nextIndex < 0)
+            nextIndex = -1;
+        if (_index == -1 && nextIndex != -1)
+            _unsubmitted = sb.ToString();
         _index = nextIndex;
-        var text = PreviousInputs[nextIndex];
+        var text = nextIndex == -1 ? _unsubmitted : PreviousInputs[nextIndex];
         var length = sb.Length;
         sb.Clear();
         sb.Append(text);
