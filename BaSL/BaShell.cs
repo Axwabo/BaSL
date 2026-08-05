@@ -51,7 +51,8 @@ public sealed class BaShell : App
 
     internal static (ExecutableContext, BaShell) CreateRoot(Console console, StreamWriter standardOutput, StreamWriter standardError)
     {
-        var shell = new BaShell(ExecutableContext.Root())
+        var shell = new BaShell(console, standardOutput, standardError);
+        return (shell.Context, shell);
     }
 
     private readonly ShellStatement? _statement;
@@ -60,13 +61,25 @@ public sealed class BaShell : App
 
     public BaShell(ExecutableContext context) : base(context)
     {
-        foreach (var kvp in context.Shell.User.Environment)
-            ExportedVariables[kvp.Key] = kvp.Value;
-        User = context.Shell.User;
+        // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
         UserContext = context.Shell.UserContext;
+        Hostname = context.Shell.Hostname;
+        CurrentDirectory = context.WorkingDirectory;
+        ImportEnv();
+        foreach (var kvp in context.Shell.ExportedVariables)
+            ExportedVariables[kvp.Key] = kvp.Value;
     }
 
     public BaShell(ExecutableContext context, ShellStatement statement) : this(context) => _statement = statement;
+
+    private BaShell(Console console, StreamWriter standardOutput, StreamWriter standardError) : base(null!)
+    {
+        UserContext = console.UserContext;
+        Hostname = console.OperatingSystem.Hostname; // TODO: auto-update
+        CurrentDirectory = console.FileSystem.ResolveDirectory(console.User.Home).Unwrap();
+        Context = ExecutableContext.Root(this, console.FileSystem, default, standardOutput, standardError);
+        ImportEnv();
+    }
 
     private int LastExitCode
     {
@@ -75,13 +88,21 @@ public sealed class BaShell : App
 
     public Dictionary<string, string> ExportedVariables { get; } = [];
 
-    public User User { get; }
+    public User User => UserContext.User;
 
     public new UserContext UserContext { get; }
 
-    private new StreamWriter StandardError => Context.IsRoot ? StandardOutput : base.StandardError;
+    public string Hostname { get; }
 
     public Directory CurrentDirectory { get; internal set; }
+
+    private new StreamWriter StandardError => Context.IsRoot ? StandardOutput : base.StandardError;
+
+    private void ImportEnv()
+    {
+        foreach (var kvp in User.Environment)
+            ExportedVariables[kvp.Key] = kvp.Value;
+    }
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
         => _statement is null
