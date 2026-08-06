@@ -22,7 +22,7 @@ public static class ArgsExtensions
 
         public static ShellStatement? operator >(Args source, Path sinkPath) => FromArgs(source) > sinkPath;
 
-        public static FileStdinStatement? operator <(Args source, Path sourcePath) => FromArgs(source) < sourcePath;
+        public static ShellStatement? operator <(Args source, Path sourcePath) => FromArgs(source) < sourcePath;
 
         public static ShellStatement? operator >> (Args source, Path sinkPath) => FromArgs(source) >> sinkPath;
 
@@ -32,7 +32,7 @@ public static class ArgsExtensions
 
         public static ShellStatement? operator |(Args source, Args target) => source | FromArgs(target);
 
-        public static ShellStatement? operator |(ExtendableStatement? statement, Args target) => statement | FromArgs(target);
+        public static ShellStatement? operator |(ShellStatement? statement, Args target) => statement | FromArgs(target);
 
     }
 
