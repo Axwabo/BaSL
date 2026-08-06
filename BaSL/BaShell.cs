@@ -349,7 +349,7 @@ public sealed class BaShell : App
 
     private async Task ExecuteAsync(string line, CancellationToken token)
     {
-        var statements = StatementParser.Parse(line, _variables.TryGetValue);
+        var statements = StatementParser.Parse(line, _variables.TryGetValue, User.Home.Value);
         foreach (var statement in statements)
             LastExitCode = await ExecuteAsync(statement, token);
     }

@@ -10,11 +10,11 @@ internal static class StatementParser
 {
 
     // TODO: escaping & shit
-    public static List<ShellStatement?> Parse(string line, TryParse variables)
+    public static List<ShellStatement?> Parse(string line, TryParse variables, string home)
     {
         var results = new List<ShellStatement?>();
         var syntax = new List<Segment>();
-        ParseStatements(line, syntax, variables);
+        ParseStatements(line, syntax, variables, home);
         if (syntax is not [ArgsSegment {Args: var firstArgs}, ..])
         {
             results.Add(null);
@@ -31,7 +31,7 @@ internal static class StatementParser
             [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, RedirectOverwriteSegment, ArgsSegment {Args: [var target, ..]}] => firstArgs < source > target,
             [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, RedirectAppendSegment, ArgsSegment {Args: [var target, ..]}] => (firstArgs < source) >> target,
             [_, PipeSegment, ArgsSegment {Args: var targetArgs}] => firstArgs | targetArgs,
-            [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, PipeSegment, ArgsSegment {Args: var targetArgs}] => (firstArgs < source) | targetArgs,
+            [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, PipeSegment, ArgsSegment {Args: var targetArgs}] => firstArgs < source | targetArgs,
             [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, PipeSegment, ..] => ExpandPipes(StandaloneStatement.FromArgs(firstArgs) < source, syntax, 4),
             [_, PipeSegment, ..] => ExpandPipes(StandaloneStatement.FromArgs(firstArgs), syntax),
             _ => null
@@ -63,7 +63,7 @@ internal static class StatementParser
         return statement;
     }
 
-    private static void ParseStatements(string s, List<Segment> statements, TryParse variables)
+    private static void ParseStatements(string s, List<Segment> statements, TryParse variables, string home)
     {
         var argBuzilder = new StringBuilder();
         var variableBuilder = new StringBuilder();
@@ -126,6 +126,9 @@ internal static class StatementParser
                     break;
                 case (SyntaxType.Variable, _):
                     variableBuilder.Append(c);
+                    break;
+                case (SyntaxType.Text, '~') when !string.IsNullOrEmpty(home):
+                    argBuzilder.Append(home);
                     break;
                 case (SyntaxType.Text, _) when char.IsWhiteSpace(c):
                     AddArg();
