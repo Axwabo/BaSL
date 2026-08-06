@@ -1,4 +1,3 @@
-using System;
 using BaSL.Executables;
 using BaSL.FileSystems;
 using BaSL.Syntax;
@@ -23,7 +22,7 @@ public static class ArgsExtensions
 
         public static ShellStatement? operator >(Args source, Path sinkPath) => FromArgs(source) > sinkPath;
 
-        public static ShellStatement operator <(Args source, Path sinkPath) => throw new NotImplementedException();
+        public static ShellStatement? operator <(Args source, Path sourcePath) => FromArgs(source) < sourcePath;
 
         public static ShellStatement? operator >> (Args source, Path sinkPath) => FromArgs(source) >> sinkPath;
 

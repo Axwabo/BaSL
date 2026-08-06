@@ -187,11 +187,11 @@ public sealed class BaShell : App
                 var sourceCommand = Locate(standaloneStatement.Location);
                 if (!sourceCommand.Success)
                     return await WriteExecuteErrorAsync(standaloneStatement.Location, sourceCommand.Error, cancellationToken);
-                var targetCommand = Locate(pipeStatement.TargetLocation);
+                var targetCommand = Locate(pipeStatement.Location);
                 if (!targetCommand.Success)
-                    return await WriteExecuteErrorAsync(pipeStatement.TargetLocation, targetCommand.Error, cancellationToken);
+                    return await WriteExecuteErrorAsync(pipeStatement.Location, targetCommand.Error, cancellationToken);
                 await using var source = new ExecutableContext(Shell, FileSystem, standaloneStatement.Args).CreatePipes();
-                await using var target = new ExecutableContext(Shell, FileSystem, pipeStatement.TargetArgs);
+                await using var target = new ExecutableContext(Shell, FileSystem, pipeStatement.Args);
                 source.SubStderr(Context);
                 target.PipeStdin(source);
                 target.CreateStdoutPipe().SubStdout(Context);
@@ -201,7 +201,7 @@ public sealed class BaShell : App
                     return await WriteExecuteErrorAsync(standaloneStatement.Location, sourceProcess.Error, cancellationToken);
                 var targetProcess = targetCommand.Value(target, cancellationToken);
                 if (!targetProcess.Success)
-                    return await WriteExecuteErrorAsync(pipeStatement.TargetLocation, targetProcess.Error, cancellationToken);
+                    return await WriteExecuteErrorAsync(pipeStatement.Location, targetProcess.Error, cancellationToken);
                 var copy = Task.WhenAll(source.CopyAsync(), target.CopyAsync());
                 var codes = await Task.WhenAll(sourceProcess.Value, targetProcess.Value);
                 await copy;
@@ -215,7 +215,7 @@ public sealed class BaShell : App
                 {
                     var (location, args) = statement switch
                     {
-                        PipeStatement {TargetLocation: var targetLocation, TargetArgs: var targetArgs} => (targetLocation, targetArgs),
+                        PipeStatement {Location: var targetLocation, Args: var targetArgs} => (targetLocation, targetArgs),
                         StandaloneStatement {Location: var standaloneLocation, Args: var standaloneArgs} => (standaloneLocation, standaloneArgs),
                         _ => throw new ArgumentOutOfRangeException(nameof(statement))
                     };

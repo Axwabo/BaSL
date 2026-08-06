@@ -17,7 +17,7 @@ public static class StatementExtensions
                 ? null
                 : new RedirectStatement(extendable, sinkPath, true);
 
-        public static ShellStatement operator <(ShellStatement source, Path sinkPath)
+        public static ShellStatement operator <(ShellStatement? source, Path sinkPath)
             => throw new NotImplementedException();
 
         [return: NotNullIfNotNull(nameof(source))]
@@ -55,6 +55,15 @@ public static class StatementExtensions
         public static StandaloneStatement? FromArgs(Args args) => StandaloneStatement.FromArgs(args.Value);
 
         public static StandaloneStatement FromPath(Path fullPath, params string[] args) => new(fullPath, args);
+
+        [return: NotNullIfNotNull(nameof(statement))]
+        public static ShellStatement? operator <(StandaloneStatement? statement, Path sourcePath)
+            => statement is null
+                ? null
+                : new FileStdinStatement(statement.Location, statement.Args, sourcePath);
+
+        public static ShellStatement operator >(StandaloneStatement? statement, Path sourcePath)
+            => throw new NotImplementedException();
 
     }
 

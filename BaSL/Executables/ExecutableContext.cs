@@ -38,6 +38,16 @@ public sealed class ExecutableContext
         return context;
     }
 
+    internal static ExecutableContext Stdin(ExecutableContext parent, BaShell shell, FileSystem fileSystem, Args args, Stream standardInput)
+    {
+        var context = new ExecutableContext(shell, fileSystem, args);
+        context.CreateStdoutPipe().SubStdout(parent);
+        context.CreateStderrPipe().SubStderr(parent);
+        context._sourceInput = new StreamReader(standardInput);
+        context._completables.Add(standardInput);
+        return context;
+    }
+
     internal static ExecutableContext Redirected(ExecutableContext source, BaShell shell, FileSystem fileSystem, Args args, Streams streams)
     {
         var context = new ExecutableContext(shell, fileSystem, args);
