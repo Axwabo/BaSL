@@ -138,14 +138,7 @@ public sealed class BaShell : App
                 await using var context = ExecutableContext.Sub(Context, this, FileSystem, standaloneStatement.Args);
                 var process = Execute(standaloneStatement.Location, context, cancellationToken);
                 if (!process.Success)
-                {
-                    await StandardError.WriteAsync("Cannot execute '", cancellationToken);
-                    await StandardError.WriteAsync(standaloneStatement.Location, cancellationToken);
-                    await StandardError.WriteAsync("' due to: ", cancellationToken);
-                    await StandardError.WriteLineAsync(process.Error.Message);
-                    return 127;
-                }
-
+                    return await WriteExecuteErrorAsync(standaloneStatement.Location, process.Error, cancellationToken);
                 var copy = context.CopyAsync();
                 var code = await process.Value;
                 await copy;
@@ -168,14 +161,7 @@ public sealed class BaShell : App
                 await using var context = ExecutableContext.Stdin(Context, this, FileSystem, fileStdinStatement.Args, stream);
                 var process = Execute(fileStdinStatement.Location, context, cancellationToken);
                 if (!process.Success)
-                {
-                    await StandardError.WriteAsync("Cannot execute '", cancellationToken);
-                    await StandardError.WriteAsync(fileStdinStatement.Location, cancellationToken);
-                    await StandardError.WriteAsync("' due to: ", cancellationToken);
-                    await StandardError.WriteLineAsync(process.Error.Message);
-                    return 127;
-                }
-
+                    return await WriteExecuteErrorAsync(fileStdinStatement.Location, process.Error, cancellationToken);
                 var copy = context.CopyAsync();
                 var code = await process.Value;
                 await copy;
@@ -199,14 +185,7 @@ public sealed class BaShell : App
                 await using var context = ExecutableContext.Redirected(Context, Shell, FileSystem, standaloneStatement.Args, new Streams(null, stream, null));
                 var process = Execute(standaloneStatement.Location, context, cancellationToken);
                 if (!process.Success)
-                {
-                    await StandardError.WriteAsync("Cannot execute '", cancellationToken);
-                    await StandardError.WriteAsync(standaloneStatement.Location, cancellationToken);
-                    await StandardError.WriteAsync("' due to: ", cancellationToken);
-                    await StandardError.WriteLineAsync(process.Error.Message);
-                    return 127;
-                }
-
+                    return await WriteExecuteErrorAsync(standaloneStatement.Location, process.Error, cancellationToken);
                 var copy = context.CopyAsync();
                 var code = await process.Value;
                 await copy;
