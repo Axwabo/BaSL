@@ -106,10 +106,10 @@ internal static class StatementParser
                     syntax = outerSyntax = SyntaxType.Text;
                     break;
                 case (SyntaxType.Text, '\''):
-                    AddArg(SyntaxType.VerbatimString);
+                    syntax = SyntaxType.VerbatimString;
                     break;
                 case (SyntaxType.Text, '"'):
-                    AddArg(SyntaxType.QuotedString);
+                    syntax = SyntaxType.QuotedString;
                     break;
                 case (SyntaxType.Text, '|') when next == '|':
                     Complete();
