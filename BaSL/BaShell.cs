@@ -151,6 +151,36 @@ public sealed class BaShell : App
                 await copy;
                 return code;
             }
+            case FileStdinStatement fileStdinStatement:
+            {
+                var file = WorkingDirectory.ResolveFile(fileStdinStatement.SourcePath).OpenRead(UserContext);
+                if (!file.Success)
+                {
+                    await StandardError.WriteAsync("Cannot open '", cancellationToken);
+                    await StandardError.WriteAsync(fileStdinStatement.SourcePath, cancellationToken);
+                    await StandardError.WriteAsync("' due to: ", cancellationToken);
+                    await StandardError.WriteLineAsync(file.Error.Message);
+                    return 127;
+                }
+
+                await using var stream = file.Value;
+                stream.Seek(0, SeekOrigin.Begin);
+                await using var context = ExecutableContext.Stdin(Context, this, FileSystem, fileStdinStatement.Args, stream);
+                var process = Execute(fileStdinStatement.Location, context, cancellationToken);
+                if (!process.Success)
+                {
+                    await StandardError.WriteAsync("Cannot execute '", cancellationToken);
+                    await StandardError.WriteAsync(fileStdinStatement.Location, cancellationToken);
+                    await StandardError.WriteAsync("' due to: ", cancellationToken);
+                    await StandardError.WriteLineAsync(process.Error.Message);
+                    return 127;
+                }
+
+                var copy = context.CopyAsync();
+                var code = await process.Value;
+                await copy;
+                return code;
+            }
             case RedirectStatement {Source: StandaloneStatement standaloneStatement} redirectStatement:
             {
                 var file = WorkingDirectory.ResolveFileOrCreate(UserContext, redirectStatement.SinkPath).OpenWrite(UserContext);
