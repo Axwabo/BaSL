@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
@@ -9,36 +10,46 @@ internal delegate bool TryParse(string variable, [NotNullWhen(true)] out string?
 internal static class StatementParser
 {
 
-    // TODO: escaping & shit
     public static List<ShellStatement?> Parse(string line, TryParse variables, string home)
     {
         var results = new List<ShellStatement?>();
         var syntax = new List<Segment>();
-        ParseStatements(line, syntax, variables, home);
-        if (syntax is not [ArgsSegment {Args: var firstArgs}, ..])
+        var index = -1;
+        do
         {
-            results.Add(null);
-            return results;
+            syntax.Clear();
+            index = ParseStatements(line.AsSpan(index + 1), syntax, variables, home);
+            switch (syntax)
+            {
+                case []:
+                    break;
+                case [ArgsSegment {Args: var firstArgs}, ..]:
+                    results.Add(CreateStatement(syntax, firstArgs));
+                    break;
+                default:
+                    results.Add(null);
+                    break;
+            }
         }
-
-        // TODO: pattern matching to some sort of magic with ; idk
-        results.Add(syntax switch
-        {
-            [_] => StandaloneStatement.FromArgs(firstArgs),
-            [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}] => firstArgs < source,
-            [_, RedirectOverwriteSegment, ArgsSegment {Args: [var target, ..]}] => firstArgs > target,
-            [_, RedirectAppendSegment, ArgsSegment {Args: [var target, ..]}] => firstArgs >> target,
-            [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, RedirectOverwriteSegment, ArgsSegment {Args: [var target, ..]}] => firstArgs < source > target,
-            [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, RedirectAppendSegment, ArgsSegment {Args: [var target, ..]}] => (firstArgs < source) >> target,
-            [_, PipeSegment, ArgsSegment {Args: var targetArgs}] => firstArgs | targetArgs,
-            [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, PipeSegment, ArgsSegment {Args: var targetArgs}] => firstArgs < source | targetArgs,
-            [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, PipeSegment, ..] => ExpandPipes(StandaloneStatement.FromArgs(firstArgs) < source, syntax, 4),
-            [_, PipeSegment, ..] => ExpandPipes(StandaloneStatement.FromArgs(firstArgs), syntax),
-            _ => null
-        });
+        while (index != -1);
 
         return results;
     }
+
+    private static ShellStatement? CreateStatement(List<Segment> syntax, Args firstArgs) => syntax switch
+    {
+        [_] => StandaloneStatement.FromArgs(firstArgs),
+        [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}] => firstArgs < source,
+        [_, RedirectOverwriteSegment, ArgsSegment {Args: [var target, ..]}] => firstArgs > target,
+        [_, RedirectAppendSegment, ArgsSegment {Args: [var target, ..]}] => firstArgs >> target,
+        [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, RedirectOverwriteSegment, ArgsSegment {Args: [var target, ..]}] => firstArgs < source > target,
+        [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, RedirectAppendSegment, ArgsSegment {Args: [var target, ..]}] => (firstArgs < source) >> target,
+        [_, PipeSegment, ArgsSegment {Args: var targetArgs}] => firstArgs | targetArgs,
+        [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, PipeSegment, ArgsSegment {Args: var targetArgs}] => firstArgs < source | targetArgs,
+        [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, PipeSegment, ..] => ExpandPipes(StandaloneStatement.FromArgs(firstArgs) < source, syntax, 4),
+        [_, PipeSegment, ..] => ExpandPipes(StandaloneStatement.FromArgs(firstArgs), syntax),
+        _ => null
+    };
 
     private static ShellStatement? ExpandPipes(ShellStatement? statement, List<Segment> syntax, int stardIndex = 2)
     {
@@ -63,7 +74,7 @@ internal static class StatementParser
         return statement;
     }
 
-    private static void ParseStatements(string s, List<Segment> statements, TryParse variables, string home)
+    private static int ParseStatements(ReadOnlySpan<char> s, List<Segment> statements, TryParse variables, string home)
     {
         var argBuzilder = new StringBuilder();
         var variableBuilder = new StringBuilder();
@@ -117,6 +128,10 @@ internal static class StatementParser
                     outerSyntax = syntax;
                     syntax = SyntaxType.Variable;
                     break;
+                case (SyntaxType.Variable, ';') when outerSyntax == SyntaxType.Text:
+                    AppendVariable();
+                    Complete();
+                    return i;
                 case (SyntaxType.Variable, '"') when outerSyntax == SyntaxType.QuotedString:
                     AddArg();
                     break;
@@ -130,6 +145,9 @@ internal static class StatementParser
                 case (SyntaxType.Text, '~') when !string.IsNullOrEmpty(home):
                     argBuzilder.Append(home);
                     break;
+                case (SyntaxType.Text, ';'):
+                    Complete();
+                    return i;
                 case (SyntaxType.Text, _) when char.IsWhiteSpace(c):
                     AddArg();
                     break;
@@ -139,12 +157,8 @@ internal static class StatementParser
             }
         }
 
-        if (argBuzilder.Length != 0)
-            AddArg();
-        if (args.Count != 0)
-            AddStatement();
-
-        return;
+        Complete();
+        return -1;
 
         void AddArg(SyntaxType next = SyntaxType.Text)
         {
@@ -174,6 +188,14 @@ internal static class StatementParser
                 argBuzilder.Append(result);
             variableBuilder.Clear();
             syntax = outerSyntax;
+        }
+
+        void Complete()
+        {
+            if (argBuzilder.Length != 0)
+                AddArg();
+            if (args.Count != 0)
+                AddStatement();
         }
     }
 
