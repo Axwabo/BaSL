@@ -103,7 +103,7 @@ internal static class StatementParser
             {
                 case (SyntaxType.VerbatimString, '\''):
                 case (SyntaxType.QuotedString, '"'):
-                    AddArg();
+                    syntax = outerSyntax = SyntaxType.Text;
                     break;
                 case (SyntaxType.Text, '\''):
                     AddArg(SyntaxType.VerbatimString);
