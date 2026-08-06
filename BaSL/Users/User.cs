@@ -17,7 +17,7 @@ public sealed class User
 
     public bool IsSuperuser { get; internal init; }
 
-    public Path Home { get; internal set; }
+    public Path Home => Environment.GetValueOrDefault("HOME", "");
 
     internal Dictionary<string, string> Environment { get; } = [];
 

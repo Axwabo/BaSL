@@ -17,10 +17,10 @@ public sealed class OperatingSystem
         Root = new User("root")
         {
             IsSuperuser = true,
-            Home = Path.Root, // TODO: probably..?
             Environment =
             {
-                {"PATH", Path.Binaries.Value}
+                {"PATH", Path.Binaries.Value},
+                {"HOME", Path.Root.Value}
             }
         };
         var ctx = new UserContext(Root);
@@ -55,7 +55,7 @@ public sealed class OperatingSystem
         var mount = _homes.Mount(new UserContext(Root), userFs, name);
         if (!mount.Success)
             return new CannotMountHome(mount.Error);
-        user.Home = mount.Value.FullPath;
+        user.Environment["HOME"] = mount.Value.FullPath.Value;
         Users[name] = user;
         return user;
     }

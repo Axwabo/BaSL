@@ -19,6 +19,7 @@ public static class OperatingSystemExtensions
         CreateBinary("rmdir", context => new Rmdir(context));
         CreateBinary("rm", context => new Rm(context));
         CreateBinary("echo", context => new Echo(context));
+        CreateBinary("env", context => new Env(context));
         CreateBinary("pwd", context => new Pwd(context));
         CreateBinary("cd", context => new Cd(context));
         CreateBinary("ls", context => new Ls(context));
