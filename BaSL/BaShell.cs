@@ -26,10 +26,24 @@ public sealed class BaShell : App
     {
         {"clear", (_, _) => System.Console.Clear()},
         {
+            "set", (shell, context) =>
+            {
+                if (context.Args.Length == 2)
+                    shell._variables[context.Args[0]] = context.Args[1];
+            }
+        },
+        {
+            "unset", (shell, context) =>
+            {
+                if (context.Args.Length == 1)
+                    shell._variables.Remove(context.Args[0]);
+            }
+        },
+        {
             "export", (shell, context) =>
             {
                 if (context.Args.Length == 2)
-                    shell.ExportedVariables[context.Args[0]] = context.Args[1];
+                    shell._exported[context.Args[0]] = shell._variables[context.Args[0]] = context.Args[1];
             }
         }
     };
@@ -55,7 +69,11 @@ public sealed class BaShell : App
         return (shell.Context, shell);
     }
 
+    private readonly Dictionary<string, string> _exported = [];
+
     private readonly ShellStatement? _statement;
+
+    private readonly Dictionary<string, string> _variables = [];
 
     private CancellationTokenSource? _cts;
 
@@ -66,8 +84,8 @@ public sealed class BaShell : App
         Hostname = context.Shell.Hostname;
         CurrentDirectory = context.WorkingDirectory;
         ImportEnv();
-        foreach (var kvp in context.Shell.ExportedVariables)
-            ExportedVariables[kvp.Key] = kvp.Value;
+        foreach (var kvp in context.Shell._exported)
+            _exported[kvp.Key] = _variables[kvp.Key] = kvp.Value;
     }
 
     public BaShell(ExecutableContext context, ShellStatement statement) : this(context) => _statement = statement;
@@ -83,10 +101,8 @@ public sealed class BaShell : App
 
     private int LastExitCode
     {
-        set => ExportedVariables["$"] = value.ToString();
+        set => _variables["$"] = value.ToString();
     }
-
-    public Dictionary<string, string> ExportedVariables { get; } = [];
 
     public User User => UserContext.User;
 
@@ -101,7 +117,7 @@ public sealed class BaShell : App
     private void ImportEnv()
     {
         foreach (var kvp in User.Environment)
-            ExportedVariables[kvp.Key] = kvp.Value;
+            _variables[kvp.Key] = kvp.Value;
     }
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
@@ -303,7 +319,7 @@ public sealed class BaShell : App
 
     private async Task ExecuteAsync(string line, CancellationToken token)
     {
-        var statements = StatementParser.Parse(line, ExportedVariables.TryGetValue);
+        var statements = StatementParser.Parse(line, _variables.TryGetValue);
         foreach (var statement in statements)
             LastExitCode = await ExecuteAsync(statement, token);
     }
@@ -335,7 +351,7 @@ public sealed class BaShell : App
 
     private GetFileResult ResolveFromPath(FileSystemEntryName arg)
     {
-        var path = ExportedVariables.GetValueOrDefault("PATH", "").Split(':');
+        var path = _variables.GetValueOrDefault("PATH", "").Split(':');
         foreach (var directoryPath in path)
         {
             var directory = FileSystem.ResolveDirectory(directoryPath);
