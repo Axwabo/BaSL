@@ -10,24 +10,24 @@ internal delegate bool TryParse(string variable, [NotNullWhen(true)] out string?
 internal static class StatementParser
 {
 
-    public static List<ShellStatement?> Parse(string line, TryParse variables, string home)
+    public static List<(ShellStatement?, Continue)> Parse(string line, TryParse variables, string home)
     {
-        var results = new List<ShellStatement?>();
+        var results = new List<(ShellStatement?, Continue)>();
         var syntax = new List<Segment>();
         var index = -1;
         do
         {
             syntax.Clear();
-            index = ParseStatements(line.AsSpan(index + 1), syntax, variables, home);
+            (index, var @continue) = ParseStatements(line.AsSpan(index + 1), syntax, variables, home);
             switch (syntax)
             {
                 case []:
                     break;
                 case [ArgsSegment {Args: var firstArgs}, ..]:
-                    results.Add(CreateStatement(syntax, firstArgs));
+                    results.Add((CreateStatement(syntax, firstArgs), @continue));
                     break;
                 default:
-                    results.Add(null);
+                    results.Add((null, @continue));
                     break;
             }
         }
@@ -74,7 +74,7 @@ internal static class StatementParser
         return statement;
     }
 
-    private static int ParseStatements(ReadOnlySpan<char> s, List<Segment> statements, TryParse variables, string home)
+    private static (int, Continue) ParseStatements(ReadOnlySpan<char> s, List<Segment> statements, TryParse variables, string home)
     {
         var argBuzilder = new StringBuilder();
         var variableBuilder = new StringBuilder();
@@ -111,6 +111,15 @@ internal static class StatementParser
                 case (SyntaxType.Text, '"'):
                     AddArg(SyntaxType.QuotedString);
                     break;
+                case (SyntaxType.Text, '|') when next == '|':
+                    Complete();
+                    return (i + 1, Continue.Always);
+                case (SyntaxType.Text, '&') when next == '&':
+                    Complete();
+                    return (i + 1, Continue.OnSuccess);
+                case (SyntaxType.Text, ';'):
+                    Complete();
+                    return (i, Continue.Always);
                 case (SyntaxType.Text, '|'):
                     AddStatement(Segment.Pipe);
                     break;
@@ -131,7 +140,7 @@ internal static class StatementParser
                 case (SyntaxType.Variable, ';') when outerSyntax == SyntaxType.Text:
                     AppendVariable();
                     Complete();
-                    return i;
+                    return (i, Continue.Always);
                 case (SyntaxType.Variable, '"') when outerSyntax == SyntaxType.QuotedString:
                     AddArg();
                     break;
@@ -145,9 +154,6 @@ internal static class StatementParser
                 case (SyntaxType.Text, '~') when !string.IsNullOrEmpty(home):
                     argBuzilder.Append(home);
                     break;
-                case (SyntaxType.Text, ';'):
-                    Complete();
-                    return i;
                 case (SyntaxType.Text, _) when char.IsWhiteSpace(c):
                     AddArg();
                     break;
@@ -158,7 +164,7 @@ internal static class StatementParser
         }
 
         Complete();
-        return -1;
+        return (-1, Continue.Always);
 
         void AddArg(SyntaxType next = SyntaxType.Text)
         {

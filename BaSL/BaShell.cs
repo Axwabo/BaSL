@@ -329,8 +329,19 @@ public sealed class BaShell : App
     private async Task ExecuteAsync(string line, CancellationToken token)
     {
         var statements = StatementParser.Parse(line, _variables.TryGetValue, User.Home.Value);
-        foreach (var statement in statements)
-            LastExitCode = await ExecuteAsync(statement, token);
+        foreach (var (statement, @continue) in statements)
+        {
+            var code = LastExitCode = await ExecuteAsync(statement, token);
+            var success = code == 0;
+            if (@continue switch
+                {
+                    Continue.Always => false,
+                    Continue.OnFailure => success,
+                    Continue.OnSuccess => !success,
+                    _ => true
+                })
+                break;
+        }
     }
 
     private LocateCommandResult Locate(CommandLocation location) => location switch
