@@ -15,35 +15,46 @@ internal static class StatementParser
         var results = new List<ShellStatement?>();
         var syntax = new List<Segment>();
         ParseStatements(line, syntax, variables);
+        if (syntax is not [ArgsSegment {Args: var firstArgs}, ..])
+        {
+            results.Add(null);
+            return results;
+        }
+
+        // TODO: pattern matching to some sort of magic with ; idk
         results.Add(syntax switch
         {
-            [ArgsSegment {Args: var simpleArgs}] => StandaloneStatement.FromArgs(simpleArgs),
-            [ArgsSegment {Args: var sourceArgs}, RedirectOverwriteSegment, ArgsSegment {Args: [var target]}] => sourceArgs > target,
-            [ArgsSegment {Args: var sourceArgs}, RedirectAppendSegment, ArgsSegment {Args: [var target]}] => sourceArgs >> target,
-            [ArgsSegment {Args: var sourceArgs}, PipeSegment, ArgsSegment {Args: var targetArgs}] => sourceArgs | targetArgs,
-            [ArgsSegment {Args: var firstArgs}, PipeSegment, ..] => ExpandPipes(firstArgs, syntax),
+            [_] => StandaloneStatement.FromArgs(firstArgs),
+            [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}] => firstArgs < source,
+            [_, RedirectOverwriteSegment, ArgsSegment {Args: [var target, ..]}] => firstArgs > target,
+            [_, RedirectAppendSegment, ArgsSegment {Args: [var target, ..]}] => firstArgs >> target,
+            [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, RedirectOverwriteSegment, ArgsSegment {Args: [var target, ..]}] => firstArgs < source > target,
+            [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, RedirectAppendSegment, ArgsSegment {Args: [var target, ..]}] => (firstArgs < source) >> target,
+            [_, PipeSegment, ArgsSegment {Args: var targetArgs}] => firstArgs | targetArgs,
+            [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, PipeSegment, ArgsSegment {Args: var targetArgs}] => firstArgs < source | targetArgs,
+            [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, PipeSegment, ..] => ExpandPipes(StandaloneStatement.FromArgs(firstArgs) < source, syntax, 4),
+            [_, PipeSegment, ..] => ExpandPipes(StandaloneStatement.FromArgs(firstArgs), syntax),
             _ => null
         });
 
         return results;
     }
 
-    private static ShellStatement? ExpandPipes(Args firstArgs, List<Segment> syntax)
+    private static ShellStatement? ExpandPipes(ShellStatement? statement, List<Segment> syntax, int stardIndex = 2)
     {
-        ShellStatement? statement = StandaloneStatement.FromArgs(firstArgs);
-        for (var i = 2; i < syntax.Count; i += 2)
+        for (var i = stardIndex; i < syntax.Count; i += 2)
         {
             if (statement is not ExtendableStatement || syntax[i] is not ArgsSegment {Args: var args})
                 return null;
-            switch (syntax[i - 1])
+            switch (syntax[i - 1], args.IsEmpty)
             {
-                case PipeSegment:
+                case (PipeSegment, _):
                     statement |= StandaloneStatement.FromArgs(args);
                     break;
-                case RedirectOverwriteSegment:
-                    return args.IsEmpty ? null : statement > args[0];
-                case RedirectAppendSegment:
-                    return args.IsEmpty ? null : statement >> args[0];
+                case (RedirectOverwriteSegment, false):
+                    return statement > args[0];
+                case (RedirectAppendSegment, false):
+                    return statement >> args[0];
                 default:
                     return null;
             }
@@ -98,6 +109,9 @@ internal static class StatementParser
                     break;
                 case (SyntaxType.Text, '>'):
                     AddStatement(Segment.RedirectOverwrite);
+                    break;
+                case (SyntaxType.Text, '<'):
+                    AddStatement(Segment.StdinFile);
                     break;
                 case (SyntaxType.Text or SyntaxType.QuotedString, '$'):
                     outerSyntax = syntax;

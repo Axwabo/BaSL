@@ -57,7 +57,7 @@ public static class StatementExtensions
         public static StandaloneStatement FromPath(Path fullPath, params string[] args) => new(fullPath, args);
 
         [return: NotNullIfNotNull(nameof(statement))]
-        public static ShellStatement? operator <(StandaloneStatement? statement, Path sourcePath)
+        public static FileStdinStatement? operator <(StandaloneStatement? statement, Path sourcePath)
             => statement is null
                 ? null
                 : new FileStdinStatement(statement.Location, statement.Args, sourcePath);
