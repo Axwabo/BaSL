@@ -132,6 +132,10 @@ public sealed class BaShell : App
             case null:
                 await StandardError.WriteLineAsync("Invalid statement", cancellationToken);
                 return 1;
+            case StandaloneStatement {Location: AutoCommandLocation {Phrase: "true"}}:
+                return 0;
+            case StandaloneStatement {Location: AutoCommandLocation {Phrase: "false"}}:
+                return 0;
             case StandaloneStatement standaloneStatement:
             {
                 // TODO: this sucks
