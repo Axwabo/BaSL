@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using BaSL.FileSystems.Errors;
 using BaSL.FileSystems.Extensions;
 using BaSL.Users;
@@ -41,6 +42,14 @@ internal sealed class VirtualFile : File
             _used = false;
             _data = buffer;
             _length = length;
+        }
+    }
+
+    internal void Release()
+    {
+        lock (_access)
+        {
+            _used = false;
         }
     }
 
@@ -121,10 +130,22 @@ file sealed class VirtualFileStream : Stream
         if (_disposed)
             return;
         GC.SuppressFinalize(this);
-        if (disposing && CanWrite) // TODO: ???
-            _file.Release(_stream.GetBuffer(), (int) _stream.Length);
+        if (disposing)
+        {
+            if (CanWrite)
+                _file.Release(_stream.GetBuffer(), (int) _stream.Length);
+            else
+                _file.Release();
+        }
+
         _stream.Dispose();
         _disposed = true;
+    }
+
+    public override ValueTask DisposeAsync()
+    {
+        Dispose(true);
+        return default;
     }
 
     ~VirtualFileStream() => Dispose(false);
