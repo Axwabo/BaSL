@@ -11,7 +11,8 @@ public sealed class ShellStatementTests
         var source = new Args("echo");
         var target = new Args("cat");
         var statement = source | target;
-        Assert.Equal(statement, new PipeStatement(new StandaloneStatement("echo"), "cat"));
+        var expected = new PipeStatement(new StandaloneStatement("echo"), "cat");
+        Assert.Equal(expected, statement);
     }
 
 }

@@ -25,4 +25,6 @@ public readonly record struct Args(ReadOnlyMemory<string> Value)
 
     public Args this[Range range] => Value[range];
 
+    public bool Equals(Args? other) => other.HasValue && (other.GetValueOrDefault().IsEmpty && IsEmpty || other.Value.Value.Span.SequenceEqual(Value.Span));
+
 }
