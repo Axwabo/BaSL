@@ -1,15 +1,36 @@
 # BaSL
 
-This project is a not-very/very-not accurate version of the bash shell in .NET.
+This project is a not-very/very-not accurate, high-level recreation of the bash shell in .NET.
 
 The project simulates file systems and executables without restricting the developer too much.
 Library authors still have access to all of the BCL (Base Class Library).
+
+> [!IMPORTANT]
+> This project is not meant for production use!
 
 # Console Version
 
 You can run the `BaSL.Shell.Console` executable in your terminal.
 
 The experience is comparable to a Linux terminal, albeit limited (see features below).
+
+## Setup 
+
+1. Download the appropriate archive from the [releases page](https://github.com/Axwabo/BaSL/releases)
+    - Linux: `BaSL.Console-linux-x64.zip`
+    - Windows: `BaSL.Console-win-x64.zip`
+2. Extract the archive to a folder of your choosing
+3. Run `BaSL.Shell.Console` from your terminal
+    - `BaSL.Shell.Console.exe` on Windows
+
+## Mounts
+
+Directly mounting "real" devices to a BaSL filesystem is not supported (yet).
+
+You can specify "physical" directories to be copied into virtual filesystems in `/media`
+by passing arguments to the program where the mounted folder's name and the directory location are separated by `=`
+
+Example: `./BaSL.Shell.Console amogus=~/Documents sus=/home/user/Desktop`
 
 # Standard Pipes
 
@@ -19,13 +40,27 @@ The experience is comparable to a Linux terminal, albeit limited (see features b
 
 # Features
 
-BaSL is currently capable of piping `|` and standard output redirection `>` and `>>`
+BaSL is currently capable of piping `|` and standard output redirection (`>` and `>>`) with some limitations.
+Standard stream selection is not supported yet.
 
 Piping `|` means "send stdout to the stdin of another process"
 
 `>` sends stdout to the file, truncating the file if it exists.
 
 `>>` also redirects stdout to a file, but it appends the file instead of truncating it.
+
+`<` sets the stdin of the process specified in the left operand to the file in the right operand.
+
+## Limitations
+
+For now, pattern matching is used to parse and execute statements:
+
+- `command [args] < source` is supported, but no additional redirections can be made (no piping or file redirection)
+    - `command [args] < source > sink` is parsed but not executed 
+    - piping is not supported (e.g. `command [args] < source | other [args]`)
+- `command [args] > sink` is supported, but no additional redirections can be made (no piping or file redirection)
+- `command [args] | other [args]` is supported with an arbitrary amount of pipes
+    - file redirection is not supported
 
 ## Built-In Programs
 
@@ -34,6 +69,7 @@ Piping `|` means "send stdout to the stdin of another process"
 - `cd` changes the current directory of the active shell
 - `chmod` changes the mode of the specified files (recursive `-r`)
 - `echo` prints the arguments separated by a space to stdout, and writes a newline at the end
+- `env` prints the user's environment variables
 - `ls` lists a directory's contents or existing files if a file is specified
 - `mkdir` creates a directory
 - `pwd` prints the current directory
