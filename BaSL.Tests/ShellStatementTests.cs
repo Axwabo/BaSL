@@ -10,9 +10,9 @@ public sealed class ShellStatementTests
     {
         var source = new Args("echo");
         var target = new Args("cat");
-        var statement = source | target;
+        var statement = (PipeStatement?) (source | target);
         var expected = new PipeStatement(new StandaloneStatement("echo"), "cat");
-        Assert.Equal(expected, statement);
+        Assert.True(expected == statement);
     }
 
 }
