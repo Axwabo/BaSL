@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using BaSL.FileSystems;
 
 namespace BaSL.Syntax;
@@ -11,22 +10,21 @@ public static class StatementExtensions
     extension(ShellStatement)
     {
 
-        [return: NotNullIfNotNull(nameof(source))]
         public static ShellStatement? operator >(ShellStatement? source, Path sinkPath)
             => source is not ExtendableStatement extendable
                 ? null
                 : new RedirectStatement(extendable, sinkPath, true);
 
-        public static ShellStatement operator <(ShellStatement? source, Path sinkPath)
-            => throw new NotImplementedException();
+        public static ShellStatement? operator <(ShellStatement? source, Path sourcePath)
+            => source is not StandaloneStatement statement
+                ? null
+                : new FileStdinStatement(statement.Location, statement.Args, sourcePath);
 
-        [return: NotNullIfNotNull(nameof(source))]
         public static ShellStatement? operator >> (ShellStatement? source, Path sinkPath)
             => source is not ExtendableStatement extendable
                 ? null
                 : new RedirectStatement(extendable, sinkPath, false);
 
-        [return: NotNullIfNotNull(nameof(source))]
         public static ShellStatement? operator |(ShellStatement? source, Path executablePath)
             => source is not ExtendableStatement extendable
                 ? source
@@ -55,15 +53,6 @@ public static class StatementExtensions
         public static StandaloneStatement? FromArgs(Args args) => StandaloneStatement.FromArgs(args.Value);
 
         public static StandaloneStatement FromPath(Path fullPath, params string[] args) => new(fullPath, args);
-
-        [return: NotNullIfNotNull(nameof(statement))]
-        public static ShellStatement? operator <(StandaloneStatement? statement, Path sourcePath)
-            => statement is null
-                ? null
-                : new FileStdinStatement(statement.Location, statement.Args, sourcePath);
-
-        public static ShellStatement operator >(StandaloneStatement? statement, Path sourcePath)
-            => throw new NotImplementedException();
 
     }
 
