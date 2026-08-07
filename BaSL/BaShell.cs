@@ -355,7 +355,13 @@ public sealed class BaShell : App
         AutoCommandLocation {Phrase: var name} when BuiltInCommands.TryGetValue(name, out var action) => (RunCommand) ((context, _) =>
         {
             action(this, context);
-            return Task.FromResult(0);
+            return Complete();
+
+            async Task<int> Complete()
+            {
+                await context.CompletePipesAsync();
+                return 0;
+            }
         }),
         AutoCommandLocation {Phrase: var name} when ResolveFromPath(name) is {Success: true, Value: var file} => Execute(file),
         _ => CommandError.NotFound
