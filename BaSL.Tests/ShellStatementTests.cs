@@ -12,7 +12,7 @@ public sealed class ShellStatementTests
         var target = new Args("cat");
         var statement = (PipeStatement?) (source | target);
         var expected = new PipeStatement(new StandaloneStatement("echo"), "cat");
-        Assert.True(expected == statement);
+        Assert.True(expected.Equals(statement));
     }
 
 }
