@@ -2,12 +2,15 @@
 
 using System.IO.Compression;
 
+const string licenses = "THIRD_PARTY_LICENSES";
+const string readme = "README.md";
+
 using var zipFile = File.Create(args[0]);
 using var archive = new ZipArchive(zipFile, ZipArchiveMode.Create);
 
-var executable = Directory.EnumerateFiles(".", "BaSL.Shell.Console>").First();
-archive.CreateEntryFromFile($"bin/{Path.GetFileName(executable)}", executable);
-archive.CreateEntryFromFile("../README.md", "README.md");
+var executable = Directory.EnumerateFiles(".", "BaSL.Shell.Console*").First();
+archive.CreateEntryFromFile(executable, $"bin/{Path.GetFileName(executable)}");
+archive.CreateEntryFromFile($"../{readme}", readme);
 
-foreach (var file in Directory.EnumerateFiles("../THIRD_PARTY_LICENSES"))
-    archive.CreateEntryFromFile(file, $"THIRD_PARTY_LICENSES/{Path.GetFileName(file)}");
+foreach (var file in Directory.EnumerateFiles($"../{licenses}"))
+    archive.CreateEntryFromFile(file, $"{licenses}/{Path.GetFileName(file)}");
