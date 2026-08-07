@@ -11,19 +11,28 @@ public static class StatementExtensions
     {
 
         public static ShellStatement? operator >(ShellStatement? source, Path sinkPath)
-            => source is not ExtendableStatement extendable
-                ? null
-                : new RedirectStatement(extendable, sinkPath, true);
+            => source switch
+            {
+                ExtendableStatement extendable => new RedirectStatement(extendable, sinkPath, true),
+                RedirectStatement {Source: var redirectSource} => new RedirectStatement(redirectSource, sinkPath, true),
+                _ => null
+            };
 
         public static ShellStatement? operator <(ShellStatement? source, Path sourcePath)
-            => source is not StandaloneStatement statement
-                ? null
-                : new FileStdinStatement(statement.Location, statement.Args, sourcePath);
+            => source switch
+            {
+                StandaloneStatement statement => new FileStdinStatement(statement.Location, statement.Args, sourcePath),
+                FileStdinStatement {Location: var location, Args: var args} => new FileStdinStatement(location, args, sourcePath),
+                _ => null
+            };
 
         public static ShellStatement? operator >> (ShellStatement? source, Path sinkPath)
-            => source is not ExtendableStatement extendable
-                ? null
-                : new RedirectStatement(extendable, sinkPath, false);
+            => source switch
+            {
+                ExtendableStatement extendable => new RedirectStatement(extendable, sinkPath, false),
+                RedirectStatement {Source: var redirectSource} => new RedirectStatement(redirectSource, sinkPath, false),
+                _ => null
+            };
 
         public static ShellStatement? operator |(ShellStatement? source, Path executablePath)
             => source is not ExtendableStatement extendable
