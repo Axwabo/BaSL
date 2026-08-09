@@ -24,7 +24,11 @@ public sealed class Process
 
     internal Process((ExecutableContext, BaShell) tuple, CancellationToken cancellationToken)
     {
-        
+        var (context, shell) = tuple;
+        StandardInput = context.DestinationInput;
+        StandardOutput = context.DestinationOutput;
+        StandardError = context.DestinationError;
+        _exit = shell.ExecuteAsync(cancellationToken);
     }
 
     public StreamWriter? StandardInput { get; }
