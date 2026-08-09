@@ -13,6 +13,13 @@ public static class FileSystemExtensions
 
         public GetEntryResult Resolve(Path path)
         {
+            var links = 0;
+            return fileSystem.ResolveInternal(path, ref links);
+        }
+
+        // TODO: stack
+        private GetEntryResult ResolveInternal(Path path, ref int links)
+        {
             if (path.IsEmpty)
                 return GetEntryError.NotFound;
             FileSystemEntry entry = fileSystem.Root;
@@ -20,6 +27,16 @@ public static class FileSystemExtensions
             {
                 if (s is FileSystemEntryName.Current)
                     continue;
+                if (entry is SymbolicLink link)
+                {
+                    if (links++ > 10)
+                        return GetEntryError.SymlinkLimit;
+                    var followResult = fileSystem.ResolveInternal(link.Target, ref links);
+                    if (!followResult.Success)
+                        return followResult.Error;
+                    entry = followResult.Value; // TODO: nested symlinks?
+                }
+
                 if (entry is not Directory directory)
                     break;
                 var result = s is FileSystemEntryName.Parent ? directory.GetParent().AsEntry() : directory.GetEntry(s);

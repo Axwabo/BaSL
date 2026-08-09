@@ -29,6 +29,7 @@ public static class OperatingSystemExtensions
         CreateBinary("bytes", context => new Bytes(context));
         CreateBinary("whoami", context => new WhoAmI(context));
         CreateBinary("sleep", context => new Sleep(context));
+        system.FileSystem.Root.Link(ctx, "bin", bin.FullPath).Unwrap();
         return Task.CompletedTask;
 
         void CreateBinary(FileSystemEntryName name, Executable executable) => bin.CreateFile(ctx, name, BinaryModes).MakeExecutable(ctx, executable);

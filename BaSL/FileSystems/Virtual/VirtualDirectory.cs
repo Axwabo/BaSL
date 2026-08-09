@@ -6,7 +6,7 @@ using BaSL.Users;
 
 namespace BaSL.FileSystems.Virtual;
 
-internal sealed class VirtualDirectory : Directory, IMountSupport
+internal sealed class VirtualDirectory : Directory, IMountSupport, ISymlinkSupport
 {
 
     private readonly Dictionary<string, FileSystemEntry> _entries = [];
@@ -24,6 +24,18 @@ internal sealed class VirtualDirectory : Directory, IMountSupport
         var mount = new FileSystemMount(FileSystemAccess, FullPath, name, fileSystem);
         _entries[name.Value] = mount;
         return mount;
+    }
+
+    public Result<SymbolicLink, CreateEntryError> Link(UserContext context, FileSystemEntryName name, Path target)
+    {
+        if (!Metadata.CanWrite(context))
+            return CreateEntryError.AccessDenied;
+        if (_entries.ContainsKey(name.Value))
+            return CreateEntryError.NameCollision;
+        // TODO: idk how to reflect metadata
+        var link = new SymbolicLink(FileSystemAccess, FullPath, name, Metadata.Owner, Metadata.Modes, target);
+        _entries.Add(name.Value, link);
+        return link;
     }
 
     public override IEnumerable<FileSystemEntry> EnumerateEntries() => _entries.Values;

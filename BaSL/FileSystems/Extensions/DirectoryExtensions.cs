@@ -104,9 +104,19 @@ public static class DirectoryExtensions
             return result.Success ? result.Value : result.Error;
         }
 
+        public Result<SymbolicLink, Error> Link(UserContext context, FileSystemEntryName name, Path target)
+        {
+            if (directory is not ISymlinkSupport symlinkSupport)
+                return new LinkError();
+            var result = symlinkSupport.Link(context, name, target);
+            return result.Success ? result.Value : result.Error;
+        }
+
     }
 
 }
 
 // TODO
 file sealed record MountError() : Error("Directory does not support mounting");
+
+file sealed record LinkError() : Error("Directory does not support creating symlinks");
