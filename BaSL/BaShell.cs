@@ -69,7 +69,7 @@ public sealed class BaShell : App
         return (shell.Context, shell);
     }
 
-    internal static (ExecutableContext, BaShell) CreateSubshell(ExecutableContext parent, ShellStatement? statement=null)
+    internal static (ExecutableContext, BaShell) CreateSubshell(ExecutableContext parent, ShellStatement? statement = null)
     {
         var shell = new BaShell(parent, statement);
         return (shell.Context, shell);
@@ -106,7 +106,7 @@ public sealed class BaShell : App
 
     private int LastExitCode
     {
-        set => _variables["$"] = value.ToString();
+        set => _variables["?"] = value.ToString();
     }
 
     public User User => UserContext.User;
