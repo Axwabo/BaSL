@@ -83,13 +83,12 @@ public sealed class BaShell : App
 
     private CancellationTokenSource? _cts;
 
-    private BaShell(ExecutableContext context, ShellStatement? statement) : base(null!)
+    private BaShell(ExecutableContext context, ShellStatement? statement) : base(context)
     {
         _statement = statement;
         UserContext = context.Shell.UserContext;
         Hostname = context.Shell.Hostname;
         CurrentDirectory = context.WorkingDirectory;
-        Context = ExecutableContext.Sub(context, this, context.FileSystem, context.Args);
         ImportEnv();
         foreach (var kvp in context.Shell._exported)
             _exported[kvp.Key] = _variables[kvp.Key] = kvp.Value;
