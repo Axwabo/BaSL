@@ -69,6 +69,8 @@ public sealed class BaShell : App
         return (shell.Context, shell);
     }
 
+    internal static (ExecutableContext, BaShell) CreateSubshell(ExecutableContext)
+
     private readonly Dictionary<string, string> _exported = [];
 
     private readonly ShellStatement? _statement;
@@ -77,9 +79,9 @@ public sealed class BaShell : App
 
     private CancellationTokenSource? _cts;
 
-    public BaShell(ExecutableContext context) : base(context)
+    public BaShell(ExecutableContext context) : base(null!)
     {
-        // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
+        Context = ExecutableContext.Sub(context, this, context.FileSystem, context.Args);
         UserContext = context.Shell.UserContext;
         Hostname = context.Shell.Hostname;
         CurrentDirectory = context.WorkingDirectory;
@@ -87,8 +89,6 @@ public sealed class BaShell : App
         foreach (var kvp in context.Shell._exported)
             _exported[kvp.Key] = _variables[kvp.Key] = kvp.Value;
     }
-
-    public BaShell(ExecutableContext context, ShellStatement statement) : this(context) => _statement = statement;
 
     private BaShell(Console console, StreamWriter standardOutput, StreamWriter standardError) : base(null!)
     {
