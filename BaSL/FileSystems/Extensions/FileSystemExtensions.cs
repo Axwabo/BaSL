@@ -27,16 +27,8 @@ public static class FileSystemExtensions
             {
                 if (s is FileSystemEntryName.Current)
                     continue;
-                if (entry is SymbolicLink link)
-                {
-                    if (links++ > 10)
-                        return GetEntryError.SymlinkLimit;
-                    var followResult = fileSystem.ResolveInternal(link.Target, ref links);
-                    if (!followResult.Success)
-                        return followResult.Error;
-                    entry = followResult.Value; // TODO: nested symlinks?
-                }
-
+                if (!fileSystem.FollowLink(ref links, ref entry, out var resolveInternal))
+                    return resolveInternal;
                 if (entry is not Directory directory)
                     break;
                 var result = s is FileSystemEntryName.Parent ? directory.GetParent().AsEntry() : directory.GetEntry(s);
@@ -45,7 +37,35 @@ public static class FileSystemExtensions
                 entry = result.Value;
             }
 
-            return entry;
+            return fileSystem.FollowLink(ref links, ref entry, out var finalInternal)
+                ? entry
+                : finalInternal.Error!;
+        }
+
+        private bool FollowLink(ref int links, ref FileSystemEntry entry, out GetEntryResult resolveInternal)
+        {
+            if (entry is not SymbolicLink link)
+            {
+                resolveInternal = default;
+                return true;
+            }
+
+            if (links++ > 10)
+            {
+                resolveInternal = GetEntryError.SymlinkLimit;
+                return false;
+            }
+
+            var followResult = fileSystem.ResolveInternal(link.Target, ref links);
+            if (!followResult.Success)
+            {
+                resolveInternal = followResult.Error;
+                return false;
+            }
+
+            entry = followResult.Value; // TODO: nested symlinks?
+            resolveInternal = default;
+            return true;
         }
 
         public GetDirectoryResult ResolveDirectory(Path path) => fileSystem.Resolve(path).AsDirectory();
