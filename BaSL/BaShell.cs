@@ -161,7 +161,6 @@ public sealed class BaShell : App
                 }
 
                 await using var stream = file.Value;
-                stream.Seek(0, SeekOrigin.Begin);
                 await using var context = ExecutableContext.Stdin(Context, this, FileSystem, fileStdinStatement.Args, stream);
                 var process = Execute(fileStdinStatement.Location, context, cancellationToken);
                 if (!process.Success)
@@ -186,6 +185,8 @@ public sealed class BaShell : App
                 await using var stream = file.Value;
                 if (redirectStatement.Overwrite)
                     stream.SetLength(0);
+                else
+                    stream.Seek(0, SeekOrigin.End);
                 await using var context = ExecutableContext.Redirected(Context, Shell, FileSystem, standaloneStatement.Args, new Streams(null, stream, null));
                 var process = Execute(standaloneStatement.Location, context, cancellationToken);
                 if (!process.Success)

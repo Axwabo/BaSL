@@ -72,6 +72,7 @@ file sealed class VirtualFileStream : Stream
         {
             _stream = new MemoryStream(length);
             _stream.Write(data.AsSpan(0, length));
+            _stream.Position = 0;
         }
         else
             _stream = new MemoryStream(data, 0, length, false);
