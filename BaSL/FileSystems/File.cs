@@ -4,6 +4,7 @@ using System.Threading;
 using BaSL.Executables;
 using BaSL.FileSystems.Errors;
 using BaSL.FileSystems.Extensions;
+using BaSL.Syntax;
 using BaSL.Users;
 
 namespace BaSL.FileSystems;
@@ -56,10 +57,11 @@ public abstract class File : FileSystemEntry
         var interpreterEnd = line.IndexOf(' ', interpreterStart);
         var path = new Path(interpreterEnd == -1 ? line[interpreterStart..] : line[interpreterStart..interpreterEnd]);
         var file = context.FileSystem.ResolveFile(path);
-        if (!file.Success || file.Value.Executable is not {} executable)
+        if (!file.Success || file.Value.Executable is null)
             return OpenFileError.ShebangNotFound;
         var args = interpreterEnd == -1 ? context.Args : new Args([line[interpreterEnd..], ..context.Args]);
-        return Process.Start(executable, ExecutableContext.Sub(context, context, context.FileSystem, args), );
+        var statement = new StandaloneStatement(file.Value.FullPath, args);
+        return new Process(BaShell.CreateSubshell(context, statement), cancellationToken);
     }
 
     public OpenFileError? MakeExecutable(UserContext context, Executable executable)

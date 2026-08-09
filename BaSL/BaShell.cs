@@ -69,7 +69,11 @@ public sealed class BaShell : App
         return (shell.Context, shell);
     }
 
-    internal static (ExecutableContext, BaShell) CreateSubshell(ExecutableContext)
+    internal static (ExecutableContext, BaShell) CreateSubshell(ExecutableContext parent, ShellStatement? statement=null)
+    {
+        var shell = new BaShell(parent, statement);
+        return (shell.Context, shell);
+    }
 
     private readonly Dictionary<string, string> _exported = [];
 
@@ -79,8 +83,9 @@ public sealed class BaShell : App
 
     private CancellationTokenSource? _cts;
 
-    public BaShell(ExecutableContext context) : base(null!)
+    private BaShell(ExecutableContext context, ShellStatement? statement) : base(null!)
     {
+        _statement = statement;
         Context = ExecutableContext.Sub(context, this, context.FileSystem, context.Args);
         UserContext = context.Shell.UserContext;
         Hostname = context.Shell.Hostname;

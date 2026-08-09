@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 namespace BaSL.Executables;
 
+// TODO: disposable or something, this architecture genuinely sucks so much ugh
 public sealed class Process
 {
 
@@ -19,6 +20,11 @@ public sealed class Process
         StandardOutput = context.DestinationOutput;
         StandardError = context.DestinationError;
         _exit = executable(context).ExecuteAsync(cancellationToken);
+    }
+
+    internal Process((ExecutableContext, BaShell) tuple, CancellationToken cancellationToken)
+    {
+        
     }
 
     public StreamWriter? StandardInput { get; }

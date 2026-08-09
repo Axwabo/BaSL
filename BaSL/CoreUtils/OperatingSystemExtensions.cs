@@ -14,7 +14,7 @@ public static class OperatingSystemExtensions
     private static Task Install(OperatingSystem system, UserContext ctx)
     {
         var bin = system.FileSystem.Root.CreateDirectories(ctx, Path.Binaries).Unwrap();
-        CreateBinary("basl", context => new BaShell(context));
+        CreateBinary("basl", context => BaShell.CreateSubshell(context).Item2);
         CreateBinary("mkdir", context => new Mkdir(context));
         CreateBinary("rmdir", context => new Rmdir(context));
         CreateBinary("rm", context => new Rm(context));
