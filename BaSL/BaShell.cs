@@ -86,10 +86,10 @@ public sealed class BaShell : App
     private BaShell(ExecutableContext context, ShellStatement? statement) : base(null!)
     {
         _statement = statement;
-        Context = ExecutableContext.Sub(context, this, context.FileSystem, context.Args);
         UserContext = context.Shell.UserContext;
         Hostname = context.Shell.Hostname;
         CurrentDirectory = context.WorkingDirectory;
+        Context = ExecutableContext.Sub(context, this, context.FileSystem, context.Args);
         ImportEnv();
         foreach (var kvp in context.Shell._exported)
             _exported[kvp.Key] = _variables[kvp.Key] = kvp.Value;

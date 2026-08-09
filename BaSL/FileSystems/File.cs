@@ -59,7 +59,7 @@ public abstract class File : FileSystemEntry
         var file = context.FileSystem.ResolveFile(path);
         if (!file.Success || file.Value.Executable is null)
             return OpenFileError.ShebangNotFound;
-        var args = interpreterEnd == -1 ? context.Args : new Args([line[interpreterEnd..], ..context.Args]);
+        var args = interpreterEnd == -1 ? new Args([FullPath.Value, ..context.Args]) : new Args([line[interpreterEnd..], FullPath.Value, ..context.Args]);
         var statement = new StandaloneStatement(file.Value.FullPath, args);
         return new Process(BaShell.CreateSubshell(context, statement), cancellationToken);
     }
