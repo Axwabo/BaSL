@@ -24,14 +24,14 @@ internal sealed class VirtualFile : File
 
     public override OpenFileResult Open(UserContext context, OpenMode mode)
     {
-        if (!Metadata.CanRead(context) || mode.IsWrite && !Metadata.CanWrite(context))
+        if (!Metadata.CanRead(context) || mode == OpenMode.ReadWrite && !Metadata.CanWrite(context))
             return OpenFileError.AccessDenied;
         lock (_access)
         {
             if (_used)
                 return OpenFileError.AccessViolation;
             _used = true;
-            return new VirtualFileStream(this, _data, _length, mode);
+            return new VirtualFileStream(this, _data, _length, mode == OpenMode.ReadWrite);
         }
     }
 
@@ -65,10 +65,10 @@ file sealed class VirtualFileStream : Stream
 
     private bool _disposed;
 
-    public VirtualFileStream(VirtualFile file, byte[] data, int length, OpenMode canWrite)
+    public VirtualFileStream(VirtualFile file, byte[] data, int length, bool canWrite)
     {
         _file = file;
-        if (canWrite.IsWrite)
+        if (canWrite)
         {
             _stream = new MemoryStream(length);
             _stream.Write(data.AsSpan(0, length));
