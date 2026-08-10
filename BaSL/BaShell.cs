@@ -83,12 +83,13 @@ public sealed class BaShell : App
 
     private CancellationTokenSource? _cts;
 
-    private BaShell(ExecutableContext context, ShellStatement? statement) : base(context)
+    private BaShell(ExecutableContext context, ShellStatement? statement) : base(null!)
     {
         _statement = statement;
         UserContext = context.Shell.UserContext;
         Hostname = context.Shell.Hostname;
         CurrentDirectory = context.WorkingDirectory;
+        Context = ExecutableContext.Sub(context, this, context.FileSystem, context.Args);
         ImportEnv();
         foreach (var kvp in context.Shell._exported)
             _exported[kvp.Key] = _variables[kvp.Key] = kvp.Value;
@@ -125,9 +126,15 @@ public sealed class BaShell : App
     }
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
-        => _statement is null
-            ? await ExecuteInteractiveAsync()
-            : await ExecuteAsync(_statement, cancellationToken);
+    {
+        if (_statement is null)
+            return await ExecuteInteractiveAsync();
+        var copy = Context.CopyAsync();
+        var code = await ExecuteAsync(_statement, cancellationToken);
+        await Context.CompletePipesAsync();
+        await copy;
+        return code;
+    }
 
     private async Task<int> ExecuteAsync(ShellStatement? shellStatement, CancellationToken cancellationToken)
     {
