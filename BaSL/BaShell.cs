@@ -342,7 +342,7 @@ public sealed class BaShell : App
         while (!cancellationToken.IsCancellationRequested)
         {
             var line = await reader.ReadLineAsync();
-            // TODO: error handling & shi
+            // TODO: exception handling & shi
             if (line == null)
                 break;
             if (string.IsNullOrEmpty(line) || line.StartsWith('#'))
