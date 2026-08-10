@@ -127,12 +127,21 @@ public sealed class BaShell : App
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        if (_statement is null)
-            return Context.Args.IsEmpty
-                ? await ExecuteInteractiveAsync(cancellationToken)
-                : await ExecuteFileAsync(Context.Args[0], cancellationToken);
+        if (_statement is not null)
+            return await ExecuteSingleAsync(_statement, cancellationToken);
+        if (Context.Args.IsEmpty)
+            return await ExecuteInteractiveAsync(cancellationToken);
         var copy = Context.CopyAsync();
-        var code = await ExecuteAsync(_statement, cancellationToken);
+        var code = await ExecuteFileAsync(Context.Args[0], cancellationToken);
+        await Context.CompletePipesAsync();
+        await copy;
+        return code;
+    }
+
+    private async Task<int> ExecuteSingleAsync(ShellStatement statement, CancellationToken cancellationToken)
+    {
+        var copy = Context.CopyAsync();
+        var code = await ExecuteAsync(statement, cancellationToken);
         await Context.CompletePipesAsync();
         await copy;
         return code;
