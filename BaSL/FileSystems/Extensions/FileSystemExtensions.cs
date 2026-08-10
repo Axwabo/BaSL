@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using BaSL.FileSystems.Errors;
 using BaSL.Users;
@@ -39,32 +40,30 @@ public static class FileSystemExtensions
 
             return fileSystem.FollowLink(ref links, ref entry, out var finalInternal)
                 ? entry
-                : finalInternal.Error!;
+                : finalInternal;
         }
 
-        private bool FollowLink(ref int links, ref FileSystemEntry entry, out GetEntryResult resolveInternal)
+        private bool FollowLink(ref int links, ref FileSystemEntry entry, [NotNullWhen(false)] out GetEntryError? error)
         {
-            if (entry is not SymbolicLink link)
+            while (entry is SymbolicLink link)
             {
-                resolveInternal = default;
-                return true;
+                if (links++ > 10)
+                {
+                    error = GetEntryError.SymlinkLimit;
+                    return false;
+                }
+
+                var followResult = fileSystem.ResolveInternal(link.Target, ref links);
+                if (!followResult.Success)
+                {
+                    error = followResult.Error;
+                    return false;
+                }
+
+                entry = followResult.Value;
             }
 
-            if (links++ > 10)
-            {
-                resolveInternal = GetEntryError.SymlinkLimit;
-                return false;
-            }
-
-            var followResult = fileSystem.ResolveInternal(link.Target, ref links);
-            if (!followResult.Success)
-            {
-                resolveInternal = followResult.Error;
-                return false;
-            }
-
-            entry = followResult.Value; // TODO: nested symlinks?
-            resolveInternal = default;
+            error = null;
             return true;
         }
 
