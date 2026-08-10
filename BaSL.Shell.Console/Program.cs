@@ -1,6 +1,5 @@
 ﻿using BaSL;
 using BaSL.CoreUtils;
-using BaSL.FileSystems;
 using BaSL.FileSystems.Extensions;
 using BaSL.Shell.Console;
 using Console = System.Console;
@@ -32,8 +31,19 @@ async Task<OperatingSystem> CreateSystemAsync(StreamWriter err)
     {
         await AutoMount.Mount(args, operatingSystem, context, err);
         var userHome = operatingSystem.FileSystem.ResolveDirectory(user.Home).Unwrap();
-        await using var writer = new StreamWriter(userHome.CreateFile(context, "amogus.txt").Open(context, OpenMode.ReadWrite).Unwrap());
-        await writer.WriteLineAsync("Hello World!");
+        await using (var writer = new StreamWriter(userHome.CreateFile(context, "amogus.txt").OpenWrite(context).Unwrap()))
+        {
+            await writer.WriteLineAsync("Hello World!");
+        }
+
+        var shebang = userHome.CreateFile(context, "shebang.sh");
+        await using (var writer = new StreamWriter(shebang.OpenWrite(context).Unwrap()))
+        {
+            await writer.WriteLineAsync("#!/usr/bin/basl");
+            await writer.WriteLineAsync("echo Hello from subshell!");
+        }
+
+        shebang.Unwrap().ChmodPlusX(context);
     });
     return system;
 }
