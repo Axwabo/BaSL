@@ -32,8 +32,7 @@ internal sealed class VirtualDirectory : Directory, IMountSupport, ISymlinkSuppo
             return CreateEntryError.AccessDenied;
         if (_entries.ContainsKey(name.Value))
             return CreateEntryError.NameCollision;
-        // TODO: idk how to reflect metadata
-        var link = new SymbolicLink(FileSystemAccess, FullPath, name, Metadata.Owner, Metadata.Modes, target);
+        var link = new SymbolicLink(FileSystemAccess, FullPath, name, Metadata, target);
         _entries.Add(name.Value, link);
         return link;
     }
