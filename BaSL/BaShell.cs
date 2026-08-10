@@ -128,7 +128,9 @@ public sealed class BaShell : App
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         if (_statement is null)
-            return await ExecuteInteractiveAsync(cancellationToken);
+            return Context.Args.IsEmpty
+                ? await ExecuteInteractiveAsync(cancellationToken)
+                : await ExecuteFileAsync(Context.Args[0], cancellationToken);
         var copy = Context.CopyAsync();
         var code = await ExecuteAsync(_statement, cancellationToken);
         await Context.CompletePipesAsync();
@@ -313,6 +315,35 @@ public sealed class BaShell : App
         await StandardError.WriteAsync("' due to: ", cancellationToken);
         await StandardError.WriteLineAsync(error.Message);
         return 127;
+    }
+
+    private async Task<int> ExecuteFileAsync(Path path, CancellationToken cancellationToken)
+    {
+        var file = WorkingDirectory.ResolveFile(path).OpenRead(UserContext);
+        if (!file.Success)
+        {
+            await StandardError.WriteAsync(path.Value, cancellationToken);
+            await StandardError.WriteAsync(": ", cancellationToken);
+            await StandardError.WriteLineAsync(file.Error.Message, cancellationToken);
+            return 127;
+        }
+
+        await using var stream = file.Value;
+        var reader = new StreamReader(stream);
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var line = await reader.ReadLineAsync();
+            // TODO: error handling & shi
+            if (line == null)
+                break;
+            if (string.IsNullOrEmpty(line) || line.StartsWith('#'))
+                continue;
+            if (line.AsSpan().Trim().Equals("exit", StringComparison.OrdinalIgnoreCase))
+                break;
+            await ExecuteAsync(line, cancellationToken);
+        }
+
+        return 0;
     }
 
     private async Task<int> ExecuteInteractiveAsync(CancellationToken cancellationToken)
