@@ -18,7 +18,7 @@ public static class PathExtensions
 
         public static Path ToPartialAbsolutePath(string path, Path basePath) => new Path(path).ToPartialAbsolute(basePath);
 
-        public static bool IsExplicitRelativeOrAbsolute(ReadOnlySpan<char> span) => span.StartsWith("/") || span.StartsWith("./") || span.StartsWith("../");
+        public static bool IsExplicitRelativeOrAbsolute(ReadOnlySpan<char> span) => span.StartsWith("/") || span.StartsWith("./") || span.StartsWith("../") || span.StartsWith("~/");
 
         public static ReadOnlySpan<char> GetParent(ReadOnlySpan<char> span)
         {
