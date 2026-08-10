@@ -29,6 +29,7 @@ public static class OperatingSystemExtensions
         CreateBinary("bytes", context => new Bytes(context));
         CreateBinary("whoami", context => new WhoAmI(context));
         CreateBinary("sleep", context => new Sleep(context));
+        CreateBinary("sudo", context => new Sudo(context));
         bin.Link(ctx, "bash", bin.FullPath / "basl");
         system.FileSystem.Root.Link(ctx, "bin", bin.FullPath).Unwrap();
         return Task.CompletedTask;

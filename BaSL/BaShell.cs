@@ -69,9 +69,9 @@ public sealed class BaShell : App
         return (shell.Context, shell);
     }
 
-    internal static (ExecutableContext, BaShell) CreateSubshell(ExecutableContext parent, ShellStatement? statement = null)
+    internal static (ExecutableContext, BaShell) CreateSubshell(ExecutableContext parent, ShellStatement? statement = null, UserContext? user = null)
     {
-        var shell = new BaShell(parent, statement);
+        var shell = new BaShell(parent, statement, user);
         return (shell.Context, shell);
     }
 
@@ -83,10 +83,11 @@ public sealed class BaShell : App
 
     private CancellationTokenSource? _cts;
 
-    private BaShell(ExecutableContext context, ShellStatement? statement) : base(null!)
+    private BaShell(ExecutableContext context, ShellStatement? statement, UserContext? user = null) : base(null!)
     {
         _statement = statement;
-        UserContext = context.Shell.UserContext;
+        Console = context.Console;
+        UserContext = user ?? context.Shell.UserContext;
         Hostname = context.Shell.Hostname;
         CurrentDirectory = context.WorkingDirectory;
         Context = ExecutableContext.Sub(context, this, context.FileSystem, context.Args);
@@ -97,10 +98,11 @@ public sealed class BaShell : App
 
     private BaShell(Console console, StreamWriter standardOutput, StreamWriter standardError) : base(null!)
     {
+        Console = console;
         UserContext = console.UserContext;
         Hostname = console.OperatingSystem.Hostname; // TODO: auto-update
         CurrentDirectory = console.FileSystem.ResolveDirectory(console.User.Home).Unwrap();
-        Context = ExecutableContext.Root(this, console.FileSystem, default, standardOutput, standardError);
+        Context = ExecutableContext.Root(this, console, default, standardOutput, standardError);
         ImportEnv();
     }
 
@@ -118,6 +120,7 @@ public sealed class BaShell : App
     public Directory CurrentDirectory { get; internal set; }
 
     private new StreamWriter StandardError => Context.IsRoot ? StandardOutput : base.StandardError;
+    internal Console Console { get; }
 
     private void ImportEnv()
     {
@@ -226,8 +229,8 @@ public sealed class BaShell : App
                 var targetCommand = Locate(pipeStatement.Location);
                 if (!targetCommand.Success)
                     return await WriteExecuteErrorAsync(pipeStatement.Location, targetCommand.Error, cancellationToken);
-                await using var source = new ExecutableContext(Shell, FileSystem, standaloneStatement.Args).CreatePipes();
-                await using var target = new ExecutableContext(Shell, FileSystem, pipeStatement.Args);
+                await using var source = new ExecutableContext(Shell, standaloneStatement.Args).CreatePipes();
+                await using var target = new ExecutableContext(Shell, pipeStatement.Args);
                 source.SubStderr(Context);
                 target.PipeStdin(source);
                 target.CreateStdoutPipe().SubStdout(Context);
@@ -267,20 +270,20 @@ public sealed class BaShell : App
                 var contexts = new List<ExecutableContext>();
                 try
                 {
-                    var source = new ExecutableContext(Shell, FileSystem, run[^1].Item3).CreatePipes();
+                    var source = new ExecutableContext(Shell, run[^1].Item3).CreatePipes();
                     source.SubStderr(Context);
                     contexts.Add(source);
                     for (var i = run.Count - 2; i >= 1; i--)
                     {
                         var args = run[i].Item3;
-                        var intermediate = new ExecutableContext(Shell, FileSystem, args);
+                        var intermediate = new ExecutableContext(Shell, args);
                         intermediate.PipeStdin(contexts[^1]);
                         intermediate.CreateStdoutPipe();
                         intermediate.CreateStderrPipe().SubStderr(Context); // TODO: concurrent writes are most likely not possible
                         contexts.Add(intermediate);
                     }
 
-                    var target = new ExecutableContext(Shell, FileSystem, run[0].Item3);
+                    var target = new ExecutableContext(Shell, run[0].Item3);
                     target.PipeStdin(contexts[^1]);
                     target.CreateStdoutPipe().SubStdout(Context);
                     target.CreateStderrPipe().SubStderr(Context);
