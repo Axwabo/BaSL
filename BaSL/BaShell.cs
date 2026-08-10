@@ -128,7 +128,7 @@ public sealed class BaShell : App
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         if (_statement is null)
-            return await ExecuteInteractiveAsync();
+            return await ExecuteInteractiveAsync(cancellationToken);
         var copy = Context.CopyAsync();
         var code = await ExecuteAsync(_statement, cancellationToken);
         await Context.CompletePipesAsync();
@@ -315,16 +315,18 @@ public sealed class BaShell : App
         return 127;
     }
 
-    private async Task<int> ExecuteInteractiveAsync()
+    private async Task<int> ExecuteInteractiveAsync(CancellationToken cancellationToken)
     {
-        while (true)
+        while (!cancellationToken.IsCancellationRequested)
         {
             await StandardOutput.WriteAsync($"{User.Username}@{Shell.Hostname}:{FormatCurrentDirectory()}{(User.IsSuperuser ? "# " : "$ ")}");
             var line = await StandardInput.ReadLineAsync();
-            if (string.IsNullOrEmpty(line))
+            if (line == null)
+                break;
+            if (string.IsNullOrEmpty(line) || line.StartsWith('#'))
                 continue;
             if (line.AsSpan().Trim().Equals("exit", StringComparison.OrdinalIgnoreCase))
-                return 0;
+                break;
             var cts = _cts = new CancellationTokenSource();
             var token = cts.Token;
             try
@@ -340,6 +342,8 @@ public sealed class BaShell : App
                 _cts = null;
             }
         }
+
+        return 0;
     }
 
     private async Task ExecuteAsync(string line, CancellationToken token)
