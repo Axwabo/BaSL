@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using BaSL.FileSystems.Errors;
 using BaSL.Users;
@@ -117,6 +118,14 @@ public static class DirectoryExtensions
                 return new LinkError();
             var result = symlinkSupport.Link(context, name, target);
             return result.Success ? result.Value : result.Error;
+        }
+
+        public Result<StreamWriter, FileSystemError> OpenTextWrite(FileSystemEntryName name, UserContext context)
+        {
+            var existing = directory.ResolveFile(name);
+            return existing.Success
+                ? existing.OpenTextWrite(context)
+                : directory.CreateFile(context, name).OpenTextWrite(context);
         }
 
     }

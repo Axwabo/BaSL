@@ -1,3 +1,4 @@
+using System.IO;
 using BaSL.FileSystems.Errors;
 using BaSL.Users;
 
@@ -9,10 +10,16 @@ public static class FileExtensions
     extension(File file)
     {
 
-        public ChangeModeError? ChmodPlusX(UserContext context)
+        public ChangeModeError? ChmodPlusX(UserContext context) => file.Metadata.Add(context, Mode.Execute);
+
+        public OpenFileResult OpenRead(UserContext context) => file.Open(context, OpenMode.Read);
+
+        public OpenFileResult OpenWrite(UserContext context) => file.Open(context, OpenMode.ReadWrite);
+
+        public Result<StreamWriter, OpenFileError> OpenTextWrite(UserContext context)
         {
-            var (owner, group, others) = file.Metadata.Modes;
-            return file.Metadata.ChangeMode(context, new Modes(owner | Mode.Execute, group | Mode.Execute, others | Mode.Execute));
+            var open = file.OpenWrite(context);
+            return open.Success ? new StreamWriter(open.Value) : open.Error;
         }
 
     }

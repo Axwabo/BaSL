@@ -31,19 +31,19 @@ async Task<OperatingSystem> CreateSystemAsync(StreamWriter err)
     {
         await AutoMount.Mount(args, operatingSystem, context, err);
         var userHome = operatingSystem.FileSystem.ResolveDirectory(user.Home).Unwrap();
-        await using (var writer = new StreamWriter(userHome.CreateFile(context, "amogus.txt").OpenWrite(context).Unwrap()))
+        await using (var writer = userHome.OpenTextWrite("amogus.txt", context).Unwrap())
         {
             await writer.WriteLineAsync("Hello World!");
         }
 
-        var shebang = userHome.CreateFile(context, "shebang.sh");
-        await using (var writer = new StreamWriter(shebang.OpenWrite(context).Unwrap()))
+        var shebang = userHome.CreateFile(context, "shebang.sh").Unwrap();
+        await using (var writer = shebang.OpenTextWrite(context).Unwrap())
         {
             await writer.WriteLineAsync("#!/usr/bin/basl");
             await writer.WriteLineAsync("echo Hello from subshell!");
         }
 
-        shebang.Unwrap().ChmodPlusX(context);
+        shebang.ChmodPlusX(context);
     });
     return system;
 }

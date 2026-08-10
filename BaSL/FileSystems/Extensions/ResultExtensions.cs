@@ -71,6 +71,12 @@ public static class ResultExtensions
 
         public Result<Stream, FileSystemError> OpenWrite(UserContext context) => result.Open(context, OpenMode.ReadWrite);
 
+        public Result<StreamWriter, FileSystemError> OpenTextWrite(UserContext context)
+        {
+            var open = result.OpenWrite(context);
+            return open.Success ? new StreamWriter(open.Value) : open.Error;
+        }
+
     }
 
     extension(CreateDirectoryResult result)
