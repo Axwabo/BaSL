@@ -20,6 +20,16 @@ public sealed class Ls : App
         await writer.WriteAsync(mode.CanExecute ? 'x' : '-');
     }
 
+    private static async Task WriteNameAsync(StreamWriter writer, string name, CancellationToken cancellationToken)
+    {
+        var quote = name.Contains(' ');
+        if (quote)
+            await writer.WriteAsync('\'');
+        await writer.WriteAsync(name, cancellationToken);
+        if (quote)
+            await writer.WriteAsync('\'');
+    }
+
     public Ls(ExecutableContext context) : base(context)
     {
     }
@@ -62,14 +72,14 @@ public sealed class Ls : App
             await writer.WriteAsync(' ');
             await writer.WriteAsync(((entry as File)?.SizeBytes ?? 0).ToString(), cancellationToken);
             await writer.WriteAsync(' ');
-            var quote = entry.Name.Value.Contains(' ');
-            if (quote)
-                await writer.WriteAsync('\'');
-            await writer.WriteAsync(entry.Name, cancellationToken);
-            if (quote)
-                await writer.WriteLineAsync('\'');
-            else
-                await writer.WriteLineAsync();
+            await WriteNameAsync(writer, entry.Name.Value, cancellationToken);
+            if (entry is SymbolicLink link)
+            {
+                await writer.WriteAsync(" -> ", cancellationToken);
+                await WriteNameAsync(writer, link.Target.Value, cancellationToken);
+            }
+
+            await writer.WriteLineAsync();
         }
 
         return 0;
