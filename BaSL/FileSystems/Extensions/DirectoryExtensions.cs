@@ -44,6 +44,13 @@ public static class DirectoryExtensions
             var current = directory;
             foreach (var s in path.Value.Split('/', StringSplitOptions.RemoveEmptyEntries))
             {
+                var existing = current.GetDirectory(s);
+                if (existing.Success)
+                {
+                    current = existing.Value;
+                    continue;
+                }
+
                 var result = current.CreateDirectory(context, s);
                 if (!result.Success)
                     return result;

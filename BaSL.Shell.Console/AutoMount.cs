@@ -44,12 +44,17 @@ public static class AutoMount
                 continue;
             }
 
+            var directory = result.Value;
             // TODO: recursive
-            foreach (var entry in Directory.EnumerateFiles(path))
+            foreach (var entry in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
             {
-                var relative = Path.GetRelativePath(path, entry);
+                var relative = Path.GetRelativePath(path, entry).Replace('\\', '/');
+                var parentPath = new FileSystems.Path(relative).Parent;
+                var parent = parentPath.IsEmpty
+                    ? directory
+                    : directory.CreateDirectories(context, parentPath).Unwrap();
                 await using var realFile = File.OpenRead(entry);
-                await using var virtualFile = result.Value.CreateFile(context, relative).OpenWrite(context).Unwrap();
+                await using var virtualFile = parent.CreateFile(context, Path.GetFileName(entry)).OpenWrite(context).Unwrap();
                 await realFile.CopyToAsync(virtualFile);
             }
         }
