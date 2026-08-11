@@ -18,4 +18,16 @@ internal static class SegmentExtensions
 
     }
 
+    extension(ContinueSegment segment)
+    {
+
+        public bool Exit(int code) => segment.On switch
+        {
+            Continue.OnFailure => code != 0,
+            Continue.OnSuccess => code == 0,
+            _ => false
+        };
+
+    }
+
 }
