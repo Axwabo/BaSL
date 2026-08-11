@@ -88,7 +88,6 @@ public sealed class BaShell : App
         _statement = statement;
         Console = context.Console;
         UserContext = user ?? context.Shell.UserContext;
-        Hostname = context.Shell.Hostname;
         CurrentDirectory = context.WorkingDirectory;
         Context = ExecutableContext.Sub(context, this, context.FileSystem, context.Args);
         ImportEnv();
@@ -100,7 +99,6 @@ public sealed class BaShell : App
     {
         Console = console;
         UserContext = console.UserContext;
-        Hostname = console.OperatingSystem.Hostname; // TODO: auto-update
         CurrentDirectory = console.FileSystem.ResolveDirectory(console.User.Home).Unwrap();
         Context = ExecutableContext.Root(this, console, default, standardOutput, standardError);
         ImportEnv();
@@ -111,19 +109,21 @@ public sealed class BaShell : App
         set => _variables["?"] = value.ToString();
     }
 
+    internal Console Console { get; }
+
     public User User => UserContext.User;
 
     public new UserContext UserContext { get; }
 
-    public string Hostname { get; }
+    public string Hostname => Console.OperatingSystem.Hostname;
 
     public Directory CurrentDirectory { get; internal set; }
 
     private new StreamWriter StandardError => Context.IsRoot ? StandardOutput : base.StandardError;
-    internal Console Console { get; }
 
     private void ImportEnv()
     {
+        _variables["?"] = "0";
         foreach (var kvp in User.Environment)
             _variables[kvp.Key] = kvp.Value;
     }
