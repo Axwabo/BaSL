@@ -18,7 +18,7 @@ internal static class StatementParser
         do
         {
             syntax.Clear();
-            (index, var @continue) = ParseStatements(line.AsSpan(index + 1), syntax, variables, home);
+            (index) = ParseStatements(line.AsSpan(index + 1), syntax, variables, home);
             switch (syntax)
             {
                 case []:
@@ -74,7 +74,7 @@ internal static class StatementParser
         return statement;
     }
 
-    private static (int, Continue) ParseStatements(ReadOnlySpan<char> s, List<Segment> statements, TryParse variables, string home)
+    private static int ParseStatements(ReadOnlySpan<char> s, List<Segment> statements, TryParse variables, string home)
     {
         var argBuzilder = new StringBuilder();
         var variableBuilder = new StringBuilder();
@@ -112,14 +112,14 @@ internal static class StatementParser
                     syntax = SyntaxType.QuotedString;
                     break;
                 case (SyntaxType.Text, '|') when next == '|':
-                    Complete();
-                    return (i + 1, Continue.Always);
+                    Complete(Continue.OnFailure);
+                    return i + 1;
                 case (SyntaxType.Text, '&') when next == '&':
-                    Complete();
-                    return (i + 1, Continue.OnSuccess);
+                    Complete(Continue.OnSuccess);
+                    return i + 1;
                 case (SyntaxType.Text, ';'):
                     Complete();
-                    return (i, Continue.Always);
+                    return i;
                 case (SyntaxType.Text, '|'):
                     AddStatement(Segment.Pipe);
                     break;
@@ -140,7 +140,7 @@ internal static class StatementParser
                 case (SyntaxType.Variable, ';') when outerSyntax == SyntaxType.Text:
                     AppendVariable();
                     Complete();
-                    return (i, Continue.Always);
+                    return i;
                 case (SyntaxType.Variable, '"') when outerSyntax == SyntaxType.QuotedString:
                     AddArg();
                     break;
@@ -164,7 +164,7 @@ internal static class StatementParser
         }
 
         Complete();
-        return (-1, Continue.Always);
+        return (-1);
 
         void AddArg(SyntaxType next = SyntaxType.Text)
         {
@@ -196,12 +196,13 @@ internal static class StatementParser
             syntax = outerSyntax;
         }
 
-        void Complete()
+        void Complete(Continue @continue = Continue.Always)
         {
             if (argBuzilder.Length != 0)
                 AddArg();
             if (args.Count != 0)
                 AddStatement();
+            statements.Add(new ContinueSegment(@continue));
         }
     }
 

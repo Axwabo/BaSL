@@ -22,3 +22,5 @@ internal sealed record StdinFileSegment : Segment;
 internal sealed record RedirectOverwriteSegment : Segment;
 
 internal sealed record RedirectAppendSegment : Segment;
+
+internal sealed record ContinueSegment(Continue On) : Segment;
