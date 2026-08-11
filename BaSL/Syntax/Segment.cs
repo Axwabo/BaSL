@@ -1,3 +1,5 @@
+using System;
+
 namespace BaSL.Syntax;
 
 internal abstract record Segment
@@ -24,3 +26,20 @@ internal sealed record RedirectOverwriteSegment : Segment;
 internal sealed record RedirectAppendSegment : Segment;
 
 internal sealed record ContinueSegment(Continue On) : Segment;
+
+internal sealed record KeywordSegment(Keyword Keyword) : Segment
+{
+
+    public static KeywordSegment? Get(ReadOnlySpan<char> span) => span switch
+    {
+        "if" => If,
+        "then" => Then,
+        "fi" => EndIf,
+        _ => null
+    };
+
+    public static KeywordSegment If { get; } = new(Keyword.If);
+    public static KeywordSegment Then { get; } = new(Keyword.Then);
+    public static KeywordSegment EndIf { get; } = new(Keyword.EndIf);
+
+}

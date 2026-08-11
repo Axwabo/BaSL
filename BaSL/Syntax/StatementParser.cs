@@ -10,30 +10,17 @@ internal delegate bool TryParse(string variable, [NotNullWhen(true)] out string?
 internal static class StatementParser
 {
 
-    public static List<(ShellStatement?, Continue)> Parse(string line, TryParse variables, string home)
+    public static List<Segment> Parse(string line, TryParse variables, string home)
     {
-        var results = new List<(ShellStatement?, Continue)>();
         var syntax = new List<Segment>();
         var index = -1;
         do
         {
-            syntax.Clear();
-            (index) = ParseStatements(line.AsSpan(index + 1), syntax, variables, home);
-            switch (syntax)
-            {
-                case []:
-                    break;
-                case [ArgsSegment {Args: var firstArgs}, ..]:
-                    results.Add((CreateStatement(syntax, firstArgs), @continue));
-                    break;
-                default:
-                    results.Add((null, @continue));
-                    break;
-            }
+            index = ParseStatements(line.AsSpan(index + 1), syntax, variables, home);
         }
         while (index != -1);
 
-        return results;
+        return syntax;
     }
 
     private static ShellStatement? CreateStatement(List<Segment> syntax, Args firstArgs) => syntax switch
@@ -82,6 +69,7 @@ internal static class StatementParser
         var syntax = SyntaxType.Text;
         var outerSyntax = SyntaxType.Text;
         var escaped = false;
+        var raw = true;
         for (var i = 0; i < s.Length; i++)
         {
             var c = s[i];
@@ -104,6 +92,7 @@ internal static class StatementParser
                 case (SyntaxType.VerbatimString, '\''):
                 case (SyntaxType.QuotedString, '"'):
                     syntax = outerSyntax = SyntaxType.Text;
+                    raw = false;
                     break;
                 case (SyntaxType.Text, '\''):
                     syntax = SyntaxType.VerbatimString;
@@ -134,6 +123,7 @@ internal static class StatementParser
                     AddStatement(Segment.StdinFile);
                     break;
                 case (SyntaxType.Text or SyntaxType.QuotedString, '$'):
+                    raw = false;
                     outerSyntax = syntax;
                     syntax = SyntaxType.Variable;
                     break;
@@ -151,7 +141,8 @@ internal static class StatementParser
                 case (SyntaxType.Variable, _):
                     variableBuilder.Append(c);
                     break;
-                case (SyntaxType.Text, '~') when !string.IsNullOrEmpty(home):
+                case (SyntaxType.Text, '~') when !string.IsNullOrEmpty(home) && argBuzilder.Length == 0:
+                    raw = false;
                     argBuzilder.Append(home);
                     break;
                 case (SyntaxType.Text, _) when char.IsWhiteSpace(c):
@@ -164,7 +155,7 @@ internal static class StatementParser
         }
 
         Complete();
-        return (-1);
+        return -1;
 
         void AddArg(SyntaxType next = SyntaxType.Text)
         {
@@ -179,7 +170,12 @@ internal static class StatementParser
 
         void AddStatement(Segment? segment = null)
         {
-            statements.Add(new ArgsSegment(args.ToArray()));
+            // TODO: maybe this doesn't belong here
+            if (raw && args.Count == 1 && KeywordSegment.Get(args[0]) is { } keyword)
+                statements.Add(keyword);
+            else
+                statements.Add(new ArgsSegment(args.ToArray()));
+            raw = true;
             if (segment is not null)
                 statements.Add(segment);
             args.Clear();
