@@ -405,7 +405,7 @@ public sealed class BaShell : App
             var statement = StatementParser.CreateStatement(span);
             start = index + 1;
             var code = LastExitCode = await ExecuteAsync(statement, token);
-            if (index != -1 && statements.Span[index] is ContinueSegment @continue && @continue.Exit(code))
+            if (statements.Span[range.End] is ContinueSegment @continue && @continue.Exit(code))
                 break;
         }
         while (index != -1);
