@@ -10,37 +10,45 @@ internal delegate bool TryParse(string variable, [NotNullWhen(true)] out string?
 internal static class StatementParser
 {
 
-    public static List<Segment> Parse(string line, TryParse variables, string home)
+    [ThreadStatic]
+    private static List<Segment>? _segments;
+
+    public static ReadOnlyMemory<Segment> Parse(string line, TryParse variables, string home)
     {
-        var syntax = new List<Segment>();
+        _segments ??= [];
         var index = -1;
         do
         {
-            index = ParseStatements(line.AsSpan(index + 1), syntax, variables, home);
+            index = ParseStatements(line.AsSpan(index + 1), _segments, variables, home);
         }
         while (index != -1);
 
-        return syntax;
+        var array = _segments.ToArray();
+        _segments.Clear();
+        return array;
     }
 
-    private static ShellStatement? CreateStatement(List<Segment> syntax, Args firstArgs) => syntax switch
-    {
-        [_] => StandaloneStatement.FromArgs(firstArgs),
-        [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}] => firstArgs < source,
-        [_, RedirectOverwriteSegment, ArgsSegment {Args: [var target, ..]}] => firstArgs > target,
-        [_, RedirectAppendSegment, ArgsSegment {Args: [var target, ..]}] => firstArgs >> target,
-        [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, RedirectOverwriteSegment, ArgsSegment {Args: [var target, ..]}] => firstArgs < source > target,
-        [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, RedirectAppendSegment, ArgsSegment {Args: [var target, ..]}] => (firstArgs < source) >> target,
-        [_, PipeSegment, ArgsSegment {Args: var targetArgs}] => firstArgs | targetArgs,
-        [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, PipeSegment, ArgsSegment {Args: var targetArgs}] => firstArgs < source | targetArgs,
-        [_, StdinFileSegment, ArgsSegment {Args: [var source, ..]}, PipeSegment, ..] => ExpandPipes(StandaloneStatement.FromArgs(firstArgs) < source, syntax, 4),
-        [_, PipeSegment, ..] => ExpandPipes(StandaloneStatement.FromArgs(firstArgs), syntax),
-        _ => null
-    };
+    public static ShellStatement? CreateStatement(ReadOnlySpan<Segment> syntax)
+        => syntax is not [ArgsSegment {Args: var firstArgs}, ..]
+            ? null
+            : syntax[1..] switch // TODO: procedural?
+            {
+                [] => StandaloneStatement.FromArgs(firstArgs),
+                [StdinFileSegment, ArgsSegment {Args: [var source, ..]}] => firstArgs < source,
+                [RedirectOverwriteSegment, ArgsSegment {Args: [var target, ..]}] => firstArgs > target,
+                [RedirectAppendSegment, ArgsSegment {Args: [var target, ..]}] => firstArgs >> target,
+                [StdinFileSegment, ArgsSegment {Args: [var source, ..]}, RedirectOverwriteSegment, ArgsSegment {Args: [var target, ..]}] => firstArgs < source > target,
+                [StdinFileSegment, ArgsSegment {Args: [var source, ..]}, RedirectAppendSegment, ArgsSegment {Args: [var target, ..]}] => (firstArgs < source) >> target,
+                [PipeSegment, ArgsSegment {Args: var targetArgs}] => firstArgs | targetArgs,
+                [StdinFileSegment, ArgsSegment {Args: [var source, ..]}, PipeSegment, ArgsSegment {Args: var targetArgs}] => firstArgs < source | targetArgs,
+                [StdinFileSegment, ArgsSegment {Args: [var source, ..]}, PipeSegment, ..] => ExpandPipes(StandaloneStatement.FromArgs(firstArgs) < source, syntax, 4),
+                [PipeSegment, ..] => ExpandPipes(StandaloneStatement.FromArgs(firstArgs), syntax),
+                _ => null
+            };
 
-    private static ShellStatement? ExpandPipes(ShellStatement? statement, List<Segment> syntax, int stardIndex = 2)
+    private static ShellStatement? ExpandPipes(ShellStatement? statement, ReadOnlySpan<Segment> syntax, int stardIndex = 2)
     {
-        for (var i = stardIndex; i < syntax.Count; i += 2)
+        for (var i = stardIndex; i < syntax.Length; i += 2)
         {
             if (statement is not ExtendableStatement || syntax[i] is not ArgsSegment {Args: var args})
                 return null;
