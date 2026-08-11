@@ -16,6 +16,12 @@ internal static class SegmentExtensions
             return -1;
         }
 
+        public int FindIndex(Segment segment, int start = 0)
+        {
+            var index = segments.Span[start..].IndexOf(segment);
+            return index == -1 ? -1 : index + start;
+        }
+
     }
 
     extension(ContinueSegment segment)

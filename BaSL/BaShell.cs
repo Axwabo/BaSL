@@ -83,6 +83,8 @@ public sealed class BaShell : App
 
     private CancellationTokenSource? _cts;
 
+    private KeywordSegment? _currentBlock;
+
     private BaShell(ExecutableContext context, ShellStatement? statement, UserContext? user = null) : base(null!)
     {
         _statement = statement;
@@ -399,7 +401,7 @@ public sealed class BaShell : App
         {
             index = statements.FindIndex<ContinueSegment>(start);
             var range = index == -1 ? start.. : start..index;
-            var span = statements[range].Span;
+            var span = statements.Span[range];
             if (index == -1 && span.IsEmpty)
                 break;
             var statement = StatementParser.CreateStatement(span);
