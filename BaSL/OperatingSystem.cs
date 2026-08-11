@@ -10,21 +10,24 @@ namespace BaSL;
 public sealed class OperatingSystem
 {
 
+    private const string RootUsername = "root";
+
     private readonly IMountSupport _homes;
 
     public OperatingSystem()
     {
-        Root = new User("root")
+        Root = new User(RootUsername)
         {
             IsSuperuser = true,
             Environment =
             {
                 {"PATH", Path.Binaries.Value},
+                {"USER", RootUsername},
                 {"HOME", Path.Root.Value}
             }
         };
         var ctx = new UserContext(Root);
-        Users["root"] = Root;
+        Users[RootUsername] = Root;
         FileSystem = FileSystem.CreateVirtual(Root);
         FileSystem.Root.Mount(ctx, new DevFileSystem(Root), "dev");
         _homes = (IMountSupport) FileSystem.Root.CreateDirectory(ctx, "home").Unwrap();
@@ -48,7 +51,8 @@ public sealed class OperatingSystem
         {
             Environment =
             {
-                {"PATH", Path.Binaries.Value}
+                {"PATH", Path.Binaries.Value},
+                {"USER", name}
             }
         };
         var userFs = FileSystem.CreateVirtual(user);

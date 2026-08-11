@@ -423,7 +423,8 @@ public sealed class BaShell : App
             var span = statements.Span[range];
             if (end && span.IsEmpty)
                 break;
-            if (statements.Span[start] is KeywordSegment {Keyword: var keyword})
+            start = index + 1;
+            if (statements.Span[range.Start] is KeywordSegment {Keyword: var keyword})
             {
                 switch (keyword)
                 {
@@ -438,11 +439,9 @@ public sealed class BaShell : App
                         break;
                 }
 
-                start = index + 1;
                 continue;
             }
 
-            start = index + 1;
             var statement = StatementParser.CreateStatement(span);
             var code = LastExitCode = await ExecuteAsync(statement, token);
             if (statements.Span[range.End] is ContinueSegment @continue && @continue.Exit(code))

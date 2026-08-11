@@ -41,6 +41,12 @@ async Task<OperatingSystem> CreateSystemAsync(StreamWriter err)
         {
             await writer.WriteLineAsync("#!/usr/bin/basl");
             await writer.WriteLineAsync("echo Hello from subshell!");
+            await writer.WriteLineAsync("if [[ $USER == 'root' ]]");
+            await writer.WriteLineAsync("    echo You are root");
+            await writer.WriteLineAsync("else");
+            await writer.WriteLineAsync("    echo You are NOT root");
+            await writer.WriteLineAsync("fi");
+            await writer.WriteLineAsync("echo End of if-else statement");
         }
 
         shebang.ChmodPlusX(context);
