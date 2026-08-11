@@ -16,6 +16,14 @@ internal static class SegmentExtensions
             return -1;
         }
 
+        public int FindIndex<T1, T2>(int start = 0) where T1 : Segment where T2 : Segment
+        {
+            for (var i = start; i < segments.Length; i++)
+                if (segments.Span[i] is T1 or T2)
+                    return i;
+            return -1;
+        }
+
         public int FindIndex(Segment segment, int start = 0)
         {
             var index = segments.Span[start..].IndexOf(segment);

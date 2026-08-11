@@ -25,7 +25,12 @@ internal sealed record RedirectOverwriteSegment : Segment;
 
 internal sealed record RedirectAppendSegment : Segment;
 
-internal sealed record ContinueSegment(Continue On) : Segment;
+internal sealed record ContinueSegment(Continue On) : Segment
+{
+
+    public static ContinueSegment Always { get; } = new(Continue.Always);
+
+}
 
 internal sealed record KeywordSegment(Keyword Keyword) : Segment
 {
@@ -34,12 +39,14 @@ internal sealed record KeywordSegment(Keyword Keyword) : Segment
     {
         "if" => If,
         "then" => Then,
+        "else" => Else,
         "fi" => EndIf,
         _ => null
     };
 
     public static KeywordSegment If { get; } = new(Keyword.If);
     public static KeywordSegment Then { get; } = new(Keyword.Then);
+    public static KeywordSegment Else { get; } = new(Keyword.Else);
     public static KeywordSegment EndIf { get; } = new(Keyword.EndIf);
 
 }

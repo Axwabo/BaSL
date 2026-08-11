@@ -75,6 +75,13 @@ public sealed class BaShell : App
         return (shell.Context, shell);
     }
 
+    private static bool IsTrue(Args args) => args switch
+    {
+        [var a, "==", var b] => a == b,
+        [var a, "!=", var b] => a != b,
+        _ => throw new NotImplementedException()
+    };
+
     private readonly Dictionary<string, string> _exported = [];
 
     private readonly ShellStatement? _statement;
@@ -83,7 +90,9 @@ public sealed class BaShell : App
 
     private CancellationTokenSource? _cts;
 
-    private KeywordSegment? _currentBlock;
+    private KeywordSegment? _currentBlock; // TODO: stack
+
+    private KeywordSegment? _skipUntil;
 
     private BaShell(ExecutableContext context, ShellStatement? statement, UserContext? user = null) : base(null!)
     {
@@ -399,13 +408,42 @@ public sealed class BaShell : App
         var start = 0;
         do
         {
-            index = statements.FindIndex<ContinueSegment>(start);
-            var range = index == -1 ? start.. : start..index;
+            index = statements.FindIndex<ContinueSegment, KeywordSegment>(start);
+            if (_skipUntil is not null)
+            {
+                var skip = statements.FindIndex(_skipUntil);
+                if (skip == -1)
+                    break;
+                start = skip + 1;
+                continue;
+            }
+
+            var end = index == -1;
+            var range = end ? start.. : start..index;
             var span = statements.Span[range];
-            if (index == -1 && span.IsEmpty)
+            if (end && span.IsEmpty)
                 break;
-            var statement = StatementParser.CreateStatement(span);
+            if (statements.Span[start] is KeywordSegment {Keyword: var keyword})
+            {
+                switch (keyword)
+                {
+                    case Keyword.EndIf:
+                        _skipUntil = _currentBlock = null;
+                        break;
+                    case Keyword.If when span[1..] is [ArgsSegment {Args: ["[[", .. var condition, "]]"]}] && IsTrue(condition):
+                        _currentBlock = KeywordSegment.Then; // TODO: get "then" keyword
+                        break;
+                    case Keyword.If:
+                        _skipUntil = KeywordSegment.Else;
+                        break;
+                }
+
+                start = index + 1;
+                continue;
+            }
+
             start = index + 1;
+            var statement = StatementParser.CreateStatement(span);
             var code = LastExitCode = await ExecuteAsync(statement, token);
             if (statements.Span[range.End] is ContinueSegment @continue && @continue.Exit(code))
                 break;
