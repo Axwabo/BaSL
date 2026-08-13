@@ -131,9 +131,11 @@ internal static class StatementParser
                     AddStatement(Segment.StdinFile);
                     break;
                 case (SyntaxType.Text, '[', '[') when argBuzilder.Length == 0:
+                    i++;
                     AddStatement(KeywordSegment.BeginCondition);
                     break;
                 case (SyntaxType.Text, ']', ']') when argBuzilder.Length == 0:
+                    i++;
                     AddStatement(KeywordSegment.EndCondition);
                     break;
                 case (SyntaxType.Text or SyntaxType.QuotedString, '$', _):
