@@ -130,9 +130,15 @@ internal static class StatementParser
                 case (SyntaxType.Text, '<', _):
                     AddStatement(Segment.StdinFile);
                     break;
+                case (SyntaxType.Text, '=' or '!', '=') when argBuzilder.Length == 0 && outerSyntax == SyntaxType.Condition:
+                    AddArg();
+                    outerSyntax = SyntaxType.Condition;
+                    i++;
+                    break;
                 case (SyntaxType.Text, '[', '[') when argBuzilder.Length == 0:
                     i++;
                     AddStatement(KeywordSegment.BeginCondition);
+                    outerSyntax = SyntaxType.Condition;
                     break;
                 case (SyntaxType.Text, ']', ']') when argBuzilder.Length == 0:
                     i++;
