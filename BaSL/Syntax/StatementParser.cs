@@ -132,13 +132,11 @@ internal static class StatementParser
                     break;
                 case (SyntaxType.Text, '=', '='):
                     i++;
-                    AddArg();
                     AddStatement(OperatorSegment.Eq);
                     outerSyntax = SyntaxType.Condition;
                     break;
                 case (SyntaxType.Text, '!', '='):
                     i++;
-                    AddArg();
                     AddStatement(OperatorSegment.NotEq);
                     outerSyntax = SyntaxType.Condition;
                     break;
