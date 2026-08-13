@@ -131,8 +131,7 @@ internal static class StatementParser
                     AddStatement(Segment.StdinFile);
                     break;
                 case (SyntaxType.Text, '=' or '!', '=') when argBuzilder.Length == 0 && outerSyntax == SyntaxType.Condition:
-                    AddArg();
-                    outerSyntax = SyntaxType.Condition;
+                    args.Add(c == '!' ? "!=" : "==");
                     i++;
                     break;
                 case (SyntaxType.Text, '[', '[') when argBuzilder.Length == 0:
