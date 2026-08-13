@@ -151,7 +151,8 @@ internal static class StatementParser
                     break;
                 case (SyntaxType.Text or SyntaxType.QuotedString, '$', _):
                     raw = false;
-                    outerSyntax = syntax;
+                    if (outerSyntax != SyntaxType.Condition)
+                        outerSyntax = syntax;
                     syntax = SyntaxType.Variable;
                     break;
                 case (SyntaxType.Variable, ';', _) when outerSyntax == SyntaxType.Text:
