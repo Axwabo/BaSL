@@ -412,6 +412,8 @@ public sealed class BaShell : App
                 return;
             start = skip + 1;
             _skipUntil = null;
+            if (start == statements.Length - 1 && statements.Span[^1] is ContinueSegment {On: Continue.Always})
+                return;
         }
 
         do
