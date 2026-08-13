@@ -95,71 +95,74 @@ internal static class StatementParser
             }
 
             char? next = i < s.Length - 1 ? s[i + 1] : null;
-            switch (syntax, c)
+            switch (syntax, c, next)
             {
-                case (SyntaxType.VerbatimString, '\''):
-                case (SyntaxType.QuotedString, '"'):
+                case (SyntaxType.VerbatimString, '\'', _):
+                case (SyntaxType.QuotedString, '"', _):
                     syntax = outerSyntax = SyntaxType.Text;
                     raw = false;
                     break;
-                case (SyntaxType.Text, '\''):
+                case (SyntaxType.Text, '\'', _):
                     syntax = SyntaxType.VerbatimString;
                     break;
-                case (SyntaxType.Text, '"'):
+                case (SyntaxType.Text, '"', _):
                     syntax = SyntaxType.QuotedString;
                     break;
-                case (SyntaxType.Text, '|') when next == '|':
+                case (SyntaxType.Text, '|', '|'):
                     Complete(Continue.OnFailure);
                     return i + 1;
-                case (SyntaxType.Text, '&') when next == '&':
+                case (SyntaxType.Text, '&', '&'):
                     Complete(Continue.OnSuccess);
                     return i + 1;
-                case (SyntaxType.Text, ';'):
+                case (SyntaxType.Text, ';', _):
                     Complete();
                     return i;
-                case (SyntaxType.Text, '|'):
+                case (SyntaxType.Text, '|', _):
                     AddStatement(Segment.Pipe);
                     break;
-                case (SyntaxType.Text, '>') when next == '>':
+                case (SyntaxType.Text, '>', '>'):
                     AddStatement(Segment.RedirectAppend);
                     i++;
                     break;
-                case (SyntaxType.Text, '>'):
+                case (SyntaxType.Text, '>', _):
                     AddStatement(Segment.RedirectOverwrite);
                     break;
-                case (SyntaxType.Text, '<'):
+                case (SyntaxType.Text, '<', _):
                     AddStatement(Segment.StdinFile);
                     break;
-                case (SyntaxType.Text, '[') when next == '[' && argBuzilder.Length == 0:
+                case (SyntaxType.Text, '[', '[') when argBuzilder.Length == 0:
                     AddStatement(KeywordSegment.BeginCondition);
                     break;
-                case (SyntaxType.Text or SyntaxType.QuotedString, '$'):
+                case (SyntaxType.Text, ']', ']') when argBuzilder.Length == 0:
+                    AddStatement(KeywordSegment.EndCondition);
+                    break;
+                case (SyntaxType.Text or SyntaxType.QuotedString, '$', _):
                     raw = false;
                     outerSyntax = syntax;
                     syntax = SyntaxType.Variable;
                     break;
-                case (SyntaxType.Variable, ';') when outerSyntax == SyntaxType.Text:
+                case (SyntaxType.Variable, ';', _) when outerSyntax == SyntaxType.Text:
                     AppendVariable();
                     Complete();
                     return i;
-                case (SyntaxType.Variable, '"') when outerSyntax == SyntaxType.QuotedString:
+                case (SyntaxType.Variable, '"', _) when outerSyntax == SyntaxType.QuotedString:
                     AddArg();
                     break;
-                case (SyntaxType.Variable, ' ' or '.'):
+                case (SyntaxType.Variable, ' ' or '.', _):
                     AppendVariable();
                     argBuzilder.Append(c);
                     break;
-                case (SyntaxType.Variable, _):
+                case (SyntaxType.Variable, _, _):
                     variableBuilder.Append(c);
                     break;
-                case (SyntaxType.Text, '~') when !string.IsNullOrEmpty(home) && argBuzilder.Length == 0:
+                case (SyntaxType.Text, '~', _) when !string.IsNullOrEmpty(home) && argBuzilder.Length == 0:
                     raw = false;
                     argBuzilder.Append(home);
                     break;
-                case (SyntaxType.Text, _) when char.IsWhiteSpace(c):
+                case (SyntaxType.Text, _, _) when char.IsWhiteSpace(c):
                     AddArg();
                     break;
-                case (SyntaxType.Text or SyntaxType.QuotedString or SyntaxType.VerbatimString, _):
+                case (SyntaxType.Text or SyntaxType.QuotedString or SyntaxType.VerbatimString, _, _):
                     argBuzilder.Append(c);
                     break;
             }

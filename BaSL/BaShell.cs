@@ -431,7 +431,7 @@ public sealed class BaShell : App
                     case Keyword.EndIf:
                         _skipUntil = _currentBlock = null;
                         break;
-                    case Keyword.If when span[1..] is [ArgsSegment {Args: ["[[", .. var condition, "]]"]}] && IsTrue(condition):
+                    case Keyword.If when span[1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: var condition}, KeywordSegment {Keyword: Keyword.EndCondition}] && IsTrue(condition):
                         _currentBlock = KeywordSegment.Then; // TODO: get "then" keyword
                         break;
                     case Keyword.If:
