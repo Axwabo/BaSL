@@ -132,7 +132,6 @@ internal static class StatementParser
                     break;
                 case (SyntaxType.Text, '=' or '!', '=') when outerSyntax == SyntaxType.Condition:
                     AddArg();
-                    outerSyntax = SyntaxType.Condition;
                     args.Add(c == '!' ? "!=" : "==");
                     i++;
                     break;
@@ -187,7 +186,8 @@ internal static class StatementParser
             if (argBuzilder.Length != 0)
                 args.Add(argBuzilder.ToString());
             argBuzilder.Clear();
-            outerSyntax = syntax;
+            if (outerSyntax != SyntaxType.Condition)
+                outerSyntax = syntax;
             syntax = next;
         }
 
