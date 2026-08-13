@@ -411,6 +411,7 @@ public sealed class BaShell : App
             if (skip == -1)
                 return;
             start = skip + 1;
+            _skipUntil = null;
         }
 
         do
