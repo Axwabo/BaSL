@@ -408,7 +408,7 @@ public sealed class BaShell : App
         var start = 0;
         do
         {
-            index = statements.FindIndex<ContinueSegment, KeywordSegment>(start);
+            index = statements.FindIndex<ContinueSegment>(start);
             if (_skipUntil is not null)
             {
                 var skip = statements.FindIndex(_skipUntil);
@@ -426,19 +426,24 @@ public sealed class BaShell : App
             start = index + 1;
             if (statements.Span[range.Start] is KeywordSegment {Keyword: var keyword})
             {
-                switch (keyword)
+                if (keyword == Keyword.EndIf)
                 {
-                    case Keyword.EndIf:
-                        _skipUntil = _currentBlock = null;
-                        break;
-                    case Keyword.If when span[1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: var condition}, KeywordSegment {Keyword: Keyword.EndCondition}] && IsTrue(condition):
-                        _currentBlock = KeywordSegment.Then; // TODO: get "then" keyword
-                        break;
-                    case Keyword.If:
-                        _skipUntil = KeywordSegment.Else;
-                        break;
+                    _skipUntil = _currentBlock = null;
+                    continue;
                 }
 
+                if (keyword == Keyword.If)
+                {
+                    var endCondition = statements.FindIndex(KeywordSegment.EndCondition);
+                    if (span[range.Start..endCondition][1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: var condition}] && IsTrue(condition))
+                    {
+                        _currentBlock = KeywordSegment.Then; // TODO: get "then" keyword
+                        continue;
+                    }
+                }
+
+                if (keyword == Keyword.If)
+                    _skipUntil = KeywordSegment.Else;
                 continue;
             }
 
