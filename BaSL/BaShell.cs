@@ -403,21 +403,19 @@ public sealed class BaShell : App
     private async Task ExecuteAsync(string line, CancellationToken token)
     {
         var statements = StatementParser.Parse(line, _variables.TryGetValue, User.Home.Value);
-        // TODO: keywords ughhhhh
         int index;
         var start = 0;
+        if (_skipUntil is not null)
+        {
+            var skip = statements.FindIndex(_skipUntil);
+            if (skip == -1)
+                return;
+            start = skip + 1;
+        }
+
         do
         {
             index = statements.FindIndex<ContinueSegment>(start);
-            if (_skipUntil is not null)
-            {
-                var skip = statements.FindIndex(_skipUntil);
-                if (skip == -1)
-                    break;
-                start = skip + 1;
-                continue;
-            }
-
             var end = index == -1;
             var range = end ? start.. : start..index;
             var span = statements.Span[range];
