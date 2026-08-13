@@ -446,6 +446,8 @@ public sealed class BaShell : App
 
                 if (keyword == Keyword.If)
                     _skipUntil = KeywordSegment.Else;
+                else if (keyword == Keyword.Else && _currentBlock == KeywordSegment.Then)
+                    _skipUntil = KeywordSegment.EndIf;
                 continue;
             }
 
