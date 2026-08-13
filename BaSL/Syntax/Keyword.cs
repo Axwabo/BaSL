@@ -6,6 +6,8 @@ public enum Keyword
     If,
     Then,
     Else,
-    EndIf
+    EndIf,
+    BeginCondition,
+    EndCondition
 
 }

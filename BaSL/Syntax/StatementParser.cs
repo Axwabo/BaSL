@@ -130,6 +130,9 @@ internal static class StatementParser
                 case (SyntaxType.Text, '<'):
                     AddStatement(Segment.StdinFile);
                     break;
+                case (SyntaxType.Text, '[') when next == '[' && argBuzilder.Length == 0:
+                    AddStatement(KeywordSegment.BeginCondition);
+                    break;
                 case (SyntaxType.Text or SyntaxType.QuotedString, '$'):
                     raw = false;
                     outerSyntax = syntax;
@@ -181,7 +184,7 @@ internal static class StatementParser
             // TODO: maybe this doesn't belong here
             if (raw && args.Count == 1 && KeywordSegment.Get(args[0]) is { } keyword)
                 statements.Add(keyword);
-            else
+            else if (args.Count != 0)
                 statements.Add(new ArgsSegment(args.ToArray()));
             raw = true;
             if (segment is not null)

@@ -41,6 +41,8 @@ internal sealed record KeywordSegment(Keyword Keyword) : Segment
         "then" => Then,
         "else" => Else,
         "fi" => EndIf,
+        "[[" => BeginCondition,
+        "]]" => EndCondition,
         _ => null
     };
 
@@ -48,5 +50,7 @@ internal sealed record KeywordSegment(Keyword Keyword) : Segment
     public static KeywordSegment Then { get; } = new(Keyword.Then);
     public static KeywordSegment Else { get; } = new(Keyword.Else);
     public static KeywordSegment EndIf { get; } = new(Keyword.EndIf);
+    public static KeywordSegment BeginCondition { get; } = new(Keyword.BeginCondition);
+    public static KeywordSegment EndCondition { get; } = new(Keyword.EndCondition);
 
 }
