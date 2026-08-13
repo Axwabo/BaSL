@@ -75,10 +75,10 @@ public sealed class BaShell : App
         return (shell.Context, shell);
     }
 
-    private static bool IsTrue(Args args) => args switch
+    private static bool IsTrue(Args left, Operator @operator, Args right) => (left, @operator, right) switch
     {
-        [var a, "==", var b] => a == b,
-        [var a, "!=", var b] => a != b,
+        ([var a], Operator.Equals, [var b]) => a == b,
+        ([var a], Operator.NotEquals, [var b]) => a != b,
         _ => throw new NotImplementedException()
     };
 
@@ -435,7 +435,8 @@ public sealed class BaShell : App
                 if (keyword == Keyword.If)
                 {
                     var endCondition = statements.FindIndex(KeywordSegment.EndCondition);
-                    if (span[range.Start..endCondition][1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: var condition}] && IsTrue(condition))
+                    var ifRange = endCondition == -1 ? range.Start.. : range.Start..endCondition;
+                    if (span[ifRange][1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: var left}, OperatorSegment {Operator: var @operator}, ArgsSegment {Args: var right}] && IsTrue(left, @operator, right))
                     {
                         _currentBlock = KeywordSegment.Then; // TODO: get "then" keyword
                         continue;
