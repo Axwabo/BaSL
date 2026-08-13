@@ -161,9 +161,13 @@ internal static class StatementParser
                 case (SyntaxType.Variable, '"', _) when outerSyntax == SyntaxType.QuotedString:
                     AddArg();
                     break;
-                case (SyntaxType.Variable, ' ' or '.', _):
+                case (SyntaxType.Variable, '.', _):
+                case (SyntaxType.Variable, ' ', _) when outerSyntax == SyntaxType.QuotedString:
                     AppendVariable();
                     argBuzilder.Append(c);
+                    break;
+                case (SyntaxType.Variable, ' ', _):
+                    AppendVariable();
                     break;
                 case (SyntaxType.Variable, _, _):
                     variableBuilder.Append(c);
