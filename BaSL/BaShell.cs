@@ -59,15 +59,33 @@ public sealed class BaShell : App
                         if (!directory.Success)
                             continue;
                         foreach (var file in directory.Value.EnumerateFiles())
-                            if (file.Metadata.CanExecute(shell.User))
-                                await context.SourceOutput.WriteLineAsync(file.Name);
+                            if (file.Executable != null && file.Metadata.CanExecute(shell.User))
+                                await shell.StandardOutput.WriteLineAsync(file.Name);
                     }
 
                     return 0;
                 }
 
-                // TODO
-                return 1;
+                var result = shell.ResolveFromPath(context.Args[0]);
+                if (!result.Success)
+                {
+                    await shell.StandardError.WriteLineAsync(result.Error.Message);
+                    return 1;
+                }
+
+                if (result.Value.Executable is not { } executable)
+                {
+                    await shell.StandardError.WriteLineAsync("Not an executable");
+                    return 1;
+                }
+
+                await shell.StandardOutput.WriteLineAsync(result.Value.FullPath.Value);
+                var app = executable(context);
+                if (app is IHelpProvider provider)
+                    await provider.DisplayHelpAsync(CancellationToken.None);
+                else
+                    await shell.StandardOutput.WriteLineAsync("No help available :(");
+                return 0;
             }
         }
     };
