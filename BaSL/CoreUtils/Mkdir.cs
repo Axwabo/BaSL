@@ -5,12 +5,15 @@ using BaSL.FileSystems.Extensions;
 
 namespace BaSL.CoreUtils;
 
-public sealed class Mkdir : App
+public sealed class Mkdir : App, IHelpProvider
 {
 
     public Mkdir(ExecutableContext context) : base(context)
     {
     }
+
+    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
+        => await StandardOutput.WriteLineAsync("Creates a directory in the current directory.", cancellationToken);
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {

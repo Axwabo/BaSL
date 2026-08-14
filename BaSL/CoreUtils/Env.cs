@@ -5,11 +5,17 @@ using BaSL.Executables;
 
 namespace BaSL.CoreUtils;
 
-public sealed class Env : App
+public sealed class Env : App, IHelpProvider
 {
 
     public Env(ExecutableContext context) : base(context)
     {
+    }
+
+    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
+    {
+        await StandardOutput.WriteLineAsync("Prints the user's envionment variables.", cancellationToken);
+        await StandardOutput.WriteLineAsync("Launching executables is not yet supported.", cancellationToken);
     }
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)

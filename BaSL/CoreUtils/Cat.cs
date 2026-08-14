@@ -6,11 +6,17 @@ using BaSL.FileSystems.Extensions;
 
 namespace BaSL.CoreUtils;
 
-public sealed class Cat : App
+public sealed class Cat : App, IHelpProvider
 {
 
     public Cat(ExecutableContext context) : base(context)
     {
+    }
+
+    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
+    {
+        await StandardOutput.WriteLineAsync("Dumps the contents of the specified file(s) to stdout, each followed by a new line.", cancellationToken);
+        await StandardOutput.WriteLineAsync("If no argument is given, writes stdin lines.", cancellationToken);
     }
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
