@@ -1,5 +1,6 @@
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using BaSL.Executables;
 using BaSL.FileSystems.Errors;
 using BaSL.Users;
@@ -76,6 +77,11 @@ public static class ResultExtensions
             var open = result.OpenWrite(context);
             return open.Success ? new StreamWriter(open.Value) : open.Error;
         }
+
+        public async Task<FileSystemError?> WriteAllTextAsync(UserContext context, string text, CancellationToken cancellationToken = default)
+            => result.Success
+                ? await result.Value.WriteAllTextAsync(context, text, cancellationToken)
+                : result.Error;
 
     }
 

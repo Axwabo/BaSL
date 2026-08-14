@@ -1,4 +1,7 @@
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using BaSL.Executables;
 using BaSL.FileSystems.Errors;
 using BaSL.Users;
 
@@ -20,6 +23,17 @@ public static class FileExtensions
         {
             var open = file.OpenWrite(context);
             return open.Success ? new StreamWriter(open.Value) : open.Error;
+        }
+
+        public async Task<OpenFileError?> WriteAllTextAsync(UserContext context, string text, CancellationToken cancellationToken = default)
+        {
+            var open = file.OpenTextWrite(context);
+            if (!open.Success)
+                return open.Error;
+            await using var writer = open.Value;
+            writer.BaseStream.SetLength(0);
+            await writer.WriteAsync(text, cancellationToken);
+            return null;
         }
 
     }

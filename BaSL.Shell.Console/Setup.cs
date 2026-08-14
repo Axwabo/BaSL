@@ -28,17 +28,9 @@ public static class Setup
         {
             await AutoMount.Mount(args, operatingSystem, context, err);
             var userHome = operatingSystem.FileSystem.ResolveDirectory(user.Home).Unwrap();
-            await using (var writer = userHome.OpenTextWrite("amogus.txt", context).Unwrap())
-            {
-                await writer.WriteLineAsync("Hello World!");
-            }
-
+            await userHome.CreateFile(context, "amogus.txt").WriteAllTextAsync(context, "Hello World!");
             var shebang = userHome.CreateFile(context, "shebang.sh").Unwrap();
-            await using (var writer = shebang.OpenTextWrite(context).Unwrap())
-            {
-                await writer.WriteAsync(Shebang);
-            }
-
+            await shebang.WriteAllTextAsync(context, Shebang);
             shebang.ChmodPlusX(context);
         });
         return system;
