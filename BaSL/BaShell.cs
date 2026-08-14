@@ -45,6 +45,28 @@ public sealed class BaShell : App
                 if (context.Args.Length == 2)
                     shell._exported[context.Args[0]] = shell._variables[context.Args[0]] = context.Args[1];
             }
+        },
+        {
+            "help", (shell, context) =>
+            {
+                if (context.Args.IsEmpty)
+                {
+                    var path = shell._variables.GetValueOrDefault("PATH", "").Split(':');
+                    foreach (var directoryPath in path)
+                    {
+                        var directory = shell.FileSystem.ResolveDirectory(directoryPath);
+                        if (!directory.Success)
+                            continue;
+                        foreach (var file in directory.Value.EnumerateFiles())
+                        {
+                            if (file.Metadata.CanExecute(shell.User))
+                                context.SourceOutput.WriteLine(file.Name.Value);
+                        }
+                    }
+
+                    return;
+                }
+            }
         }
     };
 
