@@ -19,6 +19,13 @@ public static class Setup
                                    echo End of if-else statement
                                    """;
 
+    private const string Banner = """
+                                  Welcome to the BaSL console!
+                                  This is something like a terminal running bash, but made entirely in .NET!
+                                  Syntax and features are rather limited for now.
+                                  Type "help" to see available commands.
+                                  """;
+
     private static async Task<OperatingSystem> CreateSystemAsync(StreamWriter err, string[] args)
     {
         var system = new OperatingSystem {Hostname = "OwOS"};
@@ -37,6 +44,10 @@ public static class Setup
     }
 
     public static async Task<BaSL.Console> CreateConsoleAsync(string[] args, StreamWriter stdout, StreamWriter stderr)
-        => new(await CreateSystemAsync(stderr, args), Username, stdout, stderr);
+    {
+        var system = await CreateSystemAsync(stderr, args);
+        await stdout.WriteLineAsync(Banner);
+        return new BaSL.Console(system, Username, stdout, stderr);
+    }
 
 }
