@@ -17,37 +17,38 @@ using RunCommand = System.Func<BaSL.Executables.ExecutableContext, System.Thread
 
 namespace BaSL;
 
+using BulitInCommand = Func<BaShell, ExecutableContext, Task<int>>;
 using LocateCommandResult = Result<RunCommand, Error>;
 
 public sealed class BaShell : App
 {
 
-    private static readonly Dictionary<string, Action<BaShell, ExecutableContext>> BuiltInCommands = new()
+    private static readonly Dictionary<string, BulitInCommand> BuiltInCommands = new()
     {
-        {"clear", (_, _) => System.Console.Clear()},
+        {"clear", Sync(System.Console.Clear)},
         {
-            "set", (shell, context) =>
+            "set", Sync((shell, context) =>
             {
                 if (context.Args.Length == 2)
                     shell._variables[context.Args[0]] = context.Args[1];
-            }
+            })
         },
         {
-            "unset", (shell, context) =>
+            "unset", Sync((shell, context) =>
             {
                 if (context.Args.Length == 1)
                     shell._variables.Remove(context.Args[0]);
-            }
+            })
         },
         {
-            "export", (shell, context) =>
+            "export", Sync((shell, context) =>
             {
                 if (context.Args.Length == 2)
                     shell._exported[context.Args[0]] = shell._variables[context.Args[0]] = context.Args[1];
-            }
+            })
         },
         {
-            "help", (shell, context) =>
+            "help", async (shell, context) =>
             {
                 if (context.Args.IsEmpty)
                 {
@@ -58,16 +59,31 @@ public sealed class BaShell : App
                         if (!directory.Success)
                             continue;
                         foreach (var file in directory.Value.EnumerateFiles())
-                        {
                             if (file.Metadata.CanExecute(shell.User))
-                                context.SourceOutput.WriteLine(file.Name.Value);
-                        }
+                                await context.SourceOutput.WriteLineAsync(file.Name);
                     }
 
-                    return;
+                    return 0;
                 }
+
+                // TODO
+                return 1;
             }
         }
+    };
+
+    private static BulitInCommand Sync(Func<BaShell, ExecutableContext, int> execute) => (shell, context) => Task.FromResult(execute(shell, context));
+
+    private static BulitInCommand Sync(Action<BaShell, ExecutableContext> execute) => (shell, context) =>
+    {
+        execute(shell, context);
+        return Task.FromResult(0);
+    };
+
+    private static BulitInCommand Sync(Action execute) => (_, _) =>
+    {
+        execute();
+        return Task.FromResult(0);
     };
 
     private static RunCommand Execute(File file) => (context, token) =>
@@ -487,13 +503,14 @@ public sealed class BaShell : App
         AutoCommandLocation {Phrase: var path} when Path.IsExplicitRelativeOrAbsolute(path) => Execute(path),
         AutoCommandLocation {Phrase: var name} when BuiltInCommands.TryGetValue(name, out var action) => (RunCommand) ((context, _) =>
         {
-            action(this, context);
+            var task = action(this, context);
             return Complete();
 
             async Task<int> Complete()
             {
+                var code = await task;
                 await context.CompletePipesAsync();
-                return 0;
+                return code;
             }
         }),
         AutoCommandLocation {Phrase: var name} when ResolveFromPath(name) is {Success: true, Value: var file} => Execute(file),
