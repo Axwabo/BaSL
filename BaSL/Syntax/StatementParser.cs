@@ -97,6 +97,26 @@ internal static class StatementParser
             char? next = i < s.Length - 1 ? s[i + 1] : null;
             switch (syntax, c, next)
             {
+                case (SyntaxType.Text, '>', '_') when outerSyntax == SyntaxType.Condition:
+                    i++;
+                    AddStatement(OperatorSegment.LeftGreater);
+                    outerSyntax = SyntaxType.Condition;
+                    break;
+                case (SyntaxType.Text, '<', '_') when outerSyntax == SyntaxType.Condition:
+                    i++;
+                    AddStatement(OperatorSegment.LeftLess);
+                    outerSyntax = SyntaxType.Condition;
+                    break;
+                case (SyntaxType.Text, '=', '=') when outerSyntax == SyntaxType.Condition:
+                    i++;
+                    AddStatement(OperatorSegment.Eq);
+                    outerSyntax = SyntaxType.Condition;
+                    break;
+                case (SyntaxType.Text, '!', '=') when outerSyntax == SyntaxType.Condition:
+                    i++;
+                    AddStatement(OperatorSegment.NotEq);
+                    outerSyntax = SyntaxType.Condition;
+                    break;
                 case (SyntaxType.VerbatimString, '\'', _):
                 case (SyntaxType.QuotedString, '"', _):
                     syntax = outerSyntax = SyntaxType.Text;
@@ -129,16 +149,6 @@ internal static class StatementParser
                     break;
                 case (SyntaxType.Text, '<', _):
                     AddStatement(Segment.StdinFile);
-                    break;
-                case (SyntaxType.Text, '=', '='):
-                    i++;
-                    AddStatement(OperatorSegment.Eq);
-                    outerSyntax = SyntaxType.Condition;
-                    break;
-                case (SyntaxType.Text, '!', '='):
-                    i++;
-                    AddStatement(OperatorSegment.NotEq);
-                    outerSyntax = SyntaxType.Condition;
                     break;
                 case (SyntaxType.Text, '[', '[') when argBuzilder.Length == 0:
                     i++;

@@ -137,10 +137,14 @@ public sealed class BaShell : App
         return (shell.Context, shell);
     }
 
-    private static bool IsTrue(Args left, Operator @operator, Args right) => (left, @operator, right) switch
+    private static bool IsTrue(string a, Operator @operator, string b) => @operator switch
     {
-        ([var a], Operator.Equals, [var b]) => a == b,
-        ([var a], Operator.NotEquals, [var b]) => a != b,
+        (Operator.Equals) => a == b,
+        (Operator.NotEquals) => a != b,
+        Operator.LeftGreaterThanRight when double.TryParse(a, out var x) && double.TryParse(b, out var y) => x > y,
+        Operator.LeftGreaterThanRight => a.CompareTo(b, StringComparison.CurrentCultureIgnoreCase) < 0,
+        Operator.LeftLessThanRight when double.TryParse(a, out var x) && double.TryParse(b, out var y) => x < y,
+        Operator.LeftLessThanRight => a.CompareTo(b, StringComparison.CurrentCultureIgnoreCase) > 0,
         _ => throw new NotImplementedException()
     };
 
@@ -499,7 +503,7 @@ public sealed class BaShell : App
                 {
                     var endCondition = statements.FindIndex(KeywordSegment.EndCondition);
                     var ifRange = endCondition == -1 ? range.Start.. : range.Start..endCondition;
-                    if (span[ifRange][1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: var left}, OperatorSegment {Operator: var @operator}, ArgsSegment {Args: var right}] && IsTrue(left, @operator, right))
+                    if (span[ifRange][1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: [var left]}, OperatorSegment {Operator: var @operator}, ArgsSegment {Args: [var right]}] && IsTrue(left, @operator, right))
                     {
                         _currentBlock = KeywordSegment.Then; // TODO: get "then" keyword
                         continue;
