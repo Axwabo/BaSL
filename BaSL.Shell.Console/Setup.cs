@@ -8,23 +8,14 @@ public static class Setup
 
     private const string Username = "user";
 
-    private const string Shebang = """
-                                   #!/usr/bin/basl
-                                   echo Hello from subshell!
-                                   if [[ "$USER" == "root" ]]
-                                       echo You are root
-                                   else
-                                       echo You are NOT root
-                                   fi
-                                   echo End of if-else statement
-                                   """;
-
     private const string Banner = """
                                   Welcome to the BaSL console!
                                   This is something like a terminal running bash, but made entirely in .NET!
                                   Syntax and features are rather limited for now.
                                   Type "help" to see available commands.
                                   """;
+
+    private const string Prefix = "BaSL.Shell.Console.Home.";
 
     private static async Task<OperatingSystem> CreateSystemAsync(StreamWriter err, string[] args)
     {
@@ -35,10 +26,19 @@ public static class Setup
         {
             await AutoMount.Mount(args, operatingSystem, context, err);
             var userHome = operatingSystem.FileSystem.ResolveDirectory(user.Home).Unwrap();
-            await userHome.CreateFile(context, "amogus.txt").WriteAllTextAsync(context, "Hello World!");
-            var shebang = userHome.CreateFile(context, "shebang.sh").Unwrap();
-            await shebang.WriteAllTextAsync(context, Shebang);
-            shebang.ChmodPlusX(context);
+            var assembly = typeof(Setup).Assembly;
+            foreach (var name in assembly.GetManifestResourceNames())
+            {
+                await using var resource = assembly.GetManifestResourceStream(name);
+                if (resource == null)
+                    continue;
+                var filename = name[Prefix.Length..];
+                var file = userHome.CreateFile(context, filename);
+                if (filename.EndsWith(".sh"))
+                    file.Unwrap().ChmodPlusX(context);
+                await using var fileStream = file.OpenWrite(context).Unwrap();
+                await resource.CopyToAsync(fileStream);
+            }
         });
         return system;
     }

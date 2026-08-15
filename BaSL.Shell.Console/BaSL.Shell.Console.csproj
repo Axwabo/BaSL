@@ -11,4 +11,8 @@
         <ProjectReference Include="../BaSL/BaSL.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <EmbeddedResource Include="Home/*" />
+    </ItemGroup>
+
 </Project>
