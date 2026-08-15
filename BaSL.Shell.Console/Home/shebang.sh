@@ -1,7 +1,7 @@
 #!/usr/bin/basl
 echo Hello from subshell!
 
-if [[ "$USER" == "root" ]]
+if [[ $USER == "root" ]]
    echo You are root
 else
    echo You are NOT root
