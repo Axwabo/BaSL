@@ -13,6 +13,10 @@ public static class Setup
                                   This is something like a terminal running bash, but made entirely in .NET!
                                   Syntax and features are rather limited for now.
                                   Type "help" to see available commands.
+                                  Examples commands to try out:
+                                  ls
+                                  cat amogus.txt
+                                  ./shebang.sh
                                   """;
 
     private const string Prefix = "BaSL.Shell.Console.Home.";
