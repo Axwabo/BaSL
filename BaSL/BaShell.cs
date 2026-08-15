@@ -146,6 +146,8 @@ public sealed class BaShell : App
         _ => throw new NotImplementedException()
     };
 
+    private readonly Stack<(KeywordSegment Segment, bool Skip)> _blocks = [];
+
     private readonly Dictionary<string, string> _exported = [];
 
     private readonly ShellStatement? _statement;
@@ -153,10 +155,6 @@ public sealed class BaShell : App
     private readonly Dictionary<string, string> _variables = [];
 
     private CancellationTokenSource? _cts;
-
-    private KeywordSegment? _currentBlock; // TODO: stack
-
-    private KeywordSegment? _skipUntil;
 
     private BaShell(ExecutableContext context, ShellStatement? statement, UserContext? user = null) : base(null!)
     {
@@ -469,19 +467,10 @@ public sealed class BaShell : App
         var statements = StatementParser.Parse(line, _variables.TryGetValue, User.Home.Value);
         int index;
         var start = 0;
-        if (_skipUntil is not null)
-        {
-            var skip = statements.FindIndex(_skipUntil);
-            if (skip == -1)
-                return;
-            start = skip + 1;
-            _skipUntil = null;
-            if (start == statements.Length - 1 && statements.Span[^1] is ContinueSegment {On: Continue.Always})
-                return;
-        }
-
         do
         {
+            if (_blocks.TryPeek(out var tuple) && tuple.Skip)
+                start = Math.Max(start, statements.FindIndex(tuple.Segment));
             index = statements.FindIndex<ContinueSegment>(start);
             var end = index == -1;
             var range = end ? start.. : start..index;
@@ -491,27 +480,7 @@ public sealed class BaShell : App
             start = index + 1;
             if (statements.Span[range.Start] is KeywordSegment {Keyword: var keyword})
             {
-                if (keyword == Keyword.EndIf)
-                {
-                    _skipUntil = _currentBlock = null;
-                    continue;
-                }
-
-                if (keyword == Keyword.If)
-                {
-                    var endCondition = statements.FindIndex(KeywordSegment.EndCondition);
-                    var ifRange = endCondition == -1 ? range.Start.. : range.Start..endCondition;
-                    if (span[ifRange][1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: [var left]}, OperatorSegment {Operator: var @operator}, ArgsSegment {Args: [var right]}] && IsTrue(left, @operator, right))
-                    {
-                        _currentBlock = KeywordSegment.Then; // TODO: get "then" keyword
-                        continue;
-                    }
-                }
-
-                if (keyword == Keyword.If)
-                    _skipUntil = KeywordSegment.Else;
-                else if (keyword == Keyword.Else && _currentBlock == KeywordSegment.Then)
-                    _skipUntil = KeywordSegment.EndIf;
+                await ControlAsync(keyword, tuple, statements, range);
                 continue;
             }
 
@@ -521,6 +490,59 @@ public sealed class BaShell : App
                 break;
         }
         while (index != -1);
+    }
+
+    private async Task ControlAsync(Keyword keyword, (KeywordSegment Segment, bool Skip) tuple, ReadOnlyMemory<Segment> statements, Range range)
+    {
+        if (keyword == Keyword.Then)
+        {
+            if (tuple is ({Keyword: Keyword.Then}, true))
+            {
+                _blocks.Pop();
+                _blocks.Push((KeywordSegment.Then, false));
+            }
+            else
+                await StandardError.WriteLineAsync("Unexpected token 'then'");
+
+            return;
+        }
+
+        if (keyword == Keyword.EndIf)
+        {
+            // TODO: idk if this pattern is good ngl
+            if (tuple.Segment?.Keyword is Keyword.Then or Keyword.Else or Keyword.EndIf)
+                _blocks.Pop();
+            else
+                await StandardError.WriteLineAsync("Unexpected token 'fi'");
+            return;
+        }
+
+        if (keyword == Keyword.If)
+        {
+            var endCondition = statements.FindIndex(KeywordSegment.EndCondition);
+            var ifRange = endCondition == -1 ? range.Start.. : range.Start..endCondition;
+            if (statements.Span[ifRange][1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: [var left]}, OperatorSegment {Operator: var @operator}, ArgsSegment {Args: [var right]}] && IsTrue(left, @operator, right))
+            {
+                _blocks.Push((KeywordSegment.Then, true));
+                return;
+            }
+        }
+
+        if (keyword == Keyword.If)
+        {
+            _blocks.Push((KeywordSegment.Else, true));
+            return;
+        }
+
+        if (keyword != Keyword.Else)
+            return;
+        if (tuple is ({Keyword: Keyword.Then}, false) or ({Keyword: Keyword.Else}, true))
+        {
+            _blocks.Pop();
+            _blocks.Push((KeywordSegment.EndIf, true));
+        }
+        else
+            await StandardError.WriteLineAsync("Unexpected token 'else'");
     }
 
     private LocateCommandResult Locate(CommandLocation location) => location switch

@@ -19,7 +19,7 @@ internal static class StatementParser
         var index = -1;
         do
         {
-            index = ParseStatements(line, (index + 1), _segments, variables, home);
+            index = ParseStatements(line, index + 1, _segments, variables, home);
         }
         while (index != -1);
 
