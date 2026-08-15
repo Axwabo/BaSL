@@ -19,7 +19,7 @@ internal static class StatementParser
         var index = -1;
         do
         {
-            index = ParseStatements(line.AsSpan(index + 1), _segments, variables, home);
+            index = ParseStatements(line, (index + 1), _segments, variables, home);
         }
         while (index != -1);
 
@@ -69,7 +69,7 @@ internal static class StatementParser
         return statement;
     }
 
-    private static int ParseStatements(ReadOnlySpan<char> s, List<Segment> statements, TryParse variables, string home)
+    private static int ParseStatements(ReadOnlySpan<char> s, int start, List<Segment> statements, TryParse variables, string home)
     {
         var argBuzilder = new StringBuilder();
         var variableBuilder = new StringBuilder();
@@ -78,7 +78,7 @@ internal static class StatementParser
         var outerSyntax = SyntaxType.Text;
         var escaped = false;
         var raw = true;
-        for (var i = 0; i < s.Length; i++)
+        for (var i = start; i < s.Length; i++)
         {
             var c = s[i];
             if (escaped)

@@ -96,8 +96,6 @@ public sealed class BaShell : App
         }
     };
 
-    private static BulitInCommand Sync(Func<BaShell, ExecutableContext, int> execute) => (shell, context) => Task.FromResult(execute(shell, context));
-
     private static BulitInCommand Sync(Action<BaShell, ExecutableContext> execute) => (shell, context) =>
     {
         execute(shell, context);
@@ -139,8 +137,8 @@ public sealed class BaShell : App
 
     private static bool IsTrue(string a, Operator @operator, string b) => @operator switch
     {
-        (Operator.Equals) => a == b,
-        (Operator.NotEquals) => a != b,
+        Operator.Equals => a == b,
+        Operator.NotEquals => a != b,
         Operator.LeftGreaterThanRight when double.TryParse(a, out var x) && double.TryParse(b, out var y) => x > y,
         Operator.LeftGreaterThanRight => a.CompareTo(b, StringComparison.CurrentCultureIgnoreCase) < 0,
         Operator.LeftLessThanRight when double.TryParse(a, out var x) && double.TryParse(b, out var y) => x < y,
