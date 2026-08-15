@@ -6,12 +6,15 @@ using BaSL.FileSystems.Extensions;
 
 namespace BaSL.CoreUtils;
 
-public sealed class Rmdir : App
+public sealed class Rmdir : App, IHelpProvider
 {
 
     public Rmdir(ExecutableContext context) : base(context)
     {
     }
+
+    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
+        => await StandardOutput.WriteLineAsync("Removes an empty directory.", cancellationToken);
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {

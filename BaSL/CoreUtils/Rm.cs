@@ -5,11 +5,22 @@ using BaSL.FileSystems.Extensions;
 
 namespace BaSL.CoreUtils;
 
-public sealed class Rm : App
+public sealed class Rm : App, IHelpProvider
 {
 
     public Rm(ExecutableContext context) : base(context)
     {
+    }
+
+    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
+    {
+        await StandardOutput.WriteLineAsync("Removes a file or multiple files.", cancellationToken);
+        await StandardOutput.WriteLineAsync("Use the -f flag to continue on error.", cancellationToken);
+        await StandardOutput.WriteLineAsync("Use the -r flag to recurse into subdirectories.", cancellationToken);
+        await StandardOutput.WriteLineAsync("Examples:", cancellationToken);
+        await StandardOutput.WriteLineAsync("rm amogus.txt", cancellationToken);
+        await StandardOutput.WriteLineAsync("rm -r directory", cancellationToken);
+        await StandardOutput.WriteLineAsync("rm -rf /", cancellationToken);
     }
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)

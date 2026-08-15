@@ -6,12 +6,15 @@ using BaSL.FileSystems.Extensions;
 
 namespace BaSL.CoreUtils;
 
-public sealed class Touch : App
+public sealed class Touch : App, IHelpProvider
 {
 
     public Touch(ExecutableContext context) : base(context)
     {
     }
+
+    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
+        => await StandardOutput.WriteLineAsync("Creates files without any content.", cancellationToken);
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {

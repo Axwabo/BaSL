@@ -6,7 +6,7 @@ using BaSL.Executables;
 
 namespace BaSL.CoreUtils;
 
-public sealed class Echo : App
+public sealed class Echo : App, IHelpProvider
 {
 
     private static char GetEscaped(char c) => c switch
@@ -19,6 +19,13 @@ public sealed class Echo : App
 
     public Echo(ExecutableContext context) : base(context)
     {
+    }
+
+    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
+    {
+        await StandardOutput.WriteLineAsync("Echoes the arguments separated by spaces to stdout, followed by a newline.", cancellationToken);
+        await StandardOutput.WriteLineAsync("Recognized escape sequences:", cancellationToken);
+        await StandardOutput.WriteLineAsync(@"\n \t \\", cancellationToken);
     }
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)

@@ -64,8 +64,10 @@ public sealed class BaShell : App
                     }
 
                     await shell.StandardOutput.WriteLineAsync("clear");
+                    await shell.StandardOutput.WriteLineAsync("set");
                     await shell.StandardOutput.WriteLineAsync("unset");
                     await shell.StandardOutput.WriteLineAsync("export");
+                    await shell.StandardOutput.WriteLineAsync("exit");
                     await shell.StandardOutput.WriteLineAsync("help");
                     return 0;
                 }

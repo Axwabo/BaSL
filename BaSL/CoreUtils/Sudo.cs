@@ -6,12 +6,15 @@ using BaSL.Users;
 
 namespace BaSL.CoreUtils;
 
-public sealed class Sudo : App
+public sealed class Sudo : App, IHelpProvider
 {
 
     public Sudo(ExecutableContext context) : base(context)
     {
     }
+
+    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
+        => await StandardOutput.WriteLineAsync("Runs a given command as the root user.", cancellationToken);
 
     // TODO: no freaking clue on how to solve auth
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)

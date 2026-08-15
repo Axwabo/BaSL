@@ -13,7 +13,9 @@ public static class Setup
                                   This is something like a terminal running bash, but made entirely in .NET!
                                   Syntax and features are rather limited for now.
                                   Type "help" to see available commands.
-                                  Examples commands to try out:
+                                  Type "exit" to exit BaSL.
+                                  Some statements (e.g. running "basl") can hang the shell, meaning you'll have to terminate the program (not with Ctrl+C). 
+                                  Example commands to try out:
                                   ls
                                   cat amogus.txt
                                   ./shebang.sh
