@@ -482,14 +482,19 @@ public sealed class BaShell : App
             var range = end ? start.. : start..index;
             if (end && statements.Span[range].IsEmpty)
                 break;
-            start = index + 1;
             if (statements.Span[range.Start] is KeywordSegment {Keyword: var keyword})
             {
                 if (await ControlAsync(keyword, tuple, statements, range))
+                {
+                    start = index + 1;
                     continue;
+                }
+
                 start++;
                 range = end ? start.. : start..index;
             }
+            else
+                start = index + 1;
 
             var statement = StatementParser.CreateStatement(statements.Span[range]);
             var code = LastExitCode = await ExecuteAsync(statement, token);
