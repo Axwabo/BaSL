@@ -183,7 +183,7 @@ internal static class StatementParser
                     argBuzilder.Append(home);
                     break;
                 case (SyntaxType.Text, _, _) when char.IsWhiteSpace(c):
-                    AddArg();
+                    AddArg(space: true);
                     break;
                 case (SyntaxType.Text or SyntaxType.QuotedString or SyntaxType.VerbatimString, _, _):
                     argBuzilder.Append(c);
@@ -194,22 +194,27 @@ internal static class StatementParser
         Complete();
         return -1;
 
-        void AddArg(SyntaxType next = SyntaxType.Text)
+        void AddArg(SyntaxType next = SyntaxType.Text, bool space = true)
         {
             if (syntax == SyntaxType.Variable)
                 AppendVariable();
             if (argBuzilder.Length != 0)
-                args.Add(argBuzilder.ToString());
+            {
+                var arg = argBuzilder.ToString();
+                if (space && args.Count == 0 && KeywordSegment.Get(arg) is { } keyword)
+                    statements.Add(keyword);
+                else
+                    args.Add(arg);
+            }
+
             argBuzilder.Clear();
             syntax = next;
         }
 
         void AddStatement(Segment? segment = null)
         {
-            // TODO: maybe this doesn't belong here
-            if (raw && args.Count == 1 && KeywordSegment.Get(args[0]) is { } keyword)
-                statements.Add(keyword);
-            else if (args.Count != 0)
+            AddArg();
+            if (args.Count != 0)
                 statements.Add(new ArgsSegment(args.ToArray()));
             raw = true;
             if (segment is not null)
