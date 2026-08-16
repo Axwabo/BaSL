@@ -176,6 +176,7 @@ internal static class StatementParser
                     break;
                 case (SyntaxType.Variable, '"', _) when outerSyntax == SyntaxType.QuotedString:
                 case (SyntaxType.Variable, ' ', _):
+                    AppendVariable();
                     AddArg();
                     break;
                 case (SyntaxType.Variable, _, _):
