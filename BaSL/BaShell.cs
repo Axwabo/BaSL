@@ -496,63 +496,33 @@ public sealed class BaShell : App
     {
         switch (keyword, tuple.Segment?.Keyword, tuple.Skip)
         {
-            case (Keyword.Then, ):
+            case (Keyword.If, _, _):
+            {
+                // TODO: commands as results
+                var endCondition = statements.FindIndex(KeywordSegment.EndCondition);
+                var ifRange = endCondition == -1 ? range.Start.. : range.Start..endCondition;
+                if (statements.Span[ifRange][1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: [var left]}, OperatorSegment {Operator: var @operator}, ArgsSegment {Args: [var right]}])
+                {
+                    Skip(IsTrue(left, @operator, right) ? KeywordSegment.Then : KeywordSegment.Else);
+                    break;
+                }
+
+                await StandardError.WriteLineAsync("Unsupported if statement condition");
+                break;
+            }
+            case (Keyword.Then, Keyword.Then, true):
+                Transition(KeywordSegment.Then, false);
+                break;
+            // TODO: what should the keyword check be
+            case (Keyword.EndIf, Keyword.Then or Keyword.Else, _):
+                _blocks.Pop();
+                break;
             default:
                 await StandardError.WriteAsync("Unexpected token '");
                 await StandardError.WriteAsync(keyword.Token);
                 await StandardError.WriteLineAsync('\'');
                 break;
         }
-
-        if (keyword == Keyword.Then)
-        {
-            if (tuple is ({Keyword: Keyword.Then}, true))
-            {
-                _blocks.Pop();
-                _blocks.Push((KeywordSegment.Then, false));
-            }
-            else
-                await StandardError.WriteLineAsync("Unexpected token 'then'");
-
-            return;
-        }
-
-        if (keyword == Keyword.EndIf)
-        {
-            // TODO: idk if this pattern is good ngl
-            if (tuple.Segment?.Keyword is Keyword.Then or Keyword.Else or Keyword.EndIf)
-                _blocks.Pop();
-            else
-                await StandardError.WriteLineAsync("Unexpected token 'fi'");
-            return;
-        }
-
-        if (keyword == Keyword.If)
-        {
-            var endCondition = statements.FindIndex(KeywordSegment.EndCondition);
-            var ifRange = endCondition == -1 ? range.Start.. : range.Start..endCondition;
-            if (statements.Span[ifRange][1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: [var left]}, OperatorSegment {Operator: var @operator}, ArgsSegment {Args: [var right]}] && IsTrue(left, @operator, right))
-            {
-                _blocks.Push((KeywordSegment.Then, true));
-                return;
-            }
-        }
-
-        if (keyword == Keyword.If)
-        {
-            _blocks.Push((KeywordSegment.Else, true));
-            return;
-        }
-
-        if (keyword != Keyword.Else)
-            return;
-        if (tuple is ({Keyword: Keyword.Then}, false) or ({Keyword: Keyword.Else}, true))
-        {
-            _blocks.Pop();
-            _blocks.Push((KeywordSegment.EndIf, true));
-        }
-        else
-            await StandardError.WriteLineAsync("Unexpected token 'else'");
     }
 
     private void Transition(KeywordSegment segment, bool skip)
@@ -560,6 +530,8 @@ public sealed class BaShell : App
         _blocks.Pop();
         _blocks.Push((segment, skip));
     }
+
+    private void Skip(KeywordSegment to) => _blocks.Push((to, true));
 
     private LocateCommandResult Locate(CommandLocation location) => location switch
     {
