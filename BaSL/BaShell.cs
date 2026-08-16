@@ -483,15 +483,16 @@ public sealed class BaShell : App
             if (end && statements.Span[range].IsEmpty)
                 break;
             start = index + 1;
+            var controlled = false;
             if (statements.Span[range.Start] is KeywordSegment {Keyword: var keyword})
             {
                 if (await ControlAsync(keyword, tuple, statements, range))
                     continue;
-                start++;
-                range = end ? start.. : start..index;
+                controlled = true;
             }
 
-            var statement = StatementParser.CreateStatement(statements.Span[range]);
+            var span = statements.Span[range];
+            var statement = StatementParser.CreateStatement(controlled ? span[1..] : span);
             var code = LastExitCode = await ExecuteAsync(statement, token);
             if (statements.Span[range.End] is ContinueSegment @continue && @continue.Exit(code))
                 break;
