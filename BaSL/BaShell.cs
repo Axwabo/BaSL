@@ -528,7 +528,7 @@ public sealed class BaShell : App
                 Transition(KeywordSegment.Else, false);
                 break;
             // TODO: what should the keyword check be
-            case (Keyword.EndIf, Keyword.Then or Keyword.Else, _):
+            case (Keyword.EndIf, Keyword.Then or Keyword.Else or Keyword.EndIf, _):
                 _blocks.Pop();
                 break;
             default:
