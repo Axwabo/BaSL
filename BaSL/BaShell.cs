@@ -470,7 +470,13 @@ public sealed class BaShell : App
         do
         {
             if (_blocks.TryPeek(out var tuple) && tuple.Skip)
-                start = Math.Max(start, statements.FindIndex(tuple.Segment));
+            {
+                var skipTo = statements.FindIndex(tuple.Segment, start);
+                if (skipTo == -1)
+                    break;
+                start = Math.Max(start, skipTo);
+            }
+
             index = statements.FindIndex<ContinueSegment>(start);
             var end = index == -1;
             var range = end ? start.. : start..index;
@@ -499,7 +505,7 @@ public sealed class BaShell : App
             case (Keyword.If, _, _):
             {
                 // TODO: commands as results
-                var endCondition = statements.FindIndex(KeywordSegment.EndCondition);
+                var endCondition = statements.FindIndex(KeywordSegment.EndCondition, range.Start.GetOffset(statements.Length));
                 var ifRange = endCondition == -1 ? range.Start.. : range.Start..endCondition;
                 if (statements.Span[ifRange][1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: [var left]}, OperatorSegment {Operator: var @operator}, ArgsSegment {Args: [var right]}])
                 {
@@ -512,6 +518,14 @@ public sealed class BaShell : App
             }
             case (Keyword.Then, Keyword.Then, true):
                 Transition(KeywordSegment.Then, false);
+                break;
+            case (Keyword.Then, Keyword.Else, true):
+                break;
+            case (Keyword.Else, Keyword.Then, false):
+                Transition(KeywordSegment.EndIf, true);
+                break;
+            case (Keyword.Else, Keyword.Else, true):
+                Transition(KeywordSegment.Else, false);
                 break;
             // TODO: what should the keyword check be
             case (Keyword.EndIf, Keyword.Then or Keyword.Else, _):
