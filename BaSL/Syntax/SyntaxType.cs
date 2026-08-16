@@ -6,7 +6,6 @@ internal enum SyntaxType
     Text,
     Variable,
     QuotedString,
-    VerbatimString,
-    Condition
+    VerbatimString
 
 }

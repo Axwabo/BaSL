@@ -78,6 +78,7 @@ internal static class StatementParser
         var outerSyntax = SyntaxType.Text;
         var escaped = false;
         var raw = true;
+        var condition = false;
         for (var i = start; i < s.Length; i++)
         {
             var c = s[i];
@@ -97,25 +98,21 @@ internal static class StatementParser
             char? next = i < s.Length - 1 ? s[i + 1] : null;
             switch (syntax, c, next)
             {
-                case (SyntaxType.Text, '>', '_') when outerSyntax == SyntaxType.Condition:
+                case (SyntaxType.Text, '>', '_') when condition:
                     i++;
                     AddStatement(OperatorSegment.LeftGreater);
-                    outerSyntax = SyntaxType.Condition;
                     break;
-                case (SyntaxType.Text, '<', '_') when outerSyntax == SyntaxType.Condition:
+                case (SyntaxType.Text, '<', '_') when condition:
                     i++;
                     AddStatement(OperatorSegment.LeftLess);
-                    outerSyntax = SyntaxType.Condition;
                     break;
-                case (SyntaxType.Text, '=', '=') when outerSyntax == SyntaxType.Condition:
+                case (SyntaxType.Text, '=', '=') when condition:
                     i++;
                     AddStatement(OperatorSegment.Eq);
-                    outerSyntax = SyntaxType.Condition;
                     break;
-                case (SyntaxType.Text, '!', '=') when outerSyntax == SyntaxType.Condition:
+                case (SyntaxType.Text, '!', '=') when condition:
                     i++;
                     AddStatement(OperatorSegment.NotEq);
-                    outerSyntax = SyntaxType.Condition;
                     break;
                 case (SyntaxType.VerbatimString, '\'', _):
                 case (SyntaxType.QuotedString, '"', _):
@@ -153,16 +150,15 @@ internal static class StatementParser
                 case (SyntaxType.Text, '[', '[') when argBuzilder.Length == 0:
                     i++;
                     AddStatement(KeywordSegment.BeginCondition);
-                    outerSyntax = SyntaxType.Condition;
+                    condition = true;
                     break;
                 case (SyntaxType.Text, ']', ']') when argBuzilder.Length == 0:
                     i++;
                     AddStatement(KeywordSegment.EndCondition);
+                    condition = false;
                     break;
                 case (SyntaxType.Text or SyntaxType.QuotedString, '$', _):
                     raw = false;
-                    if (outerSyntax != SyntaxType.Condition)
-                        outerSyntax = syntax;
                     syntax = SyntaxType.Variable;
                     break;
                 case (SyntaxType.Variable, ';', _) when outerSyntax == SyntaxType.Text:
@@ -205,15 +201,13 @@ internal static class StatementParser
             if (argBuzilder.Length != 0)
                 args.Add(argBuzilder.ToString());
             argBuzilder.Clear();
-            if (outerSyntax != SyntaxType.Condition)
-                outerSyntax = syntax;
             syntax = next;
         }
 
         void AddStatement(Segment? segment = null)
         {
             // TODO: maybe this doesn't belong here
-            if (raw && args.Count == 1 && KeywordExtensions.Get(args[0]) is { } keyword)
+            if (raw && args.Count == 1 && KeywordSegment.Get(args[0]) is { } keyword)
                 statements.Add(keyword);
             else if (args.Count != 0)
                 statements.Add(new ArgsSegment(args.ToArray()));
