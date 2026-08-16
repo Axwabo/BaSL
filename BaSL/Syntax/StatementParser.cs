@@ -213,7 +213,7 @@ internal static class StatementParser
         void AddStatement(Segment? segment = null)
         {
             // TODO: maybe this doesn't belong here
-            if (raw && args.Count == 1 && KeywordSegment.Get(args[0]) is { } keyword)
+            if (raw && args.Count == 1 && KeywordExtensions.Get(args[0]) is { } keyword)
                 statements.Add(keyword);
             else if (args.Count != 0)
                 statements.Add(new ArgsSegment(args.ToArray()));

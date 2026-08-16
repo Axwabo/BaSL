@@ -494,6 +494,16 @@ public sealed class BaShell : App
 
     private async Task ControlAsync(Keyword keyword, (KeywordSegment Segment, bool Skip) tuple, ReadOnlyMemory<Segment> statements, Range range)
     {
+        switch (keyword, tuple.Segment?.Keyword, tuple.Skip)
+        {
+            case (Keyword.Then, ):
+            default:
+                await StandardError.WriteAsync("Unexpected token '");
+                await StandardError.WriteAsync(keyword.Token);
+                await StandardError.WriteLineAsync('\'');
+                break;
+        }
+
         if (keyword == Keyword.Then)
         {
             if (tuple is ({Keyword: Keyword.Then}, true))
@@ -543,6 +553,12 @@ public sealed class BaShell : App
         }
         else
             await StandardError.WriteLineAsync("Unexpected token 'else'");
+    }
+
+    private void Transition(KeywordSegment segment, bool skip)
+    {
+        _blocks.Pop();
+        _blocks.Push((segment, skip));
     }
 
     private LocateCommandResult Locate(CommandLocation location) => location switch

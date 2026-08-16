@@ -1,5 +1,3 @@
-using System;
-
 namespace BaSL.Syntax;
 
 internal abstract record Segment
@@ -34,17 +32,6 @@ internal sealed record ContinueSegment(Continue On) : Segment
 
 internal sealed record KeywordSegment(Keyword Keyword) : Segment
 {
-
-    public static KeywordSegment? Get(ReadOnlySpan<char> span) => span switch
-    {
-        "if" => If,
-        "then" => Then,
-        "else" => Else,
-        "fi" => EndIf,
-        "[[" => BeginCondition,
-        "]]" => EndCondition,
-        _ => null
-    };
 
     public static KeywordSegment If { get; } = new(Keyword.If);
     public static KeywordSegment Then { get; } = new(Keyword.Then);
