@@ -41,13 +41,3 @@ internal sealed record KeywordSegment(Keyword Keyword) : Segment
     public static KeywordSegment EndCondition { get; } = new(Keyword.EndCondition);
 
 }
-
-internal sealed record OperatorSegment(Operator Operator) : Segment
-{
-
-    public static OperatorSegment Eq { get; } = new(Operator.Equals);
-    public static OperatorSegment NotEq { get; } = new(Operator.NotEquals);
-    public static OperatorSegment LeftGreater { get; } = new(Operator.LeftGreaterThanRight);
-    public static OperatorSegment LeftLess { get; } = new(Operator.LeftLessThanRight);
-
-}

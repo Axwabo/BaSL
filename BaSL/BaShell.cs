@@ -507,8 +507,16 @@ public sealed class BaShell : App
                 // TODO: commands as results
                 var endCondition = statements.FindIndex(KeywordSegment.EndCondition, range.Start.GetOffset(statements.Length));
                 var ifRange = endCondition == -1 ? range.Start.. : range.Start..endCondition;
-                if (statements.Span[ifRange][1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: [var left]}, OperatorSegment {Operator: var @operator}, ArgsSegment {Args: [var right]}])
+                if (statements.Span[ifRange][1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: [var left, var op, var right]}])
                 {
+                    var @operator = op switch
+                    {
+                        "==" or "-eq" => Operator.Equals,
+                        "!=" or "-ne" => Operator.NotEquals,
+                        "<" or "-lt" => Operator.LeftLessThanRight,
+                        ">" or "-gt" => Operator.LeftGreaterThanRight,
+                        _ => throw new NotImplementedException()
+                    };
                     Skip(IsTrue(left, @operator, right) ? KeywordSegment.Then : KeywordSegment.Else);
                     break;
                 }

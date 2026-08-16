@@ -77,7 +77,6 @@ internal static class StatementParser
         var syntax = SyntaxType.Text;
         var outerSyntax = SyntaxType.Text;
         var escaped = false;
-        var raw = true;
         var condition = false;
         for (var i = start; i < s.Length; i++)
         {
@@ -98,26 +97,9 @@ internal static class StatementParser
             char? next = i < s.Length - 1 ? s[i + 1] : null;
             switch (syntax, c, next)
             {
-                case (SyntaxType.Text, '>', '_') when condition:
-                    i++;
-                    AddStatement(OperatorSegment.LeftGreater);
-                    break;
-                case (SyntaxType.Text, '<', '_') when condition:
-                    i++;
-                    AddStatement(OperatorSegment.LeftLess);
-                    break;
-                case (SyntaxType.Text, '=', '=') when condition:
-                    i++;
-                    AddStatement(OperatorSegment.Eq);
-                    break;
-                case (SyntaxType.Text, '!', '=') when condition:
-                    i++;
-                    AddStatement(OperatorSegment.NotEq);
-                    break;
                 case (SyntaxType.VerbatimString, '\'', _):
                 case (SyntaxType.QuotedString, '"', _):
                     syntax = outerSyntax = SyntaxType.Text;
-                    raw = false;
                     break;
                 case (SyntaxType.Text, '\'', _):
                     syntax = SyntaxType.VerbatimString;
@@ -125,26 +107,26 @@ internal static class StatementParser
                 case (SyntaxType.Text, '"', _):
                     syntax = SyntaxType.QuotedString;
                     break;
-                case (SyntaxType.Text, '|', '|'):
+                case (SyntaxType.Text, '|', '|') when !condition:
                     Complete(Continue.OnFailure);
                     return i + 1;
-                case (SyntaxType.Text, '&', '&'):
+                case (SyntaxType.Text, '&', '&') when !condition:
                     Complete(Continue.OnSuccess);
                     return i + 1;
-                case (SyntaxType.Text, ';', _):
+                case (SyntaxType.Text, ';', _) when !condition:
                     Complete();
                     return i;
-                case (SyntaxType.Text, '|', _):
+                case (SyntaxType.Text, '|', _) when !condition:
                     AddStatement(Segment.Pipe);
                     break;
-                case (SyntaxType.Text, '>', '>'):
+                case (SyntaxType.Text, '>', '>') when !condition:
                     AddStatement(Segment.RedirectAppend);
                     i++;
                     break;
-                case (SyntaxType.Text, '>', _):
+                case (SyntaxType.Text, '>', _) when !condition:
                     AddStatement(Segment.RedirectOverwrite);
                     break;
-                case (SyntaxType.Text, '<', _):
+                case (SyntaxType.Text, '<', _) when !condition:
                     AddStatement(Segment.StdinFile);
                     break;
                 case (SyntaxType.Text, '[', '[') when argBuzilder.Length == 0:
@@ -158,7 +140,6 @@ internal static class StatementParser
                     condition = false;
                     break;
                 case (SyntaxType.Text or SyntaxType.QuotedString, '$', _):
-                    raw = false;
                     syntax = SyntaxType.Variable;
                     break;
                 case (SyntaxType.Variable, ';', _) when outerSyntax == SyntaxType.Text:
@@ -179,7 +160,6 @@ internal static class StatementParser
                     variableBuilder.Append(c);
                     break;
                 case (SyntaxType.Text, '~', _) when !string.IsNullOrEmpty(home) && argBuzilder.Length == 0:
-                    raw = false;
                     argBuzilder.Append(home);
                     break;
                 case (SyntaxType.Text, _, _) when char.IsWhiteSpace(c):
@@ -216,7 +196,6 @@ internal static class StatementParser
             AddArg();
             if (args.Count != 0)
                 statements.Add(new ArgsSegment(args.ToArray()));
-            raw = true;
             if (segment is not null)
                 statements.Add(segment);
             args.Clear();
