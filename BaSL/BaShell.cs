@@ -480,17 +480,18 @@ public sealed class BaShell : App
             index = statements.FindIndex<ContinueSegment>(start);
             var end = index == -1;
             var range = end ? start.. : start..index;
-            var span = statements.Span[range];
-            if (end && span.IsEmpty)
+            if (end && statements.Span[range].IsEmpty)
                 break;
             start = index + 1;
             if (statements.Span[range.Start] is KeywordSegment {Keyword: var keyword})
             {
-                await ControlAsync(keyword, tuple, statements, range);
-                continue;
+                if (await ControlAsync(keyword, tuple, statements, range))
+                    continue;
+                start++;
+                range = end ? start.. : start..index;
             }
 
-            var statement = StatementParser.CreateStatement(span);
+            var statement = StatementParser.CreateStatement(statements.Span[range]);
             var code = LastExitCode = await ExecuteAsync(statement, token);
             if (statements.Span[range.End] is ContinueSegment @continue && @continue.Exit(code))
                 break;
@@ -498,7 +499,7 @@ public sealed class BaShell : App
         while (index != -1);
     }
 
-    private async Task ControlAsync(Keyword keyword, (KeywordSegment Segment, bool Skip) tuple, ReadOnlyMemory<Segment> statements, Range range)
+    private async Task<bool> ControlAsync(Keyword keyword, (KeywordSegment Segment, bool Skip) tuple, ReadOnlyMemory<Segment> statements, Range range)
     {
         switch (keyword, tuple.Segment?.Keyword, tuple.Skip)
         {
@@ -518,32 +519,32 @@ public sealed class BaShell : App
                         _ => throw new NotImplementedException()
                     };
                     Skip(IsTrue(left, @operator, right) ? KeywordSegment.Then : KeywordSegment.Else);
-                    break;
+                    return true;
                 }
 
                 await StandardError.WriteLineAsync("Unsupported if statement condition");
-                break;
+                return true;
             }
             case (Keyword.Then, Keyword.Then, true):
                 Transition(KeywordSegment.Then, false);
-                break;
+                return true;
             case (Keyword.Then, Keyword.Else, true):
-                break;
+                return false;
             case (Keyword.Else, Keyword.Then, false):
                 Transition(KeywordSegment.EndIf, true);
-                break;
+                return false;
             case (Keyword.Else, Keyword.Else, true):
                 Transition(KeywordSegment.Else, false);
-                break;
+                return true;
             // TODO: what should the keyword check be
             case (Keyword.EndIf, Keyword.Then or Keyword.Else or Keyword.EndIf, _):
                 _blocks.Pop();
-                break;
+                return true;
             default:
                 await StandardError.WriteAsync("Unexpected token '");
                 await StandardError.WriteAsync(keyword.Token);
                 await StandardError.WriteLineAsync('\'');
-                break;
+                return false;
         }
     }
 
