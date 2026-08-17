@@ -17,7 +17,7 @@ public static class Setup
                                   Some statements (e.g. running "basl") can hang the shell, meaning you'll have to terminate the program (not with Ctrl+C). 
                                   Example commands to try out:
                                   ls
-                                  cat amogus.txt
+                                  cat amogus.txt | cat | cat | cat
                                   ./shebang.sh
                                   """;
 
