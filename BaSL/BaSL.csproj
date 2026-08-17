@@ -1,5 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+    <PropertyGroup>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    </PropertyGroup>
+
     <ItemGroup>
         <PackageReference Include="System.IO.Pipelines" Version="10.0.10" />
     </ItemGroup>

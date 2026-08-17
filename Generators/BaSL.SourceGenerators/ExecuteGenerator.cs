@@ -51,7 +51,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
             (_, _) => true,
             (ctx, token) =>
             {
-                if (ctx.SemanticModel.GetDeclaredSymbol(ctx.TargetNode, token) is not IMethodSymbol {OverriddenMethod.Name: "ExecuteAsync", Parameters: var parameters}
+                if (ctx.TargetSymbol is not IMethodSymbol {OverriddenMethod.Name: "ExecuteAsync", Parameters: var parameters}
                     || Helpers.GetParent(ctx.TargetNode) is not var (ns, name))
                     return null;
                 var list = new List<Option>();
