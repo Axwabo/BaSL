@@ -1,4 +1,7 @@
 <Solution>
+    <Folder Name="/Generators/">
+        <Project Path="Generators/BaSL.SourceGenerators/BaSL.SourceGenerators.csproj" />
+    </Folder>
     <Project Path="BaSL.Shell.Console/BaSL.Shell.Console.csproj" />
     <Project Path="BaSL.Tests\BaSL.Tests.csproj" />
     <Project Path="BaSL\BaSL.csproj" />
