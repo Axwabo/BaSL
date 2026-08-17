@@ -197,6 +197,8 @@ public sealed class BaShell : App
     private void ImportEnv()
     {
         _variables["?"] = "0";
+        for (var i = 0; i < Context.Args.Length; i++)
+            _variables[i.ToString()] = Context.Args[i];
         foreach (var kvp in User.Environment)
             _variables[kvp.Key] = kvp.Value;
     }

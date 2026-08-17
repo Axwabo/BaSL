@@ -62,6 +62,18 @@ For now, pattern matching is used to parse and execute statements:
 - `command [args] | other [args]` is supported with an arbitrary amount of pipes
     - file redirection is not supported
 
+Other features that are yet to be implemented:
+
+- `elif`
+- More conditional operators and command support for if statements
+- Arrays
+- Proper variable expansion and separation
+- `$IFS`
+- `for` and `while` loops
+- `case` statements
+- Proper input handling
+- A lot more unknowns
+
 ## Built-In Programs
 
 - `bytes` prints the first 32 bytes of a file to stdout
@@ -76,5 +88,6 @@ For now, pattern matching is used to parse and execute statements:
 - `rm` removes file(s), or directories if the recursive flag is specified (`-r`)
 - `rmdir` removes an empty directory
 - `sleep` waits for the specified amount of seconds (it's very inaccurate for some reason)
+- `sudo` runs the arguments as a command with superuser privileges
 - `touch` creates an empty file
 - `whoami` prints the current user's username
