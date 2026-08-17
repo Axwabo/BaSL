@@ -509,19 +509,14 @@ public sealed class BaShell : App
                 // TODO: commands as results
                 var endCondition = statements.FindIndex(KeywordSegment.EndCondition, range.Start.GetOffset(statements.Length));
                 var ifRange = endCondition == -1 ? range.Start.. : range.Start..endCondition;
-                if (statements.Span[ifRange][1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: [var left, var op, var right]}])
-                {
-                    var @operator = op switch
+                if (statements.Span[ifRange][1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: var condition}])
+                    switch (condition)
                     {
-                        "==" or "-eq" => Operator.Equals,
-                        "!=" or "-ne" => Operator.NotEquals,
-                        "<" or "-lt" => Operator.LeftLessThanRight,
-                        ">" or "-gt" => Operator.LeftGreaterThanRight,
-                        _ => throw new NotImplementedException()
-                    };
-                    Skip(IsTrue(left, @operator, right) ? KeywordSegment.Then : KeywordSegment.Else);
-                    return true;
-                }
+                        case [var left, var op, var right]:
+                            return Skip(left, op, right, true);
+                        case ["!", var left, var op, var right]:
+                            return Skip(left, op, right, false);
+                    }
 
                 await StandardError.WriteLineAsync("Unsupported if statement condition");
                 return true;
@@ -547,6 +542,20 @@ public sealed class BaShell : App
                 await StandardError.WriteLineAsync('\'');
                 return false;
         }
+    }
+
+    private bool Skip(string left, string op, string right, bool @true)
+    {
+        var @operator = op switch
+        {
+            "==" or "-eq" => Operator.Equals,
+            "!=" or "-ne" => Operator.NotEquals,
+            "<" or "-lt" => Operator.LeftLessThanRight,
+            ">" or "-gt" => Operator.LeftGreaterThanRight,
+            _ => throw new NotImplementedException()
+        };
+        Skip(IsTrue(left, @operator, right) == @true ? KeywordSegment.Then : KeywordSegment.Else);
+        return true;
     }
 
     private void Transition(KeywordSegment segment, bool skip)
