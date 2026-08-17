@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
+using BaSL.Executables.Attributes;
 using BaSL.FileSystems;
 using BaSL.FileSystems.Extensions;
 using Directory = BaSL.FileSystems.Directory;
@@ -10,7 +11,7 @@ using File = BaSL.FileSystems.File;
 
 namespace BaSL.CoreUtils;
 
-public sealed class Ls : App, IHelpProvider
+public sealed partial class Ls : App, IHelpProvider
 {
 
     private static async Task WriteAsync(StreamWriter writer, Mode mode)
@@ -43,6 +44,12 @@ public sealed class Ls : App, IHelpProvider
         await StandardOutput.WriteLineAsync("ls /usr/bin", cancellationToken);
         await StandardOutput.WriteLineAsync("ls -l", cancellationToken);
         await StandardOutput.WriteLineAsync("ls -l /", cancellationToken);
+    }
+
+    [Execute]
+    public async Task<int> MogusAsync(bool longFormat)
+    {
+        return 0;
     }
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
