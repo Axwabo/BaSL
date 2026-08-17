@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace BaSL.SourceGenerators;
 
@@ -10,8 +11,12 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
         var provider = context.SyntaxProvider.ForAttributeWithMetadataName(
             "BaSL.Executables.ExecuteAttribute",
             (_, _) => true,
-            (ctx, _) => ctx.SemanticModel.GetDeclaredSymbol(ctx.TargetNode) is IMethodSymbol
-        );
+            (ctx, token) =>
+            {
+                if (ctx.TargetNode.Parent is not MethodDeclarationSyntax syntax || ctx.SemanticModel.GetDeclaredSymbol(syntax, token) is not INamedTypeSymbol { })
+                    return null;
+                return ctx.TargetNode.Parent;
+            });
     }
 
 }
