@@ -423,8 +423,11 @@ public sealed class BaShell : App
                 break;
             if (string.IsNullOrEmpty(line) || line.StartsWith('#'))
                 continue;
-            if (line.AsSpan().Trim().Equals("exit", StringComparison.OrdinalIgnoreCase))
+            var span = line.AsSpan().Trim();
+            if (span is "exit")
                 break;
+            if (span.StartsWith("exit ") && int.TryParse(span["exit ".Length..].Trim(), out var exitCode))
+                return exitCode;
             await ExecuteAsync(line, cancellationToken);
         }
 
@@ -441,8 +444,11 @@ public sealed class BaShell : App
                 break;
             if (string.IsNullOrEmpty(line) || line.StartsWith('#'))
                 continue;
-            if (line.AsSpan().Trim().Equals("exit", StringComparison.OrdinalIgnoreCase))
+            var span = line.AsSpan().Trim();
+            if (span is "exit")
                 break;
+            if (span.StartsWith("exit ") && int.TryParse(span["exit ".Length..].Trim(), out var exitCode))
+                return exitCode;
             var cts = _cts = new CancellationTokenSource();
             var token = cts.Token;
             try
