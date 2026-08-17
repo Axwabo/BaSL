@@ -17,6 +17,15 @@ public static class ArgsExtensions
 
     }
 
+    extension(Args args)
+    {
+
+        public bool IsEmpty => args.Value.IsEmpty;
+
+        public ReadOnlyMemoryEnumerator<string> GetEnumerator() => args.Value.GetEnumerator();
+
+    }
+
     extension(Args)
     {
 
@@ -33,13 +42,6 @@ public static class ArgsExtensions
         public static ShellStatement? operator |(Args source, Args target) => source | FromArgs(target);
 
         public static ShellStatement? operator |(ShellStatement? statement, Args target) => statement | FromArgs(target);
-
-    }
-
-    extension(Args args)
-    {
-
-        public ReadOnlyMemoryEnumerator<string> GetEnumerator() => args.Value.GetEnumerator();
 
     }
 

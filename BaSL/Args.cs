@@ -15,8 +15,6 @@ public readonly record struct Args(ReadOnlyMemory<string> Value)
     {
     }
 
-    public bool IsEmpty => Value.IsEmpty;
-
     public int Length => Value.Length;
 
     public string this[int index] => Value.Span[index];
@@ -25,6 +23,6 @@ public readonly record struct Args(ReadOnlyMemory<string> Value)
 
     public Args this[Range range] => Value[range];
 
-    public bool Equals(Args? other) => other.HasValue && (other.GetValueOrDefault().IsEmpty && IsEmpty || other.Value.Value.Span.SequenceEqual(Value.Span));
+    public bool Equals(Args? other) => other.HasValue && (other.GetValueOrDefault().IsEmpty && Value.IsEmpty || other.Value.Value.Span.SequenceEqual(Value.Span));
 
 }
