@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace BaSL.SourceGenerators;
 
-internal readonly struct EquatableArray<T> : IEquatable<EquatableArray<T>>, IEnumerable<T>
+public readonly struct EquatableArray<T> : IEquatable<EquatableArray<T>>, IEnumerable<T>
 {
 
     public static readonly EquatableArray<T> Empty = new([]);
@@ -29,12 +29,19 @@ internal readonly struct EquatableArray<T> : IEquatable<EquatableArray<T>>, IEnu
 
     public override int GetHashCode()
     {
-        HashCode
+        if (Length == 0)
+            return 0;
+        var code = new HashCode();
+        foreach (var t in AsSpan())
+            code.Add(t);
+        return code.ToHashCode();
     }
 
     public ReadOnlySpan<T> AsSpan() => _array;
 
-    public IEnumerator<T> GetEnumerator() => throw new NotImplementedException();
+    public int Length => _array?.Length ?? 0;
+
+    public IEnumerator<T> GetEnumerator() => (IEnumerator<T>) (_array ?? []).GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
