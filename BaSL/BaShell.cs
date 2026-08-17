@@ -517,9 +517,6 @@ public sealed class BaShell : App
                 return true;
             case (Keyword.Then, Keyword.Else, true):
                 return false;
-            case (Keyword.Then, Keyword.ElseIf, true):
-                return await If(statements, range);
-            case (Keyword.ElseIf, )
             case (Keyword.Else, Keyword.Then, false):
                 Transition(KeywordSegment.EndIf, true);
                 return false;
@@ -527,7 +524,7 @@ public sealed class BaShell : App
                 Transition(KeywordSegment.Else, false);
                 return true;
             // TODO: what should the keyword check be
-            case (Keyword.EndIf, Keyword.Then or Keyword.Else or Keyword.ElseIf or Keyword.EndIf, _):
+            case (Keyword.EndIf, Keyword.Then or Keyword.Else or Keyword.EndIf, _):
                 _blocks.Pop();
                 return true;
             default:
