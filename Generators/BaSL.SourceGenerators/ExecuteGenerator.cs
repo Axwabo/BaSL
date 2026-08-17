@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System.Runtime.CompilerServices;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace BaSL.SourceGenerators;
@@ -15,6 +16,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
             {
                 if (ctx.TargetNode.Parent is not MethodDeclarationSyntax syntax || ctx.SemanticModel.GetDeclaredSymbol(syntax, token) is not INamedTypeSymbol { })
                     return null;
+                Unsafe.As<>()
                 return ctx.TargetNode.Parent;
             });
     }
