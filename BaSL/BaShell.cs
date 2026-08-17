@@ -518,6 +518,10 @@ public sealed class BaShell : App
                 if (statements.Span[ifRange][1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: var condition}])
                     switch (condition)
                     {
+                        case [var op, var str]:
+                            return Skip(op, str, true);
+                        case ["!", var op, var str]:
+                            return Skip(op, str, false);
                         case [var left, var op, var right]:
                             return Skip(left, op, right, true);
                         case ["!", var left, var op, var right]:
@@ -554,13 +558,29 @@ public sealed class BaShell : App
     {
         var @operator = op switch
         {
-            "==" or "-eq" => Operator.Equals,
+            "=" or "==" or "-eq" => Operator.Equals,
             "!=" or "-ne" => Operator.NotEquals,
             "<" or "-lt" => Operator.LeftLessThanRight,
             ">" or "-gt" => Operator.LeftGreaterThanRight,
             _ => throw new NotImplementedException()
         };
-        Skip(IsTrue(left, @operator, right) == @true ? KeywordSegment.Then : KeywordSegment.Else);
+        return Skip(IsTrue(left, @operator, right) == @true);
+    }
+
+    private bool Skip(string op, string str, bool @true) => Skip(op switch
+    {
+        "-z" => string.IsNullOrEmpty(str),
+        "-n" => !string.IsNullOrEmpty(str),
+        "-e" => WorkingDirectory.GetEntry(str).Error is not NotFoundError, // TODO: write error?
+        "-f" => WorkingDirectory.GetEntry(str).Value is File,
+        "-d" => WorkingDirectory.GetEntry(str).Value is Directory,
+        "-h" or "-L" => WorkingDirectory.GetEntry(str).Value is SymbolicLink,
+        _ => throw new NotImplementedException()
+    } == @true);
+
+    private bool Skip(bool @true)
+    {
+        Skip(@true ? KeywordSegment.Then : KeywordSegment.Else);
         return true;
     }
 
