@@ -511,7 +511,26 @@ public sealed class BaShell : App
         switch (keyword, tuple.Segment?.Keyword, tuple.Skip)
         {
             case (Keyword.If, _, _):
-                return await If(statements, range);
+            {
+                // TODO: commands as results
+                var endCondition = statements.FindIndex(KeywordSegment.EndCondition, range.Start.GetOffset(statements.Length));
+                var ifRange = endCondition == -1 ? range.Start.. : range.Start..endCondition;
+                if (statements.Span[ifRange][1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: var condition}])
+                    switch (condition)
+                    {
+                        case [var op, var str]:
+                            return Skip(op, str, true);
+                        case ["!", var op, var str]:
+                            return Skip(op, str, false);
+                        case [var left, var op, var right]:
+                            return Skip(left, op, right, true);
+                        case ["!", var left, var op, var right]:
+                            return Skip(left, op, right, false);
+                    }
+
+                await StandardError.WriteLineAsync("Unsupported if statement condition");
+                return true;
+            }
             case (Keyword.Then, Keyword.Then, true):
                 Transition(KeywordSegment.Then, false);
                 return true;
@@ -533,28 +552,6 @@ public sealed class BaShell : App
                 await StandardError.WriteLineAsync('\'');
                 return false;
         }
-    }
-
-    private async Task<bool> If(ReadOnlyMemory<Segment> statements, Range range)
-    {
-        // TODO: commands as results
-        var endCondition = statements.FindIndex(KeywordSegment.EndCondition, range.Start.GetOffset(statements.Length));
-        var ifRange = endCondition == -1 ? range.Start.. : range.Start..endCondition;
-        if (statements.Span[ifRange][1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: var condition}])
-            switch (condition)
-            {
-                case [var op, var str]:
-                    return Skip(op, str, true);
-                case ["!", var op, var str]:
-                    return Skip(op, str, false);
-                case [var left, var op, var right]:
-                    return Skip(left, op, right, true);
-                case ["!", var left, var op, var right]:
-                    return Skip(left, op, right, false);
-            }
-
-        await StandardError.WriteLineAsync("Unsupported if statement condition");
-        return true;
     }
 
     private bool Skip(string left, string op, string right, bool @true)

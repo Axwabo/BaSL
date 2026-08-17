@@ -8,7 +8,6 @@ internal static class KeywordExtensions
     public const string If = "if";
     public const string Then = "then";
     public const string Else = "else";
-    public const string ElseIf = "elif";
     public const string EndIf = "fi";
     public const string BeginCondition = "[[";
     public const string EndCondition = "]]";
@@ -21,7 +20,6 @@ internal static class KeywordExtensions
             Keyword.If => If,
             Keyword.Then => Then,
             Keyword.Else => Else,
-            Keyword.ElseIf => ElseIf,
             Keyword.EndIf => EndIf,
             Keyword.BeginCondition => BeginCondition,
             Keyword.EndCondition => EndCondition,
@@ -38,7 +36,6 @@ internal static class KeywordExtensions
             If => KeywordSegment.If,
             Then => KeywordSegment.Then,
             Else => KeywordSegment.Else,
-            ElseIf => KeywordSegment.ElseIf,
             EndIf => KeywordSegment.EndIf,
             BeginCondition => KeywordSegment.BeginCondition,
             EndCondition => KeywordSegment.EndCondition,
