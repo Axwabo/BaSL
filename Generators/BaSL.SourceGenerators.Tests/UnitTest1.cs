@@ -1,4 +1,6 @@
-﻿namespace BaSL.SourceGenerators.Tests;
+﻿using Xunit;
+
+namespace BaSL.SourceGenerators.Tests;
 
 public class UnitTest1
 {
