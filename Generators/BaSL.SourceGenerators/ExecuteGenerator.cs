@@ -9,6 +9,9 @@ namespace BaSL.SourceGenerators;
 public sealed class ExecuteGenerator : IIncrementalGenerator
 {
 
+    private const string TokenType = "System.Threading.CancellationToken";
+    private const string TokenParam = "cancellationToken";
+
     private static void Execute(MethodToGenerate? method, SourceProductionContext context)
     {
         if (method is not null)
@@ -22,7 +25,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                                      {
                                          partial class {{method.ClassName}}
                                          {
-                                             public override async global::System.Threading.Tasks.Task<int> ExecuteAsync(global::System.Threading.CancellationToken cancellationToken)
+                                             public override async global::System.Threading.Tasks.Task<int> ExecuteAsync(global::{{TokenType}} {{TokenParam}})
                                              {
                                      """);
         DeclareOptions(method, sb);
@@ -90,7 +93,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
     {
         foreach (var option in method.Options)
         {
-            sb.Append(option.Name);
+            sb.Append(option is CancellationTokenOption ? "cancellationToken" : option.Name);
             if (option is FlagOption {Required: true})
                 sb.Append(".Value");
             sb.Append(", ");
@@ -112,16 +115,24 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                     return null;
                 var list = new List<Option>();
                 foreach (var symbol in parameters)
-                foreach (var attribute in symbol.GetAttributes())
                 {
-                    token.ThrowIfCancellationRequested();
-                    if (attribute.AttributeClass?.ToString() == "BaSL.Executables.Attributes.FlagAttribute")
-                        list.Add(new FlagOption(
-                            symbol.Name,
-                            (char) attribute.ConstructorArguments[0].Value!,
-                            symbol.NullableAnnotation != NullableAnnotation.Annotated,
-                            symbol.HasExplicitDefaultValue ? symbol.ExplicitDefaultValue as bool? : null
-                        )); // TODO: other options
+                    if (symbol.Type.ToString() == TokenType)
+                    {
+                        list.Add(new CancellationTokenOption(symbol.Name));
+                        continue;
+                    }
+
+                    foreach (var attribute in symbol.GetAttributes())
+                    {
+                        token.ThrowIfCancellationRequested();
+                        if (attribute.AttributeClass?.ToString() == "BaSL.Executables.Attributes.FlagAttribute")
+                            list.Add(new FlagOption(
+                                symbol.Name,
+                                (char) attribute.ConstructorArguments[0].Value!,
+                                symbol.NullableAnnotation != NullableAnnotation.Annotated,
+                                symbol.HasExplicitDefaultValue ? symbol.ExplicitDefaultValue as bool? : null
+                            )); // TODO: other options
+                    }
                 }
 
                 return new MethodToGenerate(ns, className, methodName, new EquatableArray<Option>(list.ToArray()));

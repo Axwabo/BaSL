@@ -4,6 +4,7 @@ public static class Constants
 {
 
     public const string Source = """
+                                 using System.Threading;
                                  using BaSL.Executables;
                                  using BaSL.Executables.Attributes;
                                      
@@ -13,7 +14,7 @@ public static class Constants
                                  {
 
                                      [Execute]
-                                     public async Task<int> MogusAsync([Flag('l')] bool longFormat = false)
+                                     public async Task<int> MogusAsync([Flag('l')] bool longFormat = false, CancellationToken token = default)
                                      {
                                          return 0;
                                      }
@@ -42,7 +43,7 @@ public static class Constants
                                  }
                                  }
                                  }
-                                             return await MogusAsync(longFormat.Value);
+                                             return await MogusAsync(longFormat.Value, cancellationToken);
                                          }
                                      }
                                  }
