@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿extern alias netstandard;
+using System.Linq;
 using System.Threading;
 using BaSL.Executables;
 using Microsoft.CodeAnalysis;
@@ -19,7 +20,7 @@ public sealed class SourceGeneratorTest
             nameof(SourceGeneratorTest),
             [CSharpSyntaxTree.ParseText(Constants.Source, cancellationToken: CancellationToken.None)],
             [
-                MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                // MetadataReference.CreateFromFile(typeof(netstandard::System.Attribute).Assembly.Location),
                 MetadataReference.CreateFromFile(typeof(App).Assembly.Location),
             ]
         );

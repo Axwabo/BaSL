@@ -12,11 +12,20 @@
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
         <PackageReference Include="xunit.v3" Version="4.0.0" />
         <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" />
+        <PackageReference Include="NETStandard.Library.Ref" Version="2.1.0" GeneratePathProperty="true" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="../../BaSL/BaSL.csproj" />
         <ProjectReference Include="../BaSL.SourceGenerators/BaSL.SourceGenerators.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="netstandard" HintPath="$(PkgNETStandard_Library_Ref)/ref/netstandard2.1/netstandard.dll" Aliases="netstandard" />
+    </ItemGroup>
+
+    <Target Name="Sus" AfterTargets="Build">
+        <Warning Text="$(PkgNETStandard_Library_Ref)" />
+    </Target>
 
 </Project>

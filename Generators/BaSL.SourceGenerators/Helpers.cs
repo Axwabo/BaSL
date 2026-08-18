@@ -11,7 +11,7 @@ public static class Helpers
         if (node.Parent is not BaseTypeDeclarationSyntax type)
             return null;
         var parent = type.Parent;
-        while (parent is NamespaceDeclarationSyntax or FileScopedNamespaceDeclarationSyntax)
+        while (parent is not (null or NamespaceDeclarationSyntax or FileScopedNamespaceDeclarationSyntax))
             parent = parent.Parent;
         if (parent is not BaseNamespaceDeclarationSyntax syntax)
             return ("", type.Identifier.Span.ToString());
