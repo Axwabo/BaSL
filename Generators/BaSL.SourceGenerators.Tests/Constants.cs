@@ -23,6 +23,7 @@ public static class Constants
                                  """;
 
     public const string Result = """
+                                 #nullable enable
                                  namespace BaSL.CoreUtils
                                  {
                                      partial class Ls

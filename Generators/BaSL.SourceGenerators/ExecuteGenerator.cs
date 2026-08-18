@@ -21,6 +21,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
     private static string GenerateClass(MethodToGenerate method)
     {
         var sb = new StringBuilder($$"""
+                                     #nullable enable
                                      namespace {{method.Namespace}}
                                      {
                                          partial class {{method.ClassName}}
