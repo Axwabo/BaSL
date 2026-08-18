@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.IO;
+using System.Linq;
 using System.Threading;
 using BaSL.Executables;
 using Microsoft.CodeAnalysis;
@@ -15,12 +16,14 @@ public sealed class SourceGeneratorTest
     {
         var generator = new ExecuteGenerator();
         var driver = CSharpGeneratorDriver.Create(generator);
+        var appLocation = typeof(App).Assembly.Location;
+        var netstandardLocation = Path.Combine(Directory.GetParent(appLocation)!.FullName, "netstandard.dll");
         var compilation = CSharpCompilation.Create(
             nameof(SourceGeneratorTest),
             [CSharpSyntaxTree.ParseText(Constants.Source, cancellationToken: CancellationToken.None)],
             [
-                MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(App).Assembly.Location)
+                MetadataReference.CreateFromFile(appLocation),
+                MetadataReference.CreateFromFile(netstandardLocation)
             ]
         );
         var result = driver.RunGenerators(compilation, CancellationToken.None).GetRunResult();

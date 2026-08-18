@@ -5,6 +5,7 @@
         <OutputType>Exe</OutputType>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
+        <Assemblies>../../BaSL/bin/$(Configuration)/netstandard2.1</Assemblies>
     </PropertyGroup>
 
     <ItemGroup>
@@ -16,8 +17,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Reference Include="BaSL" HintPath="../../BaSL/bin/$(Configuration)/netstandard2.1/BaSL.dll" />
         <ProjectReference Include="../BaSL.SourceGenerators/BaSL.SourceGenerators.csproj" />
+        <Reference Include="BaSL" HintPath="$(Assemblies)/BaSL.dll" />
+        <None Include="$(Assemblies)/netstandard.dll" CopyToOutputDirectory="Always" />
     </ItemGroup>
 
 </Project>

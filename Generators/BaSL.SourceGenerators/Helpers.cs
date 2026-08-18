@@ -22,7 +22,7 @@ public static class Helpers
             syntax = outer;
         }
 
-        return (ns, type.Identifier.Span.ToString());
+        return (ns, type.Identifier.Text);
     }
 
 }
