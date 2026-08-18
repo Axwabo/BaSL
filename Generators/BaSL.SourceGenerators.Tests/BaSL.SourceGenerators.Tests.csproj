@@ -15,6 +15,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="../../BaSL/BaSL.csproj" />
         <ProjectReference Include="../BaSL.SourceGenerators/BaSL.SourceGenerators.csproj" />
     </ItemGroup>
 

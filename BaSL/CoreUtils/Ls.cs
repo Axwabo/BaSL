@@ -46,7 +46,7 @@ public sealed partial class Ls : App, IHelpProvider
         await StandardOutput.WriteLineAsync("ls -l /", cancellationToken);
     }
 
-    [Execute]
+    // [Execute]
     public async Task<int> MogusAsync([Flag('l')] bool longFormat)
     {
         return 0;
