@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace BaSL.SourceGenerators;
 
+[Generator]
 public sealed class ExecuteGenerator : IIncrementalGenerator
 {
 
