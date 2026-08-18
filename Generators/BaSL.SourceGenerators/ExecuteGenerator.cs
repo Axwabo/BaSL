@@ -37,9 +37,15 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
             }).AppendLine(";");
         }
 
-        sb.Append("            return ").Append(method.MethodName).Append('(');
+        sb.Append("            return await ").Append(method.MethodName).Append('(');
         foreach (var option in method.Options)
-            sb.Append(option.Name).Append(", ");
+        {
+            sb.Append(option.Name);
+            if (option is FlagOption {Required: true})
+                sb.Append(".Value");
+            sb.Append(", ");
+        }
+
         if (method.Options.Length != 0)
             sb.Remove(sb.Length - 2, 2);
         return sb.Append(");\n        }\n    }\n}").ToString();
