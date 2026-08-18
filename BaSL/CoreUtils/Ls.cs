@@ -43,7 +43,7 @@ public sealed partial class Ls : App, IHelpProvider
     }
 
     [Execute]
-    public async Task<int> MogusAsync([Flag('l')] bool longFormat)
+    public async Task<int> MogusAsync([Flag('l')] bool longFormat = false)
     {
         return 0;
     }

@@ -25,6 +25,16 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                                              public override async global::System.Threading.Tasks.Task<int> ExecuteAsync(global::System.Threading.CancellationToken cancellationToken)
                                              {
                                      """);
+        DeclareOptions(method, sb);
+        DetectOptions(method, sb);
+        RequireOptions(method, sb);
+        sb.Append("            return await ").Append(method.MethodName).Append('(');
+        PassOptions(method, sb);
+        return sb.Append(");\n        }\n    }\n}").ToString();
+    }
+
+    private static void DeclareOptions(MethodToGenerate method, StringBuilder sb)
+    {
         foreach (var option in method.Options)
         {
             if (option is not FlagOption flag)
@@ -36,8 +46,48 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                 null => "null"
             }).AppendLine(";");
         }
+    }
 
-        sb.Append("            return await ").Append(method.MethodName).Append('(');
+    private static void DetectOptions(MethodToGenerate method, StringBuilder sb)
+    {
+        // TODO: this sucks
+        sb.AppendLine("for (int i = 0; i < this.Args.Length; i++)")
+            .AppendLine("{")
+            .AppendLine("string arg = this.Args[i];")
+            .AppendLine("if (arg.StartsWith('-'))")
+            .AppendLine("{")
+            .AppendLine("for (int c = 1; c < arg.Length; c++)")
+            .AppendLine("{");
+        foreach (var option in method.Options)
+            if (option is FlagOption flag)
+                sb.AppendLine("if (c == '")
+                    .Append(flag.Flag)
+                    .Append("')")
+                    .AppendLine()
+                    .AppendLine("{")
+                    .Append(flag.Name)
+                    .AppendLine(" = true;")
+                    .AppendLine("}");
+        sb.AppendLine("}").AppendLine("}").AppendLine("}");
+    }
+
+    private static void RequireOptions(MethodToGenerate method, StringBuilder sb)
+    {
+        foreach (var option in method.Options)
+            if (option is FlagOption {Required: true, DefaultValue: null, Name: var name})
+                sb.Append("if (!")
+                    .Append(name)
+                    .AppendLine(".HasValue)")
+                    .AppendLine("{")
+                    .Append("await this.StandardError.WriteLineAsync(\"Argument \\\"")
+                    .Append(name)
+                    .AppendLine("\\\" must be specified\");")
+                    .AppendLine("return 1;")
+                    .AppendLine("}");
+    }
+
+    private static void PassOptions(MethodToGenerate method, StringBuilder sb)
+    {
         foreach (var option in method.Options)
         {
             sb.Append(option.Name);
@@ -48,7 +98,6 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
 
         if (method.Options.Length != 0)
             sb.Remove(sb.Length - 2, 2);
-        return sb.Append(");\n        }\n    }\n}").ToString();
     }
 
     public void Initialize(IncrementalGeneratorInitializationContext context)

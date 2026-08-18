@@ -13,7 +13,7 @@ public static class Constants
                                  {
 
                                      [Execute]
-                                     public async Task<int> MogusAsync([Flag('l')] bool longFormat)
+                                     public async Task<int> MogusAsync([Flag('l')] bool longFormat = false)
                                      {
                                          return 0;
                                      }
