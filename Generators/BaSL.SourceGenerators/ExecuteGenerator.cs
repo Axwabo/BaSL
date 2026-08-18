@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.Text;
 namespace BaSL.SourceGenerators;
 
 [Generator]
-public class ExecuteGenerator : IIncrementalGenerator
+public sealed class ExecuteGenerator : IIncrementalGenerator
 {
 
     private static void Execute(MethodToGenerate? method, SourceProductionContext context)
