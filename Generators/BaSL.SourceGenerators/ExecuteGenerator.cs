@@ -60,7 +60,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                 foreach (var attribute in symbol.GetAttributes())
                 {
                     token.ThrowIfCancellationRequested();
-                    if (attribute.AttributeClass is {Name: "FlagAttribute", ContainingNamespace.Name: "BaSL.Executables.Attributes"})
+                    if (attribute.AttributeClass?.ToString() == "BaSL.Executables.Attributes.FlagAttribute")
                         list.Add(new FlagOption(symbol.Name, (char) attribute.ConstructorArguments[0].Value!, symbol.NullableAnnotation != NullableAnnotation.Annotated, symbol.ExplicitDefaultValue as bool?)); // TODO: other options
                 }
 
