@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BaSL.SourceGenerators;
 
@@ -41,7 +42,7 @@ public readonly struct EquatableArray<T> : IEquatable<EquatableArray<T>>, IEnume
 
     public int Length => _array?.Length ?? 0;
 
-    public IEnumerator<T> GetEnumerator() => (IEnumerator<T>) (_array ?? []).GetEnumerator();
+    public IEnumerator<T> GetEnumerator() => (_array ?? []).AsEnumerable().GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
