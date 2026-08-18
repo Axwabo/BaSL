@@ -1,7 +1,5 @@
-﻿extern alias netstandard;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading;
-using BaSL.Executables;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Xunit;
@@ -20,8 +18,8 @@ public sealed class SourceGeneratorTest
             nameof(SourceGeneratorTest),
             [CSharpSyntaxTree.ParseText(Constants.Source, cancellationToken: CancellationToken.None)],
             [
-                // MetadataReference.CreateFromFile(typeof(netstandard::System.Attribute).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(App).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                // MetadataReference.CreateFromFile(typeof(App).Assembly.Location),
             ]
         );
         var result = driver.RunGenerators(compilation, CancellationToken.None).GetRunResult();
