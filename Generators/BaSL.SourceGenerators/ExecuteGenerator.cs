@@ -6,13 +6,13 @@ using Microsoft.CodeAnalysis.Text;
 namespace BaSL.SourceGenerators;
 
 [Generator]
-public sealed class ExecuteGenerator : IIncrementalGenerator
+public class ExecuteGenerator : IIncrementalGenerator
 {
 
     private static void Execute(MethodToGenerate? method, SourceProductionContext context)
     {
         if (method is not null)
-            context.AddSource($"{method.Namespace}.{method.ClassName}.g.cs", SourceText.From(GenerateClass(method)));
+            context.AddSource($"{method.Namespace}.{method.ClassName}.g.cs", SourceText.From(GenerateClass(method), Encoding.UTF8));
     }
 
     private static string GenerateClass(MethodToGenerate method)
