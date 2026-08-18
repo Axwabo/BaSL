@@ -60,7 +60,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
             .AppendLine("{");
         foreach (var option in method.Options)
             if (option is FlagOption flag)
-                sb.AppendLine("if (c == '")
+                sb.Append("if (c == '")
                     .Append(flag.Flag)
                     .Append("')")
                     .AppendLine()
