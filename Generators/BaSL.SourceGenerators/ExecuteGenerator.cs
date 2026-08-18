@@ -34,14 +34,14 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                 true => "true",
                 false => "false",
                 null => "null"
-            });
+            }).AppendLine(";");
         }
 
         sb.Append("            return ExecuteAsync(");
         foreach (var option in method.Options)
             sb.Append(option.Name).Append(", ");
         if (method.Options.Length != 0)
-            sb.Remove(sb.Length - 3, 2);
+            sb.Remove(sb.Length - 2, 2);
         return sb.Append(");\n        }\n    }\n}").ToString();
     }
 
@@ -61,7 +61,12 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                 {
                     token.ThrowIfCancellationRequested();
                     if (attribute.AttributeClass?.ToString() == "BaSL.Executables.Attributes.FlagAttribute")
-                        list.Add(new FlagOption(symbol.Name, (char) attribute.ConstructorArguments[0].Value!, symbol.NullableAnnotation != NullableAnnotation.Annotated, symbol.ExplicitDefaultValue as bool?)); // TODO: other options
+                        list.Add(new FlagOption(
+                            symbol.Name,
+                            (char) attribute.ConstructorArguments[0].Value!,
+                            symbol.NullableAnnotation != NullableAnnotation.Annotated,
+                            symbol.HasExplicitDefaultValue ? symbol.ExplicitDefaultValue as bool? : null
+                        )); // TODO: other options
                 }
 
                 return new MethodToGenerate(ns, name, new EquatableArray<Option>(list.ToArray()));
