@@ -1,13 +1,9 @@
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
 using BaSL.Executables.Attributes;
 using BaSL.FileSystems;
-using BaSL.FileSystems.Extensions;
-using Directory = BaSL.FileSystems.Directory;
-using File = BaSL.FileSystems.File;
 
 namespace BaSL.CoreUtils;
 
@@ -46,12 +42,13 @@ public sealed partial class Ls : App, IHelpProvider
         await StandardOutput.WriteLineAsync("ls -l /", cancellationToken);
     }
 
-    // [Execute]
+    [Execute]
     public async Task<int> MogusAsync([Flag('l')] bool longFormat)
     {
         return 0;
     }
 
+    /*
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         var longFormat = false;
@@ -102,5 +99,6 @@ public sealed partial class Ls : App, IHelpProvider
 
         return 0;
     }
+    */
 
 }

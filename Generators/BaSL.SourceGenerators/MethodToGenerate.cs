@@ -1,3 +1,3 @@
 namespace BaSL.SourceGenerators;
 
-public sealed record MethodToGenerate(string Namespace, string ClassName, EquatableArray<Option> Options);
+public sealed record MethodToGenerate(string Namespace, string ClassName, string MethodName, EquatableArray<Option> Options);

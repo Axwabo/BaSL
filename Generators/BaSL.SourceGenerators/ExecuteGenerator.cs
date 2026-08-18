@@ -37,7 +37,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
             }).AppendLine(";");
         }
 
-        sb.Append("            return ExecuteAsync(");
+        sb.Append("            return ").Append(method.MethodName).Append('(');
         foreach (var option in method.Options)
             sb.Append(option.Name).Append(", ");
         if (method.Options.Length != 0)
@@ -52,8 +52,8 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
             (_, _) => true,
             (ctx, token) =>
             {
-                if (ctx.TargetSymbol is not IMethodSymbol {Parameters: var parameters}
-                    || Helpers.GetParent(ctx.TargetNode) is not var (ns, name))
+                if (ctx.TargetSymbol is not IMethodSymbol {Name: var methodName, Parameters: var parameters}
+                    || Helpers.GetParent(ctx.TargetNode) is not var (ns, className))
                     return null;
                 var list = new List<Option>();
                 foreach (var symbol in parameters)
@@ -69,7 +69,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                         )); // TODO: other options
                 }
 
-                return new MethodToGenerate(ns, name, new EquatableArray<Option>(list.ToArray()));
+                return new MethodToGenerate(ns, className, methodName, new EquatableArray<Option>(list.ToArray()));
             });
 
         context.RegisterSourceOutput(provider, (ctx, generate) => Execute(generate, ctx));
