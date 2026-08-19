@@ -22,14 +22,4 @@ public sealed partial class Sleep : App
     {
     }
 
-    /*public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
-    {
-        if (Args.Length == 0)
-            return 1;
-        if (!int.TryParse(Args[0], out var seconds))
-            return 1;
-        await Task.Delay(seconds * 1000, cancellationToken);
-        return 0;
-    }*/
-
 }
