@@ -11,6 +11,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
 
     private const string TokenType = "System.Threading.CancellationToken";
     private const string TokenParam = "cancellationToken";
+    private const string IndexVar = "positionalArgumentIndex";
 
     private static void Execute(MethodToGenerate? method, SourceProductionContext context)
     {
@@ -41,20 +42,33 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
     {
         foreach (var option in method.Options)
         {
-            if (option is not FlagOption flag)
-                continue;
-            sb.Append("bool? ").Append(option.Name).Append(" = ").Append(flag.DefaultValue switch
+            switch (option)
             {
-                true => "true",
-                false => "false",
-                null => "null"
-            }).AppendLine(";");
+                case FlagOption flag:
+                    sb.Append("bool? ").Append(option.Name).Append(" = ").Append(flag.DefaultValue switch
+                    {
+                        true => "true",
+                        false => "false",
+                        null => "null"
+                    }).AppendLine(";");
+                    break;
+                case PositionalOption positional:
+                    // TODO: optional
+                    sb.Append(positional.Type);
+                    if (!positional.Type.EndsWith("?"))
+                        sb.Append('?');
+                    sb.Append(option.Name).Append(" = ").Append(positional.DefaultValue).AppendLine(";");
+                    break;
+            }
         }
     }
 
     private static void DetectOptions(MethodToGenerate method, StringBuilder sb)
     {
         // TODO: this sucks
+        // TODO: arguments with values
+        var positionalArgumentIndex = 0;
+        sb.AppendLine($"int {IndexVar} = 0;");
         sb.AppendLine("for (int i = 0; i < this.Args.Length; i++)")
             .AppendLine("{")
             .AppendLine("string arg = this.Args[i];")
@@ -72,11 +86,26 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                     .Append(flag.Name)
                     .AppendLine(" = true;")
                     .AppendLine("}");
-        sb.AppendLine("}").AppendLine("}").AppendLine("}");
+        sb.AppendLine("}").AppendLine("continue;").AppendLine("}");
+        foreach (var option in method.Options)
+        {
+            if (option is not PositionalOption positional)
+                continue;
+            var i = positionalArgumentIndex++;
+            sb.Append($"if ({IndexVar} == ").Append(i).AppendLine(")").AppendLine("{");
+            // TODO: parse
+            if (positional.Type == "string")
+                sb.Append(option.Name).AppendLine(" = arg;");
+            sb.AppendLine("}");
+        }
+
+        sb.Append($"{IndexVar}++;");
+        sb.AppendLine("}");
     }
 
     private static void RequireOptions(MethodToGenerate method, StringBuilder sb)
     {
+        // TODO: positional options
         foreach (var option in method.Options)
             if (option is FlagOption {Required: true, DefaultValue: null, Name: var name})
                 sb.Append("if (!")
@@ -117,23 +146,30 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                 var list = new List<Option>();
                 foreach (var symbol in parameters)
                 {
-                    if (symbol.Type.ToString() == TokenType)
+                    var type = symbol.Type.ToString();
+                    if (type == TokenType)
                     {
                         list.Add(new CancellationTokenOption(symbol.Name));
                         continue;
                     }
 
+                    var isFlag = false;
                     foreach (var attribute in symbol.GetAttributes())
                     {
                         token.ThrowIfCancellationRequested();
-                        if (attribute.AttributeClass?.ToString() == "BaSL.Executables.Attributes.FlagAttribute")
-                            list.Add(new FlagOption(
-                                symbol.Name,
-                                (char) attribute.ConstructorArguments[0].Value!,
-                                symbol.NullableAnnotation != NullableAnnotation.Annotated,
-                                symbol.HasExplicitDefaultValue ? symbol.ExplicitDefaultValue as bool? : null
-                            )); // TODO: other options
+                        if (attribute.AttributeClass?.ToString() != "BaSL.Executables.Attributes.FlagAttribute")
+                            continue;
+                        isFlag = true;
+                        list.Add(new FlagOption(
+                            symbol.Name,
+                            attribute.ConstructorArguments.Length == 0 && attribute.ConstructorArguments[0].Value is char flagChar ? flagChar : symbol.Name[0],
+                            symbol.NullableAnnotation != NullableAnnotation.Annotated,
+                            symbol.HasExplicitDefaultValue ? symbol.ExplicitDefaultValue as bool? : null
+                        )); // TODO: other options
                     }
+
+                    if (!isFlag)
+                        list.Add(new PositionalOption(symbol.Name, type, symbol.HasExplicitDefaultValue ? symbol.ExplicitDefaultValue?.ToString() : null));
                 }
 
                 return new MethodToGenerate(ns, className, methodName, new EquatableArray<Option>(list.ToArray()));

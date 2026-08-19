@@ -32,10 +32,11 @@ public readonly struct EquatableArray<T> : IEquatable<EquatableArray<T>>, IEnume
     {
         if (Length == 0)
             return 0;
-        var code = new HashCode();
+        var code = 0;
         foreach (var t in AsSpan())
-            code.Add(t);
-        return code.ToHashCode();
+            if (t is not null)
+                code = code * 31 + t.GetHashCode();
+        return code;
     }
 
     public ReadOnlySpan<T> AsSpan() => _array;
