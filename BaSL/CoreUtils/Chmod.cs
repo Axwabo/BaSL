@@ -8,11 +8,19 @@ namespace BaSL.CoreUtils;
 
 using ModeDeltas = (Mode AddOwner, Mode AddOthers, Mode RemoveOwner, Mode RemoveOthers);
 
-public sealed class Chmod : App
+public sealed class Chmod : App, IHelpProvider
 {
 
     public Chmod(ExecutableContext context) : base(context)
     {
+    }
+
+    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
+    {
+        await StandardOutput.WriteLineAsync("Changes the mode (permissions) of the specified file(s).", cancellationToken);
+        await StandardOutput.WriteLineAsync("Pass the -R flag to update entries recursively.", cancellationToken);
+        await StandardOutput.WriteLineAsync("Set specific modes by providing an octal mode representation (e.g. 777).", cancellationToken);
+        await StandardOutput.WriteLineAsync("Add or remove a mode by prefixing 'r' 'w' or 'x' with '+' or '-' (e.g. '+x', '-w').", cancellationToken);
     }
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
