@@ -91,12 +91,12 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
             var i = positionalArgumentIndex++;
             sb.Append($"if ({IndexVar} == ").Append(i).AppendLine(")").AppendLine("{");
             // TODO: parse
-            if (positional.Type == "string")
+            if (positional.Type is "string" or "string?")
                 sb.Append(option.Name).AppendLine(" = arg;");
             sb.AppendLine("}");
         }
 
-        sb.Append($"{IndexVar}++;");
+        sb.AppendLine($"{IndexVar}++;");
         sb.AppendLine("}");
     }
 

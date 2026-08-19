@@ -14,7 +14,7 @@ public static class Constants
                                  {
 
                                      [Execute]
-                                     public async Task<int> MogusAsync([Flag('l')] bool longFormat = false, CancellationToken token = default)
+                                     public async Task<int> MogusAsync(string? path = null, [Flag] bool longFormat = false, CancellationToken token = default)
                                      {
                                          return 0;
                                      }
@@ -29,7 +29,9 @@ public static class Constants
                                      partial class Ls
                                      {
                                          public override async global::System.Threading.Tasks.Task<int> ExecuteAsync(global::System.Threading.CancellationToken cancellationToken)
-                                         {bool? longFormat = false;
+                                         {string?path = null;
+                                 bool? longFormat = false;
+                                 int positionalArgumentIndex = 0;
                                  for (int i = 0; i < this.Args.Length; i++)
                                  {
                                  string arg = this.Args[i];
@@ -42,9 +44,15 @@ public static class Constants
                                  longFormat = true;
                                  }
                                  }
+                                 continue;
                                  }
+                                 if (positionalArgumentIndex == 0)
+                                 {
+                                 path = arg;
                                  }
-                                             return await MogusAsync(longFormat.Value, cancellationToken);
+                                 positionalArgumentIndex++;
+                                 }
+                                             return await MogusAsync(path, longFormat.Value, cancellationToken);
                                          }
                                      }
                                  }
