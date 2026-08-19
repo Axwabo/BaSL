@@ -10,7 +10,6 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
 {
 
     private const string TokenType = "System.Threading.CancellationToken";
-    private const string TokenParam = "cancellationToken";
     private const string RestType = "BaSL.Args";
     private const string IndexVar = "positionalArgumentIndex";
     private const string RestVar = "restIndex";
@@ -18,7 +17,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
     private static void Execute(MethodToGenerate? method, SourceProductionContext context)
     {
         if (method is not null)
-            context.AddSource($"{method.Namespace}.{method.ClassName}.g.cs", SourceText.From(GenerateClass(method), Encoding.UTF8));
+            context.AddSource($"{method.Namespace}.{method.ClassName}.Execute.g.cs", SourceText.From(GenerateClass(method), Encoding.UTF8));
     }
 
     private static string GenerateClass(MethodToGenerate method)
@@ -29,7 +28,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                                      {
                                          partial class {{method.ClassName}}
                                          {
-                                             public override async global::System.Threading.Tasks.Task<int> ExecuteAsync(global::{{TokenType}} {{TokenParam}})
+                                             public override async global::System.Threading.Tasks.Task<int> ExecuteAsync(global::{{TokenType}} {{Helpers.TokenParam}})
                                              {
 
                                      """);
@@ -116,9 +115,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                     .Append(name)
                     .AppendLine(")")
                     .AppendLine("{")
-                    .Append("await this.StandardError.WriteLineAsync(\"Invalid value for argument \\\"")
-                    .Append(name)
-                    .AppendLine("\\\");")
+                    .WriteLineAsync("this.StandardError", $"Invalid value for argument '{name}' ")
                     .AppendLine("return 1;")
                     .AppendLine("}")
                     .Append(name)
@@ -143,9 +140,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                     .Append(name)
                     .AppendLine(".HasValue)")
                     .AppendLine("{")
-                    .Append("await this.StandardError.WriteLineAsync(\"Argument \\\"")
-                    .Append(name)
-                    .AppendLine("\\\" must be specified\");")
+                    .WriteLineAsync("this.StandardError", $"Argument '{name}' must be specified")
                     .AppendLine("return 1;")
                     .AppendLine("}");
     }

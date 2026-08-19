@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -6,9 +7,12 @@ namespace BaSL.SourceGenerators;
 public static class Helpers
 {
 
+    public const string TokenParam = "cancellationToken";
+
     public static (string Namespace, string Class)? GetParent(SyntaxNode node)
     {
-        if (node.Parent is not BaseTypeDeclarationSyntax type)
+        var type = node as BaseTypeDeclarationSyntax ?? node.Parent as BaseTypeDeclarationSyntax;
+        if (type == null)
             return null;
         var parent = type.Parent;
         while (parent is not (null or NamespaceDeclarationSyntax or FileScopedNamespaceDeclarationSyntax))
@@ -23,6 +27,18 @@ public static class Helpers
         }
 
         return (ns, type.Identifier.Text);
+    }
+
+    extension(StringBuilder sb)
+    {
+
+        public StringBuilder WriteLineAsync(string writer, string text)
+            => sb.Append("await BaSL.Executables.StreamWriterExtensions.WriteLineAsync(")
+                .Append(writer)
+                .Append(", \"")
+                .Append(text)
+                .AppendLine($"\", {TokenParam});");
+
     }
 
 }
