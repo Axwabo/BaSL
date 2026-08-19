@@ -9,7 +9,6 @@ namespace BaSL.SourceGenerators;
 public sealed class ExecuteGenerator : IIncrementalGenerator
 {
 
-    private const string TokenType = "System.Threading.CancellationToken";
     private const string RestType = "BaSL.Args";
     private const string IndexVar = "positionalArgumentIndex";
     private const string RestVar = "restIndex";
@@ -28,7 +27,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                                      {
                                          partial class {{method.ClassName}}
                                          {
-                                             public override async global::System.Threading.Tasks.Task<int> ExecuteAsync(global::{{TokenType}} {{Helpers.TokenParam}})
+                                             public override async global::System.Threading.Tasks.Task<int> ExecuteAsync(global::{{Helpers.TokenType}} {{Helpers.TokenParam}})
                                              {
 
                                      """);
@@ -173,7 +172,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                 foreach (var symbol in parameters)
                 {
                     var type = symbol.Type.ToString();
-                    if (type == TokenType)
+                    if (type == Helpers.TokenType)
                     {
                         list.Add(new CancellationTokenOption(symbol.Name));
                         continue;

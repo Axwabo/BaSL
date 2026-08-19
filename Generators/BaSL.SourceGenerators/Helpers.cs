@@ -7,6 +7,7 @@ namespace BaSL.SourceGenerators;
 public static class Helpers
 {
 
+    public const string TokenType = "System.Threading.CancellationToken";
     public const string TokenParam = "cancellationToken";
 
     public static (string Namespace, string Class)? GetParent(SyntaxNode node)
