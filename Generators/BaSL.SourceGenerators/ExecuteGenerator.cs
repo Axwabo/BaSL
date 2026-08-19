@@ -162,7 +162,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                         isFlag = true;
                         list.Add(new FlagOption(
                             symbol.Name,
-                            attribute.ConstructorArguments.Length == 0 && attribute.ConstructorArguments[0].Value is char flagChar ? flagChar : symbol.Name[0],
+                            attribute.ConstructorArguments.Length != 0 && attribute.ConstructorArguments[0].Value is char flagChar ? flagChar : symbol.Name[0],
                             symbol.NullableAnnotation != NullableAnnotation.Annotated,
                             symbol.HasExplicitDefaultValue ? symbol.ExplicitDefaultValue as bool? : null
                         )); // TODO: other options

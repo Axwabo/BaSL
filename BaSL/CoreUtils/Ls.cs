@@ -47,7 +47,7 @@ public sealed partial class Ls : App, IHelpProvider
     }
 
     [Execute]
-    public async Task<int> MogusAsync( /*string? path = null,*/ [Flag('l')] bool longFormat = false, CancellationToken cancellationToken = default)
+    public async Task<int> MogusAsync( /*string? path = null,*/ [Flag] bool longFormat = false, CancellationToken cancellationToken = default)
     {
         string? path = null;
         var result = path == null ? WorkingDirectory : WorkingDirectory.ResolveDirectory(path);
