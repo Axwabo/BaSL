@@ -114,7 +114,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                     .Append(name)
                     .AppendLine("))")
                     .AppendLine("{")
-                    .WriteLineAsync("this.StandardError", $"Invalid value for argument '{name}' ")
+                    .WriteLineAsync("this.StandardError", $"Invalid value for argument '{name}'")
                     .AppendLine("return 1;")
                     .AppendLine("}")
                     .Append(name)
