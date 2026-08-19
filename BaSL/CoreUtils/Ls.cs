@@ -11,7 +11,17 @@ using File = BaSL.FileSystems.File;
 
 namespace BaSL.CoreUtils;
 
-public sealed partial class Ls : App, IHelpProvider
+[Help("""
+      Lists the contents of the directory (current directory if no path is given).
+      Use the "-l" flag to include permissions, owner, and file size.
+      Examples:
+      ls
+      ls /usr/bin
+      ls -l
+      ls -l 
+      /
+      """)]
+public sealed partial class Ls : App
 {
 
     private static async Task WriteAsync(StreamWriter writer, Mode mode)
@@ -33,17 +43,6 @@ public sealed partial class Ls : App, IHelpProvider
 
     public Ls(ExecutableContext context) : base(context)
     {
-    }
-
-    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
-    {
-        await StandardOutput.WriteLineAsync("Lists the contents of the directory (current directory if no path is given).", cancellationToken);
-        await StandardOutput.WriteLineAsync("Use the \"-l\" flag to include permissions, owner, and file size.", cancellationToken);
-        await StandardOutput.WriteLineAsync("Examples:", cancellationToken);
-        await StandardOutput.WriteLineAsync("ls", cancellationToken);
-        await StandardOutput.WriteLineAsync("ls /usr/bin", cancellationToken);
-        await StandardOutput.WriteLineAsync("ls -l", cancellationToken);
-        await StandardOutput.WriteLineAsync("ls -l /", cancellationToken);
     }
 
     [Execute]

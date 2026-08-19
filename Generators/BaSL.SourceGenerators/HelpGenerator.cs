@@ -24,7 +24,7 @@ public sealed class HelpGenerator : IIncrementalGenerator
                  {
                      partial class {{help.ClassName}} : BaSL.Executables.IHelpProvider
                      {
-                         public async Task DisplayHelpAsync({{Helpers.TokenType}} {{Helpers.TokenParam}})
+                         public async System.Threading.Tasks.Task DisplayHelpAsync({{Helpers.TokenType}} {{Helpers.TokenParam}})
                          {
                              await BaSL.Executables.StreamWriterExtensions.WriteLineAsync(this.StandardOutput, {{literal}}, {{Helpers.TokenParam}}); 
                          }
