@@ -68,8 +68,9 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
         // TODO: this sucks
         // TODO: arguments with values
         var positionalArgumentIndex = 0;
-        sb.AppendLine($"int {IndexVar} = 0;");
-        sb.AppendLine("for (int i = 0; i < this.Args.Length; i++)")
+        sb.AppendLine($"int {IndexVar} = 0;")
+            .AppendLine($"int {RestVar} = 0;")
+            .AppendLine("for (int i = 0; i < this.Args.Length; i++)")
             .AppendLine("{")
             .AppendLine("string arg = this.Args[i];")
             .AppendLine("if (arg.StartsWith(\"-\"))")
