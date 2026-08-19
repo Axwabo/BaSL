@@ -9,11 +9,20 @@ namespace BaSL.CoreUtils;
 public sealed partial class Sleep : App
 {
 
+    [Execute]
+    private static async Task<int> SleepAsync(int? seconds, CancellationToken cancellationToken)
+    {
+        if (seconds == null)
+            return 1;
+        await Task.Delay(seconds.Value * 1000, cancellationToken);
+        return 0;
+    }
+
     public Sleep(ExecutableContext context) : base(context)
     {
     }
 
-    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
+    /*public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         if (Args.Length == 0)
             return 1;
@@ -21,6 +30,6 @@ public sealed partial class Sleep : App
             return 1;
         await Task.Delay(seconds * 1000, cancellationToken);
         return 0;
-    }
+    }*/
 
 }

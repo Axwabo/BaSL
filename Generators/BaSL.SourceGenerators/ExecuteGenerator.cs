@@ -109,10 +109,10 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                 sb.Append(option.Name).AppendLine(" = arg;");
             else
                 sb.Append("if (!BaSL.Executables.ArgumentParser<")
-                    .Append(type)
+                    .Append(type.EndsWith("?") ? type.Substring(0, type.Length - 1) : type)
                     .Append(">.TryParse(arg, out var tryParse_")
                     .Append(name)
-                    .AppendLine(")")
+                    .AppendLine("))")
                     .AppendLine("{")
                     .WriteLineAsync("this.StandardError", $"Invalid value for argument '{name}' ")
                     .AppendLine("return 1;")
