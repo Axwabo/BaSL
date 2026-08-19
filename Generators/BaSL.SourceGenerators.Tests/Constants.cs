@@ -29,13 +29,14 @@ public static class Constants
                                      partial class Ls
                                      {
                                          public override async global::System.Threading.Tasks.Task<int> ExecuteAsync(global::System.Threading.CancellationToken cancellationToken)
-                                         {string?path = null;
+                                         {
+                                 string? path = null;
                                  bool? longFormat = false;
                                  int positionalArgumentIndex = 0;
                                  for (int i = 0; i < this.Args.Length; i++)
                                  {
                                  string arg = this.Args[i];
-                                 if (arg.StartsWith('-'))
+                                 if (arg.StartsWith("-"))
                                  {
                                  for (int c = 1; c < arg.Length; c++)
                                  {

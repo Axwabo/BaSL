@@ -29,6 +29,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                                          {
                                              public override async global::System.Threading.Tasks.Task<int> ExecuteAsync(global::{{TokenType}} {{TokenParam}})
                                              {
+
                                      """);
         DeclareOptions(method, sb);
         DetectOptions(method, sb);
@@ -54,7 +55,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                     break;
                 case PositionalOption positional:
                     // TODO: optional
-                    sb.Append(positional.Type).Append(option.Name).Append(" = ").Append(positional.DefaultValue ?? "null").AppendLine(";");
+                    sb.Append(positional.Type).Append(' ').Append(option.Name).Append(" = ").Append(positional.DefaultValue ?? "null").AppendLine(";");
                     break;
             }
         }
@@ -69,7 +70,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
         sb.AppendLine("for (int i = 0; i < this.Args.Length; i++)")
             .AppendLine("{")
             .AppendLine("string arg = this.Args[i];")
-            .AppendLine("if (arg.StartsWith('-'))")
+            .AppendLine("if (arg.StartsWith(\"-\"))")
             .AppendLine("{")
             .AppendLine("for (int c = 1; c < arg.Length; c++)")
             .AppendLine("{");
