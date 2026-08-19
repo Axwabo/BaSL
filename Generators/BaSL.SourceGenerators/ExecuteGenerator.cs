@@ -76,7 +76,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
             .AppendLine("{");
         foreach (var option in method.Options)
             if (option is FlagOption flag)
-                sb.Append("if (c == '")
+                sb.Append("if (arg[c] == '")
                     .Append(flag.Flag)
                     .Append("')")
                     .AppendLine()

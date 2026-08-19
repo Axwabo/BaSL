@@ -40,7 +40,7 @@ public static class Constants
                                  {
                                  for (int c = 1; c < arg.Length; c++)
                                  {
-                                 if (c == 'l')
+                                 if (arg[c] == 'l')
                                  {
                                  longFormat = true;
                                  }
