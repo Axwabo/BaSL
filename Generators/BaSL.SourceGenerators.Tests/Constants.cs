@@ -33,11 +33,18 @@ public static class Constants
                                  string? path = null;
                                  bool? longFormat = false;
                                  int positionalArgumentIndex = 0;
+                                 int restIndex = 0;
                                  for (int i = 0; i < this.Args.Length; i++)
                                  {
                                  string arg = this.Args[i];
+                                 if (arg == "--")
+                                 {
+                                 restIndex = i + 1;
+                                 break;
+                                 }
                                  if (arg.StartsWith("-"))
                                  {
+                                 restIndex = i + 1;
                                  for (int c = 1; c < arg.Length; c++)
                                  {
                                  if (arg[c] == 'l')
