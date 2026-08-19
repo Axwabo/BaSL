@@ -54,10 +54,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                     break;
                 case PositionalOption positional:
                     // TODO: optional
-                    sb.Append(positional.Type);
-                    if (!positional.Type.EndsWith("?"))
-                        sb.Append('?');
-                    sb.Append(option.Name).Append(" = ").Append(positional.DefaultValue).AppendLine(";");
+                    sb.Append(positional.Type).Append(option.Name).Append(" = ").Append(positional.DefaultValue ?? "null").AppendLine(";");
                     break;
             }
         }
