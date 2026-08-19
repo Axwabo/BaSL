@@ -1,11 +1,16 @@
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
+using BaSL.Executables.Attributes;
 using BaSL.FileSystems.Extensions;
 
 namespace BaSL.CoreUtils;
 
-public sealed class Cd : App
+[Help("""
+      Changes the current directory.
+      If no argument is provided, changes to the current user's home directory.
+      """)]
+public sealed partial class Cd : App
 {
 
     public Cd(ExecutableContext context) : base(context)

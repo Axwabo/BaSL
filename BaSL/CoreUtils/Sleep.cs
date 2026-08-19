@@ -1,18 +1,17 @@
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
+using BaSL.Executables.Attributes;
 
 namespace BaSL.CoreUtils;
 
-public sealed class Sleep : App, IHelpProvider
+[Help("Sleeps for the given amount of seconds (incredibly inaccurate for some reason).")]
+public sealed partial class Sleep : App
 {
 
     public Sleep(ExecutableContext context) : base(context)
     {
     }
-
-    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
-        => await StandardOutput.WriteLineAsync("Sleeps for the given amount of seconds (incredibly inaccurate for some reason).", cancellationToken);
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {

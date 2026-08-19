@@ -1,20 +1,19 @@
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
+using BaSL.Executables.Attributes;
 using BaSL.FileSystems.Errors;
 using BaSL.FileSystems.Extensions;
 
 namespace BaSL.CoreUtils;
 
-public sealed class Rmdir : App, IHelpProvider
+[Help("Removes an empty directory.")]
+public sealed partial class Rmdir : App
 {
 
     public Rmdir(ExecutableContext context) : base(context)
     {
     }
-
-    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
-        => await StandardOutput.WriteLineAsync("Removes an empty directory.", cancellationToken);
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {

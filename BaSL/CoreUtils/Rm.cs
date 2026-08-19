@@ -6,22 +6,20 @@ using BaSL.FileSystems.Extensions;
 
 namespace BaSL.CoreUtils;
 
-public sealed partial class Rm : App, IHelpProvider
+[Help("""
+      Removes a file or multiple files.
+      Use the -f flag to continue on error.
+      Use the -r flag to recurse into subdirectories.
+      Examples:
+      rm amogus.txt
+      rm -r directory
+      rm -rf /
+      """)]
+public sealed partial class Rm : App
 {
 
     public Rm(ExecutableContext context) : base(context)
     {
-    }
-
-    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
-    {
-        await StandardOutput.WriteLineAsync("Removes a file or multiple files.", cancellationToken);
-        await StandardOutput.WriteLineAsync("Use the -f flag to continue on error.", cancellationToken);
-        await StandardOutput.WriteLineAsync("Use the -r flag to recurse into subdirectories.", cancellationToken);
-        await StandardOutput.WriteLineAsync("Examples:", cancellationToken);
-        await StandardOutput.WriteLineAsync("rm amogus.txt", cancellationToken);
-        await StandardOutput.WriteLineAsync("rm -r directory", cancellationToken);
-        await StandardOutput.WriteLineAsync("rm -rf /", cancellationToken);
     }
 
     [Execute]
