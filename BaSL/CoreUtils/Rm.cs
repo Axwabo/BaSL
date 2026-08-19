@@ -1,11 +1,12 @@
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
+using BaSL.Executables.Attributes;
 using BaSL.FileSystems.Extensions;
 
 namespace BaSL.CoreUtils;
 
-public sealed class Rm : App, IHelpProvider
+public sealed partial class Rm : App, IHelpProvider
 {
 
     public Rm(ExecutableContext context) : base(context)
@@ -23,20 +24,9 @@ public sealed class Rm : App, IHelpProvider
         await StandardOutput.WriteLineAsync("rm -rf /", cancellationToken);
     }
 
-    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
+    [Execute]
+    private async Task<int> RemoveAsync(string? path, [Flag] bool recursive, [Flag] bool french, CancellationToken cancellationToken)
     {
-        var recursive = false;
-        var french = false;
-        string? path = null;
-        foreach (var arg in Args)
-            if (arg is "-r")
-                recursive = true;
-            else if (arg is "-f")
-                french = true;
-            else if (arg is "-rf" or "-fr") // remove the french language pack
-                recursive = french = true;
-            else
-                path = arg;
         if (path == null)
         {
             await StandardOutput.WriteLineAsync("File must be specified", cancellationToken);

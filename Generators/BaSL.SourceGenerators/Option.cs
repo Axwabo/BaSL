@@ -7,3 +7,6 @@ public sealed record PositionalOption(string Name, string Type, string? DefaultV
 public sealed record FlagOption(string Name, char Flag, bool Required, bool? DefaultValue) : Option(Name);
 
 public sealed record CancellationTokenOption(string Name) : Option(Name);
+
+// TODO: support multiple collection types
+public sealed record RestArgumentsOption(string Name) : Option(Name);

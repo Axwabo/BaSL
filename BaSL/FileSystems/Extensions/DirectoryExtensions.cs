@@ -61,14 +61,14 @@ public static class DirectoryExtensions
             return current;
         }
 
-        public GetEntryResult Resolve(Path relativeOrAbsolute)
-            => directory.FileSystem.Resolve(relativeOrAbsolute.ToPartialAbsolute(directory.FullPath));
+        public GetEntryResult Resolve(Path relativeOrAbsolute, bool followLinks = true)
+            => directory.FileSystem.Resolve(relativeOrAbsolute.ToPartialAbsolute(directory.FullPath), followLinks);
 
-        public GetDirectoryResult ResolveDirectory(Path relativeOrAbsolute)
-            => directory.Resolve(relativeOrAbsolute).AsDirectory();
+        public GetDirectoryResult ResolveDirectory(Path relativeOrAbsolute, bool followLinks = true)
+            => directory.Resolve(relativeOrAbsolute, followLinks).AsDirectory();
 
-        public GetFileResult ResolveFile(Path relativeOrAbsolute)
-            => directory.Resolve(relativeOrAbsolute).AsFile();
+        public GetFileResult ResolveFile(Path relativeOrAbsolute, bool followLinks = true)
+            => directory.Resolve(relativeOrAbsolute, followLinks).AsFile();
 
         public Result<File, FileSystemError> ResolveFileOrCreate(UserContext context, Path relativeOrAbsolute)
         {

@@ -29,7 +29,7 @@ public sealed class Chmod : App
         {
             if (cancellationToken.IsCancellationRequested)
                 break;
-            var entry = WorkingDirectory.Resolve(arg);
+            var entry = WorkingDirectory.Resolve(arg, false);
             if (!entry.Success)
             {
                 await StandardError.WriteAsync("Cannot find ", cancellationToken);
