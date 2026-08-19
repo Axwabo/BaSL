@@ -11,7 +11,9 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
 
     private const string TokenType = "System.Threading.CancellationToken";
     private const string TokenParam = "cancellationToken";
+    private const string RestType = "BaSL.Args";
     private const string IndexVar = "positionalArgumentIndex";
+    private const string RestVar = "restIndex";
 
     private static void Execute(MethodToGenerate? method, SourceProductionContext context)
     {
@@ -72,6 +74,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
             .AppendLine("string arg = this.Args[i];")
             .AppendLine("if (arg.StartsWith(\"-\"))")
             .AppendLine("{")
+            .AppendLine($"{RestVar} = i + 1;")
             .AppendLine("for (int c = 1; c < arg.Length; c++)")
             .AppendLine("{");
         foreach (var option in method.Options)
@@ -85,20 +88,44 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                     .AppendLine(" = true;")
                     .AppendLine("}");
         sb.AppendLine("}").AppendLine("continue;").AppendLine("}");
+        string? rest = null;
         foreach (var option in method.Options)
         {
-            if (option is not PositionalOption positional)
+            if (option is RestArgumentsOption)
+            {
+                rest = option.Name;
+                continue;
+            }
+
+            if (option is not PositionalOption {Type: var type, Name: var name})
                 continue;
             var i = positionalArgumentIndex++;
             sb.Append($"if ({IndexVar} == ").Append(i).AppendLine(")").AppendLine("{");
-            // TODO: parse
-            if (positional.Type is "string" or "string?")
+            if (type is "string" or "string?")
                 sb.Append(option.Name).AppendLine(" = arg;");
+            else
+                sb.Append("if (!BaSL.Executables.ArgumentParser<")
+                    .Append(type)
+                    .Append(">.TryParse(arg, out var tryParse_")
+                    .Append(name)
+                    .AppendLine(")")
+                    .AppendLine("{")
+                    .Append("await this.StandardError.WriteLineAsync(\"Invalid value for argument \\\"")
+                    .Append(name)
+                    .AppendLine("\\\");")
+                    .AppendLine("return 1;")
+                    .AppendLine("}")
+                    .Append(name)
+                    .Append(" = tryParse_")
+                    .Append(name)
+                    .AppendLine(";")
+                    .AppendLine($"{RestVar} = {IndexVar} + 2;");
             sb.AppendLine("}");
         }
 
-        sb.AppendLine($"{IndexVar}++;");
-        sb.AppendLine("}");
+        sb.AppendLine($"{IndexVar}++;").AppendLine("}");
+        if (rest != null)
+            sb.Append(RestType).Append(' ').Append(rest).Append(" = ").Append($"this.Args.Length <= {RestVar} ? default : this.Args[{RestVar}..];");
     }
 
     private static void RequireOptions(MethodToGenerate method, StringBuilder sb)
@@ -148,6 +175,12 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                     if (type == TokenType)
                     {
                         list.Add(new CancellationTokenOption(symbol.Name));
+                        continue;
+                    }
+
+                    if (type == RestType)
+                    {
+                        list.Add(new RestArgumentsOption(symbol.Name));
                         continue;
                     }
 
