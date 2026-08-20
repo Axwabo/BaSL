@@ -8,6 +8,7 @@ using BaSL.Executables.Pipes;
 using BaSL.FileSystems;
 using BaSL.FileSystems.Errors;
 using BaSL.FileSystems.Extensions;
+using BaSL.Interpreter;
 using BaSL.Syntax;
 using BaSL.Users;
 using Directory = BaSL.FileSystems.Directory;
@@ -135,32 +136,6 @@ public sealed class BaShell : App
         return (shell.Context, shell);
     }
 
-    private static bool IsTrue(string a, Operator @operator, string b) => @operator switch
-    {
-        Operator.Equals => a == b,
-        Operator.NotEquals => a != b,
-        Operator.LeftGreaterThanRight when double.TryParse(a, out var x) && double.TryParse(b, out var y) => x > y,
-        Operator.LeftGreaterThanRight => a.CompareTo(b, StringComparison.CurrentCultureIgnoreCase) < 0,
-        Operator.LeftLessThanRight when double.TryParse(a, out var x) && double.TryParse(b, out var y) => x < y,
-        Operator.LeftLessThanRight => a.CompareTo(b, StringComparison.CurrentCultureIgnoreCase) > 0,
-        _ => throw new NotImplementedException()
-    };
-
-    private static bool? IsTrue(string left, string op, string right, bool @true)
-    {
-        Operator? @operator = op switch
-        {
-            "=" or "==" or "-eq" => Operator.Equals,
-            "!=" or "-ne" => Operator.NotEquals,
-            "<" or "-lt" => Operator.LeftLessThanRight,
-            ">" or "-gt" => Operator.LeftGreaterThanRight,
-            _ => null
-        };
-        return @operator == null
-            ? null
-            : IsTrue(left, @operator.Value, right) == @true;
-    }
-
     private readonly Stack<(KeywordSegment Segment, bool Skip)> _blocks = [];
 
     private readonly Dictionary<string, string> _exported = [];
@@ -250,7 +225,7 @@ public sealed class BaShell : App
             case StandaloneStatement {Location: AutoCommandLocation {Phrase: "true"}}:
                 return 0;
             case StandaloneStatement {Location: AutoCommandLocation {Phrase: "false"}}:
-                return 0;
+                return 1;
             case StandaloneStatement standaloneStatement:
             {
                 // TODO: this sucks
@@ -455,7 +430,7 @@ public sealed class BaShell : App
     {
         while (!cancellationToken.IsCancellationRequested)
         {
-            await StandardOutput.WriteAsync($"{User.Username}@{Shell.Hostname}:{FormatCurrentDirectory()}{(User.IsSuperuser ? "# " : "$ ")}");
+            await StandardOutput.WriteAsync(Display.InteractivePrefix(this));
             var line = await StandardInput.ReadLineAsync();
             if (line == null)
                 break;
@@ -532,7 +507,7 @@ public sealed class BaShell : App
                 switch (statements.Span[range][1..])
                 {
                     case [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: var condition}, KeywordSegment {Keyword: Keyword.EndCondition}]:
-                        if (IsTrueComplex(condition) is { } @true)
+                        if (Conditions.IsTrueComplex(condition, WorkingDirectory) is { } @true)
                             return Skip(@true);
                         break;
                     case var syntax when StatementParser.CreateStatement(syntax) is { } statement:
@@ -566,50 +541,6 @@ public sealed class BaShell : App
         }
     }
 
-    private bool? IsTrueComplex(Args condition)
-    {
-        // TODO: -a
-        foreach (var and in condition.Value.Split("&&"))
-        {
-            var @true = false;
-            foreach (var or in and.Split("||"))
-            {
-                if (IsTrue(or) is not { } value)
-                    return null;
-                @true |= value;
-                if (value)
-                    break;
-            }
-
-            if (!@true)
-                return false;
-        }
-
-        return true;
-    }
-
-    private bool? IsTrue(Args args) => args switch
-    {
-        ["true"] => true,
-        ["false"] => false,
-        [var op, var str] => IsTrue(op, str, true),
-        ["!", var op, var str] => IsTrue(op, str, false),
-        [var left, var op, var right] => IsTrue(left, op, right, true),
-        ["!", var left, var op, var right] => IsTrue(left, op, right, false),
-        _ => null
-    };
-
-    private bool? IsTrue(string op, string str, bool @true) => op switch
-    {
-        "-z" => string.IsNullOrEmpty(str) == @true,
-        "-n" => !string.IsNullOrEmpty(str) == @true,
-        "-e" => WorkingDirectory.GetEntry(str).Error is not NotFoundError == @true, // TODO: write error?
-        "-f" => WorkingDirectory.GetEntry(str).Value is File == @true,
-        "-d" => WorkingDirectory.GetEntry(str).Value is Directory == @true,
-        "-h" or "-L" => WorkingDirectory.GetEntry(str).Value is SymbolicLink == @true,
-        _ => null
-    };
-
     private bool Skip(bool @true)
     {
         Skip(@true ? KeywordSegment.Then : KeywordSegment.Else);
@@ -640,7 +571,12 @@ public sealed class BaShell : App
                 return code;
             }
         }),
-        AutoCommandLocation {Phrase: var name} when ResolveFromPath(name) is {Success: true, Value: var file} => Execute(file),
+        AutoCommandLocation {Phrase: var name} => ResolveFromPath(name) switch
+        {
+            {Success: true, Value: var file} => Execute(file),
+            {Success: false, Error: NotFoundError} => CommandError.NotFound,
+            {Error: var error} => error
+        },
         _ => CommandError.NotFound
     };
 
@@ -670,18 +606,6 @@ public sealed class BaShell : App
         }
 
         return GetEntryError.NotFound;
-    }
-
-    private string FormatCurrentDirectory()
-    {
-        var path = Shell.CurrentDirectory.FullPath.Value.AsSpan();
-        var home = User.Home.Value.AsSpan();
-        if (!path.StartsWith(home))
-            return Shell.CurrentDirectory.FullPath.Value;
-        Span<char> span = stackalloc char[path.Length - home.Length + 1];
-        span[0] = '~';
-        path[home.Length..].CopyTo(span[1..]);
-        return span.ToString();
     }
 
     public bool Cancel()
