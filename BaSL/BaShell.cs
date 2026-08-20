@@ -146,6 +146,21 @@ public sealed class BaShell : App
         _ => throw new NotImplementedException()
     };
 
+    private static bool? IsTrue(string left, string op, string right, bool @true)
+    {
+        Operator? @operator = op switch
+        {
+            "=" or "==" or "-eq" => Operator.Equals,
+            "!=" or "-ne" => Operator.NotEquals,
+            "<" or "-lt" => Operator.LeftLessThanRight,
+            ">" or "-gt" => Operator.LeftGreaterThanRight,
+            _ => null
+        };
+        return @operator == null
+            ? null
+            : IsTrue(left, @operator.Value, right) == @true;
+    }
+
     private readonly Stack<(KeywordSegment Segment, bool Skip)> _blocks = [];
 
     private readonly Dictionary<string, string> _exported = [];
@@ -517,16 +532,16 @@ public sealed class BaShell : App
                 switch (statements.Span[range][1..])
                 {
                     case [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: var condition}, KeywordSegment {Keyword: Keyword.EndCondition}]:
-                        if (Control(condition) is { } control)
-                            return control;
+                        if (IsTrueComplex(condition) is { } @true)
+                            return Skip(@true);
                         break;
                     case var syntax when StatementParser.CreateStatement(syntax) is { } statement:
                         var code = LastExitCode = await ExecuteAsync(statement, token);
                         return Skip(code == 0);
                 }
 
-                await StandardError.WriteLineAsync("Unsupported if statement condition");
-                return true;
+                await StandardError.WriteLineAsync("Unsupported if statement condition, defaulting to false");
+                return Skip(false);
             }
             case (Keyword.Then, Keyword.Then, true):
                 Transition(KeywordSegment.Then, false);
@@ -551,7 +566,7 @@ public sealed class BaShell : App
         }
     }
 
-    private bool? Control(Args condition)
+    private bool? IsTrueComplex(Args condition)
     {
         // TODO: -a
         foreach (var and in condition.Value.Split("&&"))
@@ -577,36 +592,23 @@ public sealed class BaShell : App
     {
         ["true"] => true,
         ["false"] => false,
-        [var op, var str] => Skip(op, str, true),
-        ["!", var op, var str] => Skip(op, str, false),
-        [var left, var op, var right] => Skip(left, op, right, true),
-        ["!", var left, var op, var right] => Skip(left, op, right, false),
+        [var op, var str] => IsTrue(op, str, true),
+        ["!", var op, var str] => IsTrue(op, str, false),
+        [var left, var op, var right] => IsTrue(left, op, right, true),
+        ["!", var left, var op, var right] => IsTrue(left, op, right, false),
         _ => null
     };
 
-    private bool Skip(string left, string op, string right, bool @true)
+    private bool? IsTrue(string op, string str, bool @true) => op switch
     {
-        var @operator = op switch
-        {
-            "=" or "==" or "-eq" => Operator.Equals,
-            "!=" or "-ne" => Operator.NotEquals,
-            "<" or "-lt" => Operator.LeftLessThanRight,
-            ">" or "-gt" => Operator.LeftGreaterThanRight,
-            _ => throw new NotImplementedException()
-        };
-        return Skip(IsTrue(left, @operator, right) == @true);
-    }
-
-    private bool Skip(string op, string str, bool @true) => Skip(op switch
-    {
-        "-z" => string.IsNullOrEmpty(str),
-        "-n" => !string.IsNullOrEmpty(str),
-        "-e" => WorkingDirectory.GetEntry(str).Error is not NotFoundError, // TODO: write error?
-        "-f" => WorkingDirectory.GetEntry(str).Value is File,
-        "-d" => WorkingDirectory.GetEntry(str).Value is Directory,
-        "-h" or "-L" => WorkingDirectory.GetEntry(str).Value is SymbolicLink,
-        _ => throw new NotImplementedException()
-    } == @true);
+        "-z" => string.IsNullOrEmpty(str) == @true,
+        "-n" => !string.IsNullOrEmpty(str) == @true,
+        "-e" => WorkingDirectory.GetEntry(str).Error is not NotFoundError == @true, // TODO: write error?
+        "-f" => WorkingDirectory.GetEntry(str).Value is File == @true,
+        "-d" => WorkingDirectory.GetEntry(str).Value is Directory == @true,
+        "-h" or "-L" => WorkingDirectory.GetEntry(str).Value is SymbolicLink == @true,
+        _ => null
+    };
 
     private bool Skip(bool @true)
     {
@@ -614,13 +616,13 @@ public sealed class BaShell : App
         return true;
     }
 
+    private void Skip(KeywordSegment to) => _blocks.Push((to, true));
+
     private void Transition(KeywordSegment segment, bool skip)
     {
         _blocks.Pop();
         _blocks.Push((segment, skip));
     }
-
-    private void Skip(KeywordSegment to) => _blocks.Push((to, true));
 
     private LocateCommandResult Locate(CommandLocation location) => location switch
     {
