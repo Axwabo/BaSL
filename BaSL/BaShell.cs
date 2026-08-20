@@ -551,14 +551,17 @@ public sealed class BaShell : App
         }
     }
 
-    private bool? Control(Args condition) => condition switch
+    private bool? Control(Args condition)
     {
-        [var op, var str] => Skip(op, str, true),
-        ["!", var op, var str] => Skip(op, str, false),
-        [var left, var op, var right] => Skip(left, op, right, true),
-        ["!", var left, var op, var right] => Skip(left, op, right, false),
-        _ => null
-    };
+        return condition switch
+        {
+            [var op, var str] => Skip(op, str, true),
+            ["!", var op, var str] => Skip(op, str, false),
+            [var left, var op, var right] => Skip(left, op, right, true),
+            ["!", var left, var op, var right] => Skip(left, op, right, false),
+            _ => null
+        };
+    }
 
     private bool Skip(string left, string op, string right, bool @true)
     {
