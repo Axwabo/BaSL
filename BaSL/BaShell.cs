@@ -507,28 +507,24 @@ public sealed class BaShell : App
                 switch (statements.Span[range][1..])
                 {
                     case [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: var condition}, KeywordSegment {Keyword: Keyword.EndCondition}]:
-                        if (Conditions.IsTrueComplex(condition, WorkingDirectory) is { } @true)
-                            return Skip(@true);
+                        if (Conditions.IsTrueComplex(condition, CurrentDirectory) is { } @true)
+                            return _blocks.Skip(@true);
                         break;
                     case var syntax when StatementParser.CreateStatement(syntax) is { } statement:
-                        var code = LastExitCode = await ExecuteAsync(statement, token);
-                        return Skip(code == 0);
+                        return _blocks.Skip(LastExitCode = await ExecuteAsync(statement, token));
                 }
 
                 await StandardError.WriteLineAsync("Unsupported if statement condition, defaulting to false");
-                return Skip(false);
+                return _blocks.Skip(false);
             }
             case (Keyword.Then, Keyword.Then, true):
-                Transition(KeywordSegment.Then, false);
-                return true;
+                return _blocks.Transition(KeywordSegment.Then, false);
             case (Keyword.Then, Keyword.Else, true):
                 return false;
             case (Keyword.Else, Keyword.Then, false):
-                Transition(KeywordSegment.EndIf, true);
-                return false;
+                return _blocks.Transition(KeywordSegment.EndIf, true);
             case (Keyword.Else, Keyword.Else, true):
-                Transition(KeywordSegment.Else, false);
-                return true;
+                return _blocks.Transition(KeywordSegment.Else, false);
             // TODO: what should the keyword check be
             case (Keyword.EndIf, Keyword.Then or Keyword.Else or Keyword.EndIf, _):
                 _blocks.Pop();
@@ -539,20 +535,6 @@ public sealed class BaShell : App
                 await StandardError.WriteLineAsync('\'');
                 return false;
         }
-    }
-
-    private bool Skip(bool @true)
-    {
-        Skip(@true ? KeywordSegment.Then : KeywordSegment.Else);
-        return true;
-    }
-
-    private void Skip(KeywordSegment to) => _blocks.Push((to, true));
-
-    private void Transition(KeywordSegment segment, bool skip)
-    {
-        _blocks.Pop();
-        _blocks.Push((segment, skip));
     }
 
     private LocateCommandResult Locate(CommandLocation location) => location switch
