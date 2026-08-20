@@ -553,15 +553,36 @@ public sealed class BaShell : App
 
     private bool? Control(Args condition)
     {
-        return condition switch
+        // TODO: -a
+        foreach (var and in condition.Value.Split("&&"))
         {
-            [var op, var str] => Skip(op, str, true),
-            ["!", var op, var str] => Skip(op, str, false),
-            [var left, var op, var right] => Skip(left, op, right, true),
-            ["!", var left, var op, var right] => Skip(left, op, right, false),
-            _ => null
-        };
+            var @true = false;
+            foreach (var or in and.Split("||"))
+            {
+                if (IsTrue(or) is not { } value)
+                    return null;
+                @true |= value;
+                if (value)
+                    break;
+            }
+
+            if (!@true)
+                return false;
+        }
+
+        return true;
     }
+
+    private bool? IsTrue(Args args) => args switch
+    {
+        ["true"] => true,
+        ["false"] => false,
+        [var op, var str] => Skip(op, str, true),
+        ["!", var op, var str] => Skip(op, str, false),
+        [var left, var op, var right] => Skip(left, op, right, true),
+        ["!", var left, var op, var right] => Skip(left, op, right, false),
+        _ => null
+    };
 
     private bool Skip(string left, string op, string right, bool @true)
     {
