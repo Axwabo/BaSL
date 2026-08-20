@@ -494,7 +494,7 @@ public sealed class BaShell : App
             var controlled = false;
             if (statements.Span[range.Start] is KeywordSegment {Keyword: var keyword})
             {
-                if (await ControlAsync(keyword, tuple, statements, range))
+                if (await ControlAsync(keyword, tuple, statements, range, token))
                     continue;
                 controlled = true;
             }
@@ -508,30 +508,25 @@ public sealed class BaShell : App
         while (index != -1);
     }
 
-    private async Task<bool> ControlAsync(Keyword keyword, (KeywordSegment Segment, bool Skip) tuple, ReadOnlyMemory<Segment> statements, Range range)
+    private async Task<bool> ControlAsync(Keyword keyword, (KeywordSegment Segment, bool Skip) tuple, ReadOnlyMemory<Segment> statements, Range range, CancellationToken token)
     {
         switch (keyword, tuple.Segment?.Keyword, tuple.Skip)
         {
             case (Keyword.If, _, _):
             {
-                // TODO: commands as results
-                var endCondition = statements.FindIndex(KeywordSegment.EndCondition, range.Start.GetOffset(statements.Length));
+                var endCondition = statements.FindIndex(ContinueSegment.Always, range.Start.GetOffset(statements.Length));
                 var ifRange = endCondition == -1 ? range.Start.. : range.Start..endCondition;
-                if (statements.Span[ifRange][1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: var condition}])
-                    switch (condition)
-                    {
-                        case [var op, var str]:
-                            return Skip(op, str, true);
-                        case ["!", var op, var str]:
-                            return Skip(op, str, false);
-                        case [var left, var op, var right]:
-                            return Skip(left, op, right, true);
-                        case ["!", var left, var op, var right]:
-                            return Skip(left, op, right, false);
-                    }
-
-                await StandardError.WriteLineAsync("Unsupported if statement condition");
-                return true;
+                switch (statements.Span[ifRange][1..])
+                {
+                    case [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: var condition}, KeywordSegment {Keyword: Keyword.EndCondition}] when Control(condition) is { } control:
+                        return control;
+                    case var syntax when StatementParser.CreateStatement(syntax) is { } statement:
+                        var code = LastExitCode = await ExecuteAsync(statement, token);
+                        return Skip(code == 0);
+                    default:
+                        await StandardError.WriteLineAsync("Unsupported if statement condition");
+                        return true;
+                }
             }
             case (Keyword.Then, Keyword.Then, true):
                 Transition(KeywordSegment.Then, false);
@@ -549,12 +544,21 @@ public sealed class BaShell : App
                 _blocks.Pop();
                 return true;
             default:
-                await StandardError.WriteAsync("Unexpected token '");
-                await StandardError.WriteAsync(keyword.Token);
+                await StandardError.WriteAsync("Unexpected token '", token);
+                await StandardError.WriteAsync(keyword.Token, token);
                 await StandardError.WriteLineAsync('\'');
                 return false;
         }
     }
+
+    private bool? Control(Args condition) => condition switch
+    {
+        [var op, var str] => Skip(op, str, true),
+        ["!", var op, var str] => Skip(op, str, false),
+        [var left, var op, var right] => Skip(left, op, right, true),
+        ["!", var left, var op, var right] => Skip(left, op, right, false),
+        _ => null
+    };
 
     private bool Skip(string left, string op, string right, bool @true)
     {
