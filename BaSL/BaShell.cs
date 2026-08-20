@@ -514,19 +514,19 @@ public sealed class BaShell : App
         {
             case (Keyword.If, _, _):
             {
-                var endCondition = statements.FindIndex(ContinueSegment.Always, range.Start.GetOffset(statements.Length));
-                var ifRange = endCondition == -1 ? range.Start.. : range.Start..endCondition;
-                switch (statements.Span[ifRange][1..])
+                switch (statements.Span[range][1..])
                 {
-                    case [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: var condition}, KeywordSegment {Keyword: Keyword.EndCondition}] when Control(condition) is { } control:
-                        return control;
+                    case [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: var condition}, KeywordSegment {Keyword: Keyword.EndCondition}]:
+                        if (Control(condition) is { } control)
+                            return control;
+                        break;
                     case var syntax when StatementParser.CreateStatement(syntax) is { } statement:
                         var code = LastExitCode = await ExecuteAsync(statement, token);
                         return Skip(code == 0);
-                    default:
-                        await StandardError.WriteLineAsync("Unsupported if statement condition");
-                        return true;
                 }
+
+                await StandardError.WriteLineAsync("Unsupported if statement condition");
+                return true;
             }
             case (Keyword.Then, Keyword.Then, true):
                 Transition(KeywordSegment.Then, false);
