@@ -11,7 +11,6 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
 
     private const string IndexVar = "positionalArgumentIndex";
     private const string RestVar = "restIndex";
-    private const string DirectoryType = "BaSL.FileSystems.Directory";
     private const string DirectoryResultPrefix = "resolveDirectory_";
     private const string TryParsePrefix = "tryParse_";
 
@@ -60,7 +59,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                     sb.Append(positional.Type).Append(' ').Append(option.Name).Append(" = ").Append(positional.DefaultValue ?? "null").AppendLine(";");
                     break;
                 case DirectoryOption:
-                    sb.Append($"{DirectoryType}? ").Append(option.Name).AppendLine(" = null;");
+                    sb.Append($"{Helpers.DirectoryType}? ").Append(option.Name).AppendLine(" = null;");
                     break;
             }
         }
