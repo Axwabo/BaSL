@@ -51,7 +51,7 @@ public sealed partial class ZipFs : App
 
             await using var fileStream = open.Value;
             var zipEntry = archive.CreateEntry(file.FullPath.Value[start..]);
-            var zipStream = await zipEntry.OpenAsync(cancellationToken);
+            await using var zipStream = await zipEntry.OpenAsync(cancellationToken);
             await fileStream.CopyToAsync(zipStream, cancellationToken);
         }
 
