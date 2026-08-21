@@ -1,22 +1,21 @@
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
+using BaSL.Executables.Attributes;
 using BaSL.FileSystems;
 using BaSL.FileSystems.Extensions;
 
 namespace BaSL.CoreUtils;
 
-public sealed class Cat : App, IHelpProvider
+[Help("""
+      "Dumps the contents of the specified file(s) to stdout, each followed by a new line."
+      "If no argument is given, writes stdin lines."
+      """)]
+public sealed partial class Cat : App
 {
 
     public Cat(ExecutableContext context) : base(context)
     {
-    }
-
-    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
-    {
-        await StandardOutput.WriteLineAsync("Dumps the contents of the specified file(s) to stdout, each followed by a new line.", cancellationToken);
-        await StandardOutput.WriteLineAsync("If no argument is given, writes stdin lines.", cancellationToken);
     }
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)

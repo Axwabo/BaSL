@@ -8,6 +8,7 @@ using BaSL.Executables.Pipes;
 using BaSL.FileSystems;
 using BaSL.FileSystems.Errors;
 using BaSL.FileSystems.Extensions;
+using BaSL.Interpreter;
 using BaSL.Syntax;
 using BaSL.Users;
 using Directory = BaSL.FileSystems.Directory;
@@ -135,17 +136,6 @@ public sealed class BaShell : App
         return (shell.Context, shell);
     }
 
-    private static bool IsTrue(string a, Operator @operator, string b) => @operator switch
-    {
-        Operator.Equals => a == b,
-        Operator.NotEquals => a != b,
-        Operator.LeftGreaterThanRight when double.TryParse(a, out var x) && double.TryParse(b, out var y) => x > y,
-        Operator.LeftGreaterThanRight => a.CompareTo(b, StringComparison.CurrentCultureIgnoreCase) < 0,
-        Operator.LeftLessThanRight when double.TryParse(a, out var x) && double.TryParse(b, out var y) => x < y,
-        Operator.LeftLessThanRight => a.CompareTo(b, StringComparison.CurrentCultureIgnoreCase) > 0,
-        _ => throw new NotImplementedException()
-    };
-
     private readonly Stack<(KeywordSegment Segment, bool Skip)> _blocks = [];
 
     private readonly Dictionary<string, string> _exported = [];
@@ -156,6 +146,15 @@ public sealed class BaShell : App
 
     private CancellationTokenSource? _cts;
 
+    static BaShell()
+    {
+        ArgumentParser<bool>.Delegate = bool.TryParse;
+        ArgumentParser<float>.Delegate = float.TryParse;
+        ArgumentParser<double>.Delegate = double.TryParse;
+        ArgumentParser<int>.Delegate = int.TryParse;
+        ArgumentParser<byte>.Delegate = byte.TryParse;
+    }
+
     private BaShell(ExecutableContext context, ShellStatement? statement, UserContext? user = null) : base(null!)
     {
         _statement = statement;
@@ -163,9 +162,7 @@ public sealed class BaShell : App
         UserContext = user ?? context.Shell.UserContext;
         CurrentDirectory = context.WorkingDirectory;
         Context = ExecutableContext.Sub(context, this, context.FileSystem, context.Args);
-        ImportEnv();
-        foreach (var kvp in context.Shell._exported)
-            _exported[kvp.Key] = _variables[kvp.Key] = kvp.Value;
+        ImportEnv(context.Shell._exported);
     }
 
     private BaShell(Console console, StreamWriter standardOutput, StreamWriter standardError) : base(null!)
@@ -194,13 +191,17 @@ public sealed class BaShell : App
 
     private new StreamWriter StandardError => Context.IsRoot ? StandardOutput : base.StandardError;
 
-    private void ImportEnv()
+    private void ImportEnv(Dictionary<string, string>? exported = null)
     {
-        _variables["?"] = "0";
+        LastExitCode = 0;
         for (var i = 0; i < Context.Args.Length; i++)
             _variables[i.ToString()] = Context.Args[i];
         foreach (var kvp in User.Environment)
             _variables[kvp.Key] = kvp.Value;
+        if (exported == null)
+            return;
+        foreach (var kvp in exported)
+            _exported[kvp.Key] = _variables[kvp.Key] = kvp.Value;
     }
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
@@ -235,7 +236,7 @@ public sealed class BaShell : App
             case StandaloneStatement {Location: AutoCommandLocation {Phrase: "true"}}:
                 return 0;
             case StandaloneStatement {Location: AutoCommandLocation {Phrase: "false"}}:
-                return 0;
+                return 1;
             case StandaloneStatement standaloneStatement:
             {
                 // TODO: this sucks
@@ -440,7 +441,7 @@ public sealed class BaShell : App
     {
         while (!cancellationToken.IsCancellationRequested)
         {
-            await StandardOutput.WriteAsync($"{User.Username}@{Shell.Hostname}:{FormatCurrentDirectory()}{(User.IsSuperuser ? "# " : "$ ")}");
+            await StandardOutput.WriteAsync(Display.InteractivePrefix(this));
             var line = await StandardInput.ReadLineAsync();
             if (line == null)
                 break;
@@ -494,7 +495,7 @@ public sealed class BaShell : App
             var controlled = false;
             if (statements.Span[range.Start] is KeywordSegment {Keyword: var keyword})
             {
-                if (await ControlAsync(keyword, tuple, statements, range))
+                if (await ControlAsync(keyword, tuple, statements, range, token))
                     continue;
                 controlled = true;
             }
@@ -508,91 +509,44 @@ public sealed class BaShell : App
         while (index != -1);
     }
 
-    private async Task<bool> ControlAsync(Keyword keyword, (KeywordSegment Segment, bool Skip) tuple, ReadOnlyMemory<Segment> statements, Range range)
+    private async Task<bool> ControlAsync(Keyword keyword, (KeywordSegment Segment, bool Skip) tuple, ReadOnlyMemory<Segment> statements, Range range, CancellationToken token)
     {
         switch (keyword, tuple.Segment?.Keyword, tuple.Skip)
         {
             case (Keyword.If, _, _):
             {
-                // TODO: commands as results
-                var endCondition = statements.FindIndex(KeywordSegment.EndCondition, range.Start.GetOffset(statements.Length));
-                var ifRange = endCondition == -1 ? range.Start.. : range.Start..endCondition;
-                if (statements.Span[ifRange][1..] is [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: var condition}])
-                    switch (condition)
-                    {
-                        case [var op, var str]:
-                            return Skip(op, str, true);
-                        case ["!", var op, var str]:
-                            return Skip(op, str, false);
-                        case [var left, var op, var right]:
-                            return Skip(left, op, right, true);
-                        case ["!", var left, var op, var right]:
-                            return Skip(left, op, right, false);
-                    }
+                switch (statements.Span[range][1..])
+                {
+                    case [KeywordSegment {Keyword: Keyword.BeginCondition}, ArgsSegment {Args: var condition}, KeywordSegment {Keyword: Keyword.EndCondition}]:
+                        if (Conditions.IsTrueComplex(condition, CurrentDirectory) is { } @true)
+                            return _blocks.Skip(@true);
+                        break;
+                    case var syntax when StatementParser.CreateStatement(syntax) is { } statement:
+                        return _blocks.Skip(LastExitCode = await ExecuteAsync(statement, token));
+                }
 
-                await StandardError.WriteLineAsync("Unsupported if statement condition");
-                return true;
+                await StandardError.WriteLineAsync("Unsupported if statement condition, defaulting to false");
+                return _blocks.Skip(false);
             }
             case (Keyword.Then, Keyword.Then, true):
-                Transition(KeywordSegment.Then, false);
-                return true;
+                return _blocks.Transition(KeywordSegment.Then, false);
             case (Keyword.Then, Keyword.Else, true):
                 return false;
             case (Keyword.Else, Keyword.Then, false):
-                Transition(KeywordSegment.EndIf, true);
-                return false;
+                return _blocks.Transition(KeywordSegment.EndIf, true);
             case (Keyword.Else, Keyword.Else, true):
-                Transition(KeywordSegment.Else, false);
-                return true;
+                return _blocks.Transition(KeywordSegment.Else, false);
             // TODO: what should the keyword check be
             case (Keyword.EndIf, Keyword.Then or Keyword.Else or Keyword.EndIf, _):
                 _blocks.Pop();
                 return true;
             default:
-                await StandardError.WriteAsync("Unexpected token '");
-                await StandardError.WriteAsync(keyword.Token);
+                await StandardError.WriteAsync("Unexpected token '", token);
+                await StandardError.WriteAsync(keyword.Token, token);
                 await StandardError.WriteLineAsync('\'');
                 return false;
         }
     }
-
-    private bool Skip(string left, string op, string right, bool @true)
-    {
-        var @operator = op switch
-        {
-            "=" or "==" or "-eq" => Operator.Equals,
-            "!=" or "-ne" => Operator.NotEquals,
-            "<" or "-lt" => Operator.LeftLessThanRight,
-            ">" or "-gt" => Operator.LeftGreaterThanRight,
-            _ => throw new NotImplementedException()
-        };
-        return Skip(IsTrue(left, @operator, right) == @true);
-    }
-
-    private bool Skip(string op, string str, bool @true) => Skip(op switch
-    {
-        "-z" => string.IsNullOrEmpty(str),
-        "-n" => !string.IsNullOrEmpty(str),
-        "-e" => WorkingDirectory.GetEntry(str).Error is not NotFoundError, // TODO: write error?
-        "-f" => WorkingDirectory.GetEntry(str).Value is File,
-        "-d" => WorkingDirectory.GetEntry(str).Value is Directory,
-        "-h" or "-L" => WorkingDirectory.GetEntry(str).Value is SymbolicLink,
-        _ => throw new NotImplementedException()
-    } == @true);
-
-    private bool Skip(bool @true)
-    {
-        Skip(@true ? KeywordSegment.Then : KeywordSegment.Else);
-        return true;
-    }
-
-    private void Transition(KeywordSegment segment, bool skip)
-    {
-        _blocks.Pop();
-        _blocks.Push((segment, skip));
-    }
-
-    private void Skip(KeywordSegment to) => _blocks.Push((to, true));
 
     private LocateCommandResult Locate(CommandLocation location) => location switch
     {
@@ -610,7 +564,12 @@ public sealed class BaShell : App
                 return code;
             }
         }),
-        AutoCommandLocation {Phrase: var name} when ResolveFromPath(name) is {Success: true, Value: var file} => Execute(file),
+        AutoCommandLocation {Phrase: var name} => ResolveFromPath(name) switch
+        {
+            {Success: true, Value: var file} => Execute(file),
+            {Success: false, Error: NotFoundError} => CommandError.NotFound,
+            {Error: var error} => error
+        },
         _ => CommandError.NotFound
     };
 
@@ -640,18 +599,6 @@ public sealed class BaShell : App
         }
 
         return GetEntryError.NotFound;
-    }
-
-    private string FormatCurrentDirectory()
-    {
-        var path = Shell.CurrentDirectory.FullPath.Value.AsSpan();
-        var home = User.Home.Value.AsSpan();
-        if (!path.StartsWith(home))
-            return Shell.CurrentDirectory.FullPath.Value;
-        Span<char> span = stackalloc char[path.Length - home.Length + 1];
-        span[0] = '~';
-        path[home.Length..].CopyTo(span[1..]);
-        return span.ToString();
     }
 
     public bool Cancel()

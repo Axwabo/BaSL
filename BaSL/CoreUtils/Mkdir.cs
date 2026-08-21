@@ -1,19 +1,18 @@
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
+using BaSL.Executables.Attributes;
 using BaSL.FileSystems.Extensions;
 
 namespace BaSL.CoreUtils;
 
-public sealed class Mkdir : App, IHelpProvider
+[Help("Creates a directory in the current directory.")]
+public sealed partial class Mkdir : App
 {
 
     public Mkdir(ExecutableContext context) : base(context)
     {
     }
-
-    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
-        => await StandardOutput.WriteLineAsync("Creates a directory in the current directory.", cancellationToken);
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {

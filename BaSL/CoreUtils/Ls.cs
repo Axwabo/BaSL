@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
+using BaSL.Executables.Attributes;
 using BaSL.FileSystems;
 using BaSL.FileSystems.Extensions;
 using Directory = BaSL.FileSystems.Directory;
@@ -10,7 +11,17 @@ using File = BaSL.FileSystems.File;
 
 namespace BaSL.CoreUtils;
 
-public sealed class Ls : App, IHelpProvider
+[Help("""
+      Lists the contents of the directory (current directory if no path is given).
+      Use the "-l" flag to include permissions, owner, and file size.
+      Examples:
+      ls
+      ls /usr/bin
+      ls -l
+      ls -l 
+      /
+      """)]
+public sealed partial class Ls : App
 {
 
     private static async Task WriteAsync(StreamWriter writer, Mode mode)
@@ -34,26 +45,9 @@ public sealed class Ls : App, IHelpProvider
     {
     }
 
-    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
+    [Execute]
+    public async Task<int> MogusAsync(string? path = null, [Flag] bool longFormat = false, CancellationToken cancellationToken = default)
     {
-        await StandardOutput.WriteLineAsync("Lists the contents of the directory (current directory if no path is given).", cancellationToken);
-        await StandardOutput.WriteLineAsync("Use the \"-l\" flag to include permissions, owner, and file size.", cancellationToken);
-        await StandardOutput.WriteLineAsync("Examples:", cancellationToken);
-        await StandardOutput.WriteLineAsync("ls", cancellationToken);
-        await StandardOutput.WriteLineAsync("ls /usr/bin", cancellationToken);
-        await StandardOutput.WriteLineAsync("ls -l", cancellationToken);
-        await StandardOutput.WriteLineAsync("ls -l /", cancellationToken);
-    }
-
-    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
-    {
-        var longFormat = false;
-        string? path = null;
-        foreach (var arg in Args)
-            if (!longFormat && arg is "-l")
-                longFormat = true;
-            else
-                path = arg;
         var result = path == null ? WorkingDirectory : WorkingDirectory.ResolveDirectory(path);
         if (!result.Success)
         {

@@ -2,20 +2,19 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
+using BaSL.Executables.Attributes;
 
 namespace BaSL.CoreUtils;
 
-public sealed class Env : App, IHelpProvider
+[Help("""
+      Prints the user's envionment variables.
+      Launching executables is not yet supported.
+      """)]
+public sealed partial class Env : App
 {
 
     public Env(ExecutableContext context) : base(context)
     {
-    }
-
-    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
-    {
-        await StandardOutput.WriteLineAsync("Prints the user's envionment variables.", cancellationToken);
-        await StandardOutput.WriteLineAsync("Launching executables is not yet supported.", cancellationToken);
     }
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)

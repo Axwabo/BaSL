@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
+using BaSL.Executables.Attributes;
 using BaSL.FileSystems;
 using BaSL.FileSystems.Extensions;
 
@@ -8,7 +9,13 @@ namespace BaSL.CoreUtils;
 
 using ModeDeltas = (Mode AddOwner, Mode AddOthers, Mode RemoveOwner, Mode RemoveOthers);
 
-public sealed class Chmod : App
+[Help("""
+      Changes the mode (permissions) of the specified file(s).
+      Pass the -R flag to update entries recursively.
+      Set specific modes by providing an octal mode representation (e.g. 777).
+      Add or remove a mode by prefixing 'r' 'w' or 'x' with '+' or '-' (e.g. '+x', '-w').
+      """)]
+public sealed partial class Chmod : App
 {
 
     public Chmod(ExecutableContext context) : base(context)
@@ -29,7 +36,7 @@ public sealed class Chmod : App
         {
             if (cancellationToken.IsCancellationRequested)
                 break;
-            var entry = WorkingDirectory.Resolve(arg);
+            var entry = WorkingDirectory.Resolve(arg, false);
             if (!entry.Success)
             {
                 await StandardError.WriteAsync("Cannot find ", cancellationToken);

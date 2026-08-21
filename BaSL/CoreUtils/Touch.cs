@@ -1,20 +1,19 @@
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
+using BaSL.Executables.Attributes;
 using BaSL.FileSystems;
 using BaSL.FileSystems.Extensions;
 
 namespace BaSL.CoreUtils;
 
-public sealed class Touch : App, IHelpProvider
+[Help("Creates files without any content.")]
+public sealed partial class Touch : App
 {
 
     public Touch(ExecutableContext context) : base(context)
     {
     }
-
-    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
-        => await StandardOutput.WriteLineAsync("Creates files without any content.", cancellationToken);
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {

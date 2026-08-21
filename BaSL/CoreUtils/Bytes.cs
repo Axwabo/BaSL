@@ -2,22 +2,21 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
+using BaSL.Executables.Attributes;
 using BaSL.FileSystems;
 using BaSL.FileSystems.Extensions;
 
 namespace BaSL.CoreUtils;
 
-public sealed class Bytes : App, IHelpProvider
+[Help("""
+      Writes the first 32 bytes of a file to stdout.
+      If less than 32 bytes are available, prints the read bytes.
+      """)]
+public sealed partial class Bytes : App
 {
 
     public Bytes(ExecutableContext context) : base(context)
     {
-    }
-
-    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
-    {
-        await StandardOutput.WriteLineAsync("Writes the first 32 bytes of a file to stdout.", cancellationToken);
-        await StandardOutput.WriteLineAsync("If less than 32 bytes are available, prints the read bytes.", cancellationToken);
     }
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)

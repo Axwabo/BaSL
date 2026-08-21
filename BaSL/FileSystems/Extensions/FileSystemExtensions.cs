@@ -12,14 +12,14 @@ public static class FileSystemExtensions
     extension(FileSystem fileSystem)
     {
 
-        public GetEntryResult Resolve(Path path)
+        public GetEntryResult Resolve(Path path, bool followLinks = true)
         {
             var links = 0;
-            return fileSystem.ResolveInternal(path, ref links);
+            return fileSystem.ResolveInternal(path, followLinks, ref links);
         }
 
         // TODO: stack
-        private GetEntryResult ResolveInternal(Path path, ref int links)
+        private GetEntryResult ResolveInternal(Path path, bool followLinks, ref int links)
         {
             if (path.IsEmpty)
                 return GetEntryError.NotFound;
@@ -28,7 +28,7 @@ public static class FileSystemExtensions
             {
                 if (s is FileSystemEntryName.Current)
                     continue;
-                if (!fileSystem.FollowLink(ref links, ref entry, out var resolveInternal))
+                if (followLinks && !fileSystem.FollowLink(ref links, ref entry, out var resolveInternal))
                     return resolveInternal;
                 if (entry is not Directory directory)
                     break;
@@ -38,7 +38,7 @@ public static class FileSystemExtensions
                 entry = result.Value;
             }
 
-            return fileSystem.FollowLink(ref links, ref entry, out var finalInternal)
+            return !followLinks || fileSystem.FollowLink(ref links, ref entry, out var finalInternal)
                 ? entry
                 : finalInternal;
         }
@@ -53,7 +53,7 @@ public static class FileSystemExtensions
                     return false;
                 }
 
-                var followResult = fileSystem.ResolveInternal(link.Target, ref links);
+                var followResult = fileSystem.ResolveInternal(link.Target, true, ref links);
                 if (!followResult.Success)
                 {
                     error = followResult.Error;

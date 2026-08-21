@@ -1,18 +1,17 @@
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
+using BaSL.Executables.Attributes;
 
 namespace BaSL.CoreUtils;
 
-public sealed class WhoAmI : App, IHelpProvider
+[Help("Prints the current user's name to stdout.")]
+public sealed partial class WhoAmI : App
 {
 
     public WhoAmI(ExecutableContext context) : base(context)
     {
     }
-
-    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
-        => await StandardOutput.WriteLineAsync("Prints the current user's name to stdout.", cancellationToken);
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {

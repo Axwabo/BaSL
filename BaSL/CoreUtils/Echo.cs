@@ -3,10 +3,12 @@ using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
+using BaSL.Executables.Attributes;
 
 namespace BaSL.CoreUtils;
 
-public sealed class Echo : App, IHelpProvider
+[Help("Echoes the arguments separated by spaces to stdout, followed by a newline.")]
+public sealed partial class Echo : App
 {
 
     private static char GetEscaped(char c) => c switch
@@ -21,20 +23,13 @@ public sealed class Echo : App, IHelpProvider
     {
     }
 
-    public async Task DisplayHelpAsync(CancellationToken cancellationToken)
-    {
-        await StandardOutput.WriteLineAsync("Echoes the arguments separated by spaces to stdout, followed by a newline.", cancellationToken);
-        await StandardOutput.WriteLineAsync("Recognized escape sequences:", cancellationToken);
-        await StandardOutput.WriteLineAsync(@"\n \t \\", cancellationToken);
-    }
-
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         var args = Args;
         for (var i = 0; i < args.Length; i++)
         {
             var arg = args[i];
-            await WriteAsync(cancellationToken, arg);
+            await StandardOutput.WriteAsync(arg, cancellationToken);
             if (i != args.Length - 1)
                 await StandardOutput.WriteAsync(" ", cancellationToken);
         }
@@ -43,6 +38,7 @@ public sealed class Echo : App, IHelpProvider
         return 0;
     }
 
+    // TODO: optional escape support
     private async Task WriteAsync(CancellationToken cancellationToken, string arg)
     {
         var buffer = ArrayPool<char>.Shared.Rent(arg.Length);
