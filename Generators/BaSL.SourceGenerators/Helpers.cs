@@ -37,11 +37,14 @@ public static class Helpers
     {
 
         public StringBuilder WriteLineAsync(string writer, string text)
+            => sb.WriteLineAsyncRaw(writer, $"\"{text}\"");
+
+        public StringBuilder WriteLineAsyncRaw(string writer, string member)
             => sb.Append("await BaSL.Executables.StreamWriterExtensions.WriteLineAsync(")
                 .Append(writer)
-                .Append(", \"")
-                .Append(text)
-                .AppendLine($"\", {TokenParam});");
+                .Append(", ")
+                .Append(member)
+                .AppendLine($", {TokenParam});");
 
     }
 

@@ -12,6 +12,8 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
     private const string IndexVar = "positionalArgumentIndex";
     private const string RestVar = "restIndex";
     private const string DirectoryType = "BaSL.FileSystems.Directory";
+    private const string DirectoryResultPrefix = "resolveDirectory_";
+    private const string TryParsePrefix = "tryParse_";
 
     private static void Execute(MethodToGenerate? method, SourceProductionContext context)
     {
@@ -107,33 +109,59 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
             if (option is not IPositionalOption)
                 continue;
             var i = positionalArgumentIndex++;
-            if (option is not PositionalOption {Type: var type, Name: var name})
-                continue;
             sb.Append($"if ({IndexVar} == ").Append(i).AppendLine(")").AppendLine("{");
-            if (type is "string" or "string?")
-                sb.Append(option.Name).AppendLine(" = arg;");
-            else
-                sb.Append("if (!BaSL.Executables.ArgumentParser<")
-                    .Append(type.EndsWith("?") ? type.Substring(0, type.Length - 1) : type)
-                    .Append(">.TryParse(arg, out var tryParse_")
-                    .Append(name)
-                    .AppendLine("))")
-                    .AppendLine("{")
-                    .WriteLineAsync("this.StandardError", $"Invalid value for argument '{name}'")
-                    .AppendLine("return 1;")
-                    .AppendLine("}")
-                    .Append(name)
-                    .Append(" = tryParse_")
-                    .Append(name)
-                    .AppendLine(";")
-                    .AppendLine($"{RestVar} = {IndexVar} + 2;");
-            sb.AppendLine("}");
+            switch (option)
+            {
+                case PositionalOption {Type: var type, Name: var name}:
+                    AppendPositionalOption(sb, type, name);
+                    break;
+                case DirectoryOption:
+                    AppendDirectoryOption(sb, option.Name);
+                    break;
+            }
+
+            sb.AppendLine($"{RestVar} = {IndexVar} + 2;").AppendLine("}");
         }
 
         sb.AppendLine($"{IndexVar}++;").AppendLine("}");
         if (rest != null)
             sb.Append(Helpers.RestType).Append(' ').Append(rest).Append(" = ").Append($"this.Args.Length <= {RestVar} ? default : this.Args[{RestVar}..];");
     }
+
+    private static void AppendPositionalOption(StringBuilder sb, string type, string name)
+    {
+        if (type is "string" or "string?")
+            sb.Append(name).AppendLine(" = arg;");
+        else
+            sb.Append("if (!BaSL.Executables.ArgumentParser<")
+                .Append(type.EndsWith("?") ? type.Substring(0, type.Length - 1) : type)
+                .Append($">.TryParse(arg, out var {TryParsePrefix}")
+                .Append(name)
+                .AppendLine("))")
+                .AppendLine("{")
+                .WriteLineAsync("this.StandardError", $"Invalid value for argument '{name}'")
+                .AppendLine("return 1;")
+                .AppendLine("}")
+                .Append(name)
+                .Append($" = {TryParsePrefix}")
+                .Append(name)
+                .AppendLine(";");
+    }
+
+    private static void AppendDirectoryOption(StringBuilder sb, string name) => sb.Append($"var {DirectoryResultPrefix}")
+        .Append(name)
+        .AppendLine(" = BaSL.FileSystems.Extensions.DirectoryExtensions.ResolveDirectory(this.WorkingDirectory, arg);")
+        .Append($"if (!{DirectoryResultPrefix}")
+        .Append(name)
+        .AppendLine(".Success)")
+        .AppendLine("{")
+        .WriteLineAsyncRaw("this.StandardError", $"{DirectoryResultPrefix}{name}.Error.Message")
+        .AppendLine("return 1;")
+        .AppendLine("}")
+        .Append(name)
+        .Append($" = {DirectoryResultPrefix}")
+        .Append(name)
+        .AppendLine(";");
 
     private static void RequireOptions(MethodToGenerate method, StringBuilder sb)
     {
