@@ -146,6 +146,15 @@ public sealed class BaShell : App
 
     private CancellationTokenSource? _cts;
 
+    static BaShell()
+    {
+        ArgumentParser<bool>.Delegate = bool.TryParse;
+        ArgumentParser<float>.Delegate = float.TryParse;
+        ArgumentParser<double>.Delegate = double.TryParse;
+        ArgumentParser<int>.Delegate = int.TryParse;
+        ArgumentParser<byte>.Delegate = byte.TryParse;
+    }
+
     private BaShell(ExecutableContext context, ShellStatement? statement, UserContext? user = null) : base(null!)
     {
         _statement = statement;
