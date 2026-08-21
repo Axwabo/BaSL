@@ -6,6 +6,8 @@ internal enum Operator
     Equals,
     NotEquals,
     LeftGreaterThanRight,
-    LeftLessThanRight
+    LeftLessThanRight,
+    LeftGreaterThanOrEqualToRight,
+    LeftLessThanOrEqualToRight
 
 }

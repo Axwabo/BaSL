@@ -33,15 +33,19 @@ internal static class Conditions
         return true;
     }
 
-    private static bool IsTrue(string a, Operator @operator, string b) => @operator switch
+    private static bool? IsTrue(string a, Operator @operator, string b) => @operator switch
     {
         Operator.Equals => a == b,
         Operator.NotEquals => a != b,
-        Operator.LeftGreaterThanRight when double.TryParse(a, out var x) && double.TryParse(b, out var y) => x > y,
+        Operator.LeftGreaterThanRight when int.TryParse(a, out var x) && int.TryParse(b, out var y) => x > y,
         Operator.LeftGreaterThanRight => a.CompareTo(b, StringComparison.CurrentCultureIgnoreCase) < 0,
-        Operator.LeftLessThanRight when double.TryParse(a, out var x) && double.TryParse(b, out var y) => x < y,
+        Operator.LeftLessThanRight when int.TryParse(a, out var x) && int.TryParse(b, out var y) => x < y,
         Operator.LeftLessThanRight => a.CompareTo(b, StringComparison.CurrentCultureIgnoreCase) > 0,
-        _ => throw new NotImplementedException()
+        Operator.LeftGreaterThanOrEqualToRight when int.TryParse(a, out var x) && int.TryParse(b, out var y) => x >= y,
+        Operator.LeftGreaterThanOrEqualToRight => a.CompareTo(b, StringComparison.CurrentCultureIgnoreCase) <= 0,
+        Operator.LeftLessThanOrEqualToRight when int.TryParse(a, out var x) && int.TryParse(b, out var y) => x <= y,
+        Operator.LeftLessThanOrEqualToRight => a.CompareTo(b, StringComparison.CurrentCultureIgnoreCase) >= 0,
+        _ => null
     };
 
     private static bool? IsTrue(string left, string op, string right, bool @true)
@@ -52,6 +56,8 @@ internal static class Conditions
             "!=" or "-ne" => Operator.NotEquals,
             "<" or "-lt" => Operator.LeftLessThanRight,
             ">" or "-gt" => Operator.LeftGreaterThanRight,
+            "<=" or "-le" => Operator.LeftLessThanOrEqualToRight,
+            ">=" or "-ge" => Operator.LeftGreaterThanOrEqualToRight,
             _ => null
         };
         return @operator == null
