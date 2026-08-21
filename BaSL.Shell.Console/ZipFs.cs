@@ -19,7 +19,7 @@ public sealed partial class ZipFs : App
     [Execute]
     private async Task<int> Zip(string? path = null, CancellationToken cancellationToken = default)
     {
-        await using var stream = System.IO.File.Create($"zipfs-{DateTimeOffset.Now:yyyy-MM-dd' 'hh':'mm':'ss}");
+        await using var stream = System.IO.File.Create($"zipfs-{DateTimeOffset.Now:yyyy-MM-dd'_'hh'-'mm'-'ss}");
         await using var archive = await ZipArchive.CreateAsync(stream, ZipArchiveMode.Create, false, Encoding.UTF8, cancellationToken);
         Directory directory;
         if (string.IsNullOrEmpty(path))
@@ -36,7 +36,7 @@ public sealed partial class ZipFs : App
             directory = result.Value;
         }
 
-        var start = directory.FullPath.Length + 1;
+        var start = directory.FullPath.Length;
         foreach (var entry in directory.EnumerateEntriesRecursive())
         {
             if (entry is not File file)
