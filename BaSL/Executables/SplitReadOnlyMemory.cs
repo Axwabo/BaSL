@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace BaSL.Executables;
 
-public readonly record struct SplitReadOnlyMemory<T>(ReadOnlyMemory<T> Memory, T Split) : IEnumerable<ReadOnlyMemory<T>> where T : IEquatable<T>
+public readonly record struct SplitReadOnlyMemory<T>(ReadOnlyMemory<T> Memory, ReadOnlyMemory<T> Split) : IEnumerable<ReadOnlyMemory<T>> where T : IEquatable<T>
 {
 
     public IEnumerator<ReadOnlyMemory<T>> GetEnumerator() => new SplitReadOnlyMemoryEnumerator<T>(this);
@@ -31,7 +31,7 @@ public struct SplitReadOnlyMemoryEnumerator<T> : IEnumerator<ReadOnlyMemory<T>> 
         var startIndex = _index + 1;
         if (startIndex >= _memory.Memory.Length)
             return false;
-        var next = _memory.Memory.FindIndex(_memory.Split, startIndex);
+        var next = _memory.Memory.FindIndexAny(_memory.Split.Span, startIndex);
         Current = next == -1 ? _memory.Memory[(next + 1)..] : _memory.Memory[_index..(next + 1)];
         _index = next == -1 ? _memory.Memory.Length : next;
         return true;

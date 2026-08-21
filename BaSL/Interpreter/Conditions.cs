@@ -9,13 +9,15 @@ namespace BaSL.Interpreter;
 internal static class Conditions
 {
 
+    private static readonly string[] And = ["&&", "-a"];
+    private static readonly string[] Or = ["||", "-o"];
+
     public static bool? IsTrueComplex(Args condition, Directory workingDirectory)
     {
-        // TODO: -a
-        foreach (var and in condition.Value.Split("&&"))
+        foreach (var and in condition.Value.Split(And))
         {
             var @true = false;
-            foreach (var or in and.Split("||"))
+            foreach (var or in and.Split(Or))
             {
                 if (IsTrue(or, workingDirectory) is not { } value)
                     return null;

@@ -16,7 +16,13 @@ public static class MemoryExtensions
             return index == -1 ? -1 : index + start;
         }
 
-        public SplitReadOnlyMemory<T> Split(T split) => new(memory, split);
+        public int FindIndexAny(ReadOnlySpan<T> items, int start = 0)
+        {
+            var index = memory.Span[start..].IndexOfAny(items);
+            return index == -1 ? -1 : index + start;
+        }
+
+        public SplitReadOnlyMemory<T> Split(params T[] split) => new(memory, split);
 
     }
 
