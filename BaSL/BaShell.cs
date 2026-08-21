@@ -162,9 +162,7 @@ public sealed class BaShell : App
         UserContext = user ?? context.Shell.UserContext;
         CurrentDirectory = context.WorkingDirectory;
         Context = ExecutableContext.Sub(context, this, context.FileSystem, context.Args);
-        ImportEnv();
-        foreach (var kvp in context.Shell._exported)
-            _exported[kvp.Key] = _variables[kvp.Key] = kvp.Value;
+        ImportEnv(context.Shell._exported);
     }
 
     private BaShell(Console console, StreamWriter standardOutput, StreamWriter standardError) : base(null!)
@@ -193,13 +191,17 @@ public sealed class BaShell : App
 
     private new StreamWriter StandardError => Context.IsRoot ? StandardOutput : base.StandardError;
 
-    private void ImportEnv()
+    private void ImportEnv(Dictionary<string, string>? exported = null)
     {
-        _variables["?"] = "0";
+        LastExitCode = 0;
         for (var i = 0; i < Context.Args.Length; i++)
             _variables[i.ToString()] = Context.Args[i];
         foreach (var kvp in User.Environment)
             _variables[kvp.Key] = kvp.Value;
+        if (exported == null)
+            return;
+        foreach (var kvp in exported)
+            _exported[kvp.Key] = _variables[kvp.Key] = kvp.Value;
     }
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
