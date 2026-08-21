@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
@@ -14,9 +15,12 @@ public sealed partial class Sleep : App
     {
         if (seconds == null)
             return 1;
-        await Task.Delay(seconds.Value * 1000, cancellationToken);
+        await SleepMs(seconds.Value * 1000, cancellationToken);
         return 0;
     }
+
+    // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global
+    public static Func<int, CancellationToken, Task> SleepMs { get; set; } = Task.Delay;
 
     public Sleep(ExecutableContext context) : base(context)
     {
