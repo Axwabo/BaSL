@@ -181,7 +181,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                     sb.Append(option.Name).AppendLine(" ??= this.WorkingDirectory;");
                     break;
                 case DirectoryOption {Default: DefaultDirectory.UserHome, Name: var name}:
-                    sb.Append($"if ({DirectoryResultPrefix}")
+                    sb.Append("if (")
                         .Append(name)
                         .AppendLine(" == null)")
                         .AppendLine("{")
