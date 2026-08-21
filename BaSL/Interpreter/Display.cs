@@ -17,6 +17,6 @@ public static class Display
         return span.ToString();
     }
 
-    public static string InteractivePrefix(BaShell shell) => $"{shell.User.Username}@{shell.Hostname}:{FormatCurrentDirectory(shell)}{(shell.User.IsSuperuser ? "# " : "$ ")}";
+    public static string InteractivePrefix(BaShell shell) => $"\e[1;36m{shell.User.Username}@{shell.Hostname}\e[0m:\e[1;36m{FormatCurrentDirectory(shell)}\e[0m{(shell.User.IsSuperuser ? "# " : "$ ")}";
 
 }
