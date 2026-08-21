@@ -7,7 +7,6 @@ public static class Constants
                                  using System.Threading;
                                  using BaSL.Executables;
                                  using BaSL.Executables.Attributes;
-                                 using BaSL.FileSystems;
                                      
                                  namespace BaSL.CoreUtils;
 
@@ -15,7 +14,7 @@ public static class Constants
                                  {
 
                                      [Execute]
-                                     public async Task<int> MogusAsync([DefaultTo(DefaultDirectory.UserHome)] Directory directory, string? path = null, [Flag] bool longFormat = false, CancellationToken token = default)
+                                     public async Task<int> MogusAsync(string? path = null, [Flag] bool longFormat = false, CancellationToken token = default)
                                      {
                                          return 0;
                                      }
