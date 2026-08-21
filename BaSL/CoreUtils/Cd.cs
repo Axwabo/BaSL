@@ -1,8 +1,7 @@
-using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
 using BaSL.Executables.Attributes;
-using BaSL.FileSystems.Extensions;
+using BaSL.FileSystems;
 
 namespace BaSL.CoreUtils;
 
@@ -17,17 +16,11 @@ public sealed partial class Cd : App
     {
     }
 
-    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
+    [Execute]
+    public Task<int> ChangeAsync([DefaultTo(DefaultDirectory.UserHome)] Directory directory)
     {
-        var result = WorkingDirectory.ResolveDirectory(Args.FirstOrDefault(UserContext.User.Home));
-        if (!result.Success)
-        {
-            await StandardOutput.WriteLineAsync(result.Error.Message, cancellationToken);
-            return 1;
-        }
-
-        Shell.CurrentDirectory = result.Value;
-        return 0;
+        Shell.CurrentDirectory = directory;
+        return Task.FromResult(0);
     }
 
 }

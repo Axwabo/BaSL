@@ -177,10 +177,26 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                         .AppendLine("return 1;")
                         .AppendLine("}");
                     break;
-                case DirectoryOption {DefaultToCurrent: true}:
+                case DirectoryOption {Default: DefaultDirectory.Current}:
                     sb.Append(option.Name).AppendLine(" ??= this.WorkingDirectory;");
                     break;
-                case DirectoryOption {DefaultToCurrent: false, Name: var name}:
+                case DirectoryOption {Default: DefaultDirectory.UserHome, Name: var name}:
+                    sb.Append($"var {DirectoryResultPrefix}home_")
+                        .Append(name)
+                        .AppendLine(" = BaSL.FileSystems.Extensions.FileSystemExtensions.ResolveDirectory(this.FileSystem, this.UserContext.User.Home);")
+                        .Append($"if (!{DirectoryResultPrefix}home_")
+                        .Append(name)
+                        .AppendLine(".Success)")
+                        .AppendLine("{")
+                        .WriteLineAsyncRaw("this.StandardError", $"{DirectoryResultPrefix}home_{name}.Error.Message")
+                        .AppendLine("return 1;")
+                        .AppendLine("}")
+                        .Append(name)
+                        .Append($" = {DirectoryResultPrefix}home_")
+                        .Append(name)
+                        .AppendLine(".Value;");
+                    break;
+                case DirectoryOption {Name: var name}:
                     sb.Append("if (")
                         .Append(name)
                         .AppendLine(" == null)")

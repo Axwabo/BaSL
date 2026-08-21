@@ -8,7 +8,7 @@ public static class OptionParser
 {
 
     private const string FlagAttribute = $"{Helpers.Attributes}.FlagAttribute";
-    private const string DirAttribute = $"{Helpers.Attributes}.DefaultToCurrentAttribute";
+    private const string DirAttribute = $"{Helpers.Attributes}.DefaultToAttribute";
 
     public static void ProcessParameter(IParameterSymbol symbol, List<Option> list, CancellationToken token)
     {
@@ -27,10 +27,17 @@ public static class OptionParser
 
         if (type == Helpers.DirectoryType)
         {
-            var useWorkingDir = false;
+            var @default = DefaultDirectory.None;
             foreach (var attribute in symbol.GetAttributes())
-                useWorkingDir |= attribute.AttributeClass?.ToString() == DirAttribute;
-            list.Add(new DirectoryOption(symbol.Name, useWorkingDir));
+            {
+                if (attribute.AttributeClass?.ToString() != DirAttribute)
+                    continue;
+                if (attribute.ConstructorArguments.Length != 0)
+                {
+                }
+            }
+
+            list.Add(new DirectoryOption(symbol.Name, @default));
             return;
         }
 

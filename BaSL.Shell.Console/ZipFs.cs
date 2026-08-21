@@ -17,7 +17,7 @@ public sealed partial class ZipFs : App
     }
 
     [Execute]
-    private async Task<int> Zip([DefaultToCurrent] Directory directory, CancellationToken cancellationToken = default)
+    private async Task<int> Zip([DefaultTo(DefaultDirectory.Current)] Directory directory, CancellationToken cancellationToken = default)
     {
         await using var stream = System.IO.File.Create($"zipfs-{DateTimeOffset.Now:yyyy-MM-dd'_'HH'-'mm'-'ss}.zip");
         await using var archive = await ZipArchive.CreateAsync(stream, ZipArchiveMode.Create, false, Encoding.UTF8, cancellationToken);
