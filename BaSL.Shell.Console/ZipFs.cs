@@ -17,25 +17,10 @@ public sealed partial class ZipFs : App
     }
 
     [Execute]
-    private async Task<int> Zip(string? path = null, CancellationToken cancellationToken = default)
+    private async Task<int> Zip([Dir(true)] Directory directory, CancellationToken cancellationToken = default)
     {
         await using var stream = System.IO.File.Create($"zipfs-{DateTimeOffset.Now:yyyy-MM-dd'_'HH'-'mm'-'ss}.zip");
         await using var archive = await ZipArchive.CreateAsync(stream, ZipArchiveMode.Create, false, Encoding.UTF8, cancellationToken);
-        Directory directory;
-        if (string.IsNullOrEmpty(path))
-            directory = WorkingDirectory;
-        else
-        {
-            var result = WorkingDirectory.ResolveDirectory(path);
-            if (!result.Success)
-            {
-                await StandardOutput.WriteLineAsync(result.Error.Message, cancellationToken);
-                return 1;
-            }
-
-            directory = result.Value;
-        }
-
         var start = directory.FullPath.Length;
         foreach (var entry in directory.EnumerateEntriesRecursive())
         {

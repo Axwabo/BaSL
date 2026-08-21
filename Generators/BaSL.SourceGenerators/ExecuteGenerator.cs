@@ -161,7 +161,7 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
         .Append(name)
         .Append($" = {DirectoryResultPrefix}")
         .Append(name)
-        .AppendLine(";");
+        .AppendLine(".Value;");
 
     private static void RequireOptions(MethodToGenerate method, StringBuilder sb)
     {
