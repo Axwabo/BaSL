@@ -19,8 +19,8 @@ public sealed record RestArgumentsOption(string Name) : Option(Name);
 public enum DefaultDirectory
 {
 
-    None,
-    Current,
-    UserHome
+    None = -1,
+    Current = 0,
+    UserHome = 1
 
 }

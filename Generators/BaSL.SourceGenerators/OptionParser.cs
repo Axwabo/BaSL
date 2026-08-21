@@ -32,9 +32,8 @@ public static class OptionParser
             {
                 if (attribute.AttributeClass?.ToString() != DirAttribute)
                     continue;
-                if (attribute.ConstructorArguments.Length != 0)
-                {
-                }
+                if (attribute.ConstructorArguments.Length != 0 && attribute.ConstructorArguments[0].Value is int value)
+                    @default = (DefaultDirectory) value;
             }
 
             list.Add(new DirectoryOption(symbol.Name, @default));

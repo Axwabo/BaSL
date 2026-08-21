@@ -15,7 +15,7 @@ public sealed class DefaultToAttribute : Attribute
 public enum DefaultDirectory
 {
 
-    Current,
-    UserHome
+    Current = 0,
+    UserHome = 1
 
 }
