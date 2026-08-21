@@ -25,23 +25,26 @@ public static class OptionParser
             return;
         }
 
-        var isFlag = false;
         foreach (var attribute in symbol.GetAttributes())
         {
             token.ThrowIfCancellationRequested();
-            if (attribute.AttributeClass?.ToString() != FlagAttribute)
-                continue;
-            isFlag = true;
-            list.Add(new FlagOption(
-                symbol.Name,
-                attribute.ConstructorArguments.Length != 0 && attribute.ConstructorArguments[0].Value is char flagChar ? flagChar : symbol.Name[0],
-                symbol.NullableAnnotation != NullableAnnotation.Annotated,
-                symbol.HasExplicitDefaultValue ? symbol.ExplicitDefaultValue as bool? : null
-            ));
+            switch (attribute.AttributeClass?.ToString())
+            {
+                case DirAttribute:
+                    list.Add(new DirectoryOption(symbol.Name, attribute.ConstructorArguments.Length != 0 && attribute.ConstructorArguments[0].Value is true));
+                    return;
+                case FlagAttribute:
+                    list.Add(new FlagOption(
+                        symbol.Name,
+                        attribute.ConstructorArguments.Length != 0 && attribute.ConstructorArguments[0].Value is char flagChar ? flagChar : symbol.Name[0],
+                        symbol.NullableAnnotation != NullableAnnotation.Annotated,
+                        symbol.HasExplicitDefaultValue ? symbol.ExplicitDefaultValue as bool? : null
+                    ));
+                    return;
+            }
         }
 
-        if (!isFlag)
-            list.Add(new PositionalOption(symbol.Name, type, symbol.HasExplicitDefaultValue ? symbol.ExplicitDefaultValue?.ToString() : null));
+        list.Add(new PositionalOption(symbol.Name, type, symbol.HasExplicitDefaultValue ? symbol.ExplicitDefaultValue?.ToString() : null));
     }
 
 }
