@@ -9,6 +9,9 @@ public static class Helpers
 
     public const string TokenType = "System.Threading.CancellationToken";
     public const string TokenParam = "cancellationToken";
+    public const string RestType = "BaSL.Args";
+
+    public const string Attributes = "BaSL.Executables.Attributes";
 
     public static (string Namespace, string Class)? GetParent(SyntaxNode node)
     {

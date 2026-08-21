@@ -9,9 +9,9 @@ namespace BaSL.SourceGenerators;
 public sealed class ExecuteGenerator : IIncrementalGenerator
 {
 
-    private const string RestType = "BaSL.Args";
     private const string IndexVar = "positionalArgumentIndex";
     private const string RestVar = "restIndex";
+    private const string DirectoryType = "BaSL.FileSystems.Directory";
 
     private static void Execute(MethodToGenerate? method, SourceProductionContext context)
     {
@@ -57,6 +57,9 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                     // TODO: optional
                     sb.Append(positional.Type).Append(' ').Append(option.Name).Append(" = ").Append(positional.DefaultValue ?? "null").AppendLine(";");
                     break;
+                case DirectoryOption:
+                    sb.Append($"{DirectoryType}? ").Append(option.Name).AppendLine(" = null;");
+                    break;
             }
         }
     }
@@ -101,9 +104,11 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                 continue;
             }
 
-            if (option is not PositionalOption {Type: var type, Name: var name})
+            if (option is not IPositionalOption)
                 continue;
             var i = positionalArgumentIndex++;
+            if (option is not PositionalOption {Type: var type, Name: var name})
+                continue;
             sb.Append($"if ({IndexVar} == ").Append(i).AppendLine(")").AppendLine("{");
             if (type is "string" or "string?")
                 sb.Append(option.Name).AppendLine(" = arg;");
@@ -127,21 +132,37 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
 
         sb.AppendLine($"{IndexVar}++;").AppendLine("}");
         if (rest != null)
-            sb.Append(RestType).Append(' ').Append(rest).Append(" = ").Append($"this.Args.Length <= {RestVar} ? default : this.Args[{RestVar}..];");
+            sb.Append(Helpers.RestType).Append(' ').Append(rest).Append(" = ").Append($"this.Args.Length <= {RestVar} ? default : this.Args[{RestVar}..];");
     }
 
     private static void RequireOptions(MethodToGenerate method, StringBuilder sb)
     {
         // TODO: positional options
         foreach (var option in method.Options)
-            if (option is FlagOption {Required: true, DefaultValue: null, Name: var name})
-                sb.Append("if (!")
-                    .Append(name)
-                    .AppendLine(".HasValue)")
-                    .AppendLine("{")
-                    .WriteLineAsync("this.StandardError", $"Argument '{name}' must be specified")
-                    .AppendLine("return 1;")
-                    .AppendLine("}");
+            switch (option)
+            {
+                case FlagOption {Required: true, DefaultValue: null, Name: var name}:
+                    sb.Append("if (!")
+                        .Append(name)
+                        .AppendLine(".HasValue)")
+                        .AppendLine("{")
+                        .WriteLineAsync("this.StandardError", $"Argument '{name}' must be specified")
+                        .AppendLine("return 1;")
+                        .AppendLine("}");
+                    break;
+                case DirectoryOption {DefaultToCurrent: true}:
+                    sb.Append(option.Name).AppendLine(" ??= this.WorkingDirectory;");
+                    break;
+                case DirectoryOption {DefaultToCurrent: false, Name: var name}:
+                    sb.Append("if (")
+                        .Append(name)
+                        .AppendLine(" == null)")
+                        .AppendLine("{")
+                        .WriteLineAsync("this.StandardError", $"Directory '{name}' must be specified")
+                        .AppendLine("return 1;")
+                        .AppendLine("}");
+                    break;
+            }
     }
 
     private static void PassOptions(MethodToGenerate method, StringBuilder sb)
@@ -171,36 +192,8 @@ public sealed class ExecuteGenerator : IIncrementalGenerator
                 var list = new List<Option>();
                 foreach (var symbol in parameters)
                 {
-                    var type = symbol.Type.ToString();
-                    if (type == Helpers.TokenType)
-                    {
-                        list.Add(new CancellationTokenOption(symbol.Name));
-                        continue;
-                    }
-
-                    if (type == RestType)
-                    {
-                        list.Add(new RestArgumentsOption(symbol.Name));
-                        continue;
-                    }
-
-                    var isFlag = false;
-                    foreach (var attribute in symbol.GetAttributes())
-                    {
-                        token.ThrowIfCancellationRequested();
-                        if (attribute.AttributeClass?.ToString() != "BaSL.Executables.Attributes.FlagAttribute")
-                            continue;
-                        isFlag = true;
-                        list.Add(new FlagOption(
-                            symbol.Name,
-                            attribute.ConstructorArguments.Length != 0 && attribute.ConstructorArguments[0].Value is char flagChar ? flagChar : symbol.Name[0],
-                            symbol.NullableAnnotation != NullableAnnotation.Annotated,
-                            symbol.HasExplicitDefaultValue ? symbol.ExplicitDefaultValue as bool? : null
-                        )); // TODO: other options
-                    }
-
-                    if (!isFlag)
-                        list.Add(new PositionalOption(symbol.Name, type, symbol.HasExplicitDefaultValue ? symbol.ExplicitDefaultValue?.ToString() : null));
+                    token.ThrowIfCancellationRequested();
+                    OptionParser.ProcessParameter(symbol, list, token);
                 }
 
                 return new MethodToGenerate(ns, className, methodName, new EquatableArray<Option>(list.ToArray()));
