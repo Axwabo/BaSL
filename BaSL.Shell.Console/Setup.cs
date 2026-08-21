@@ -1,5 +1,8 @@
 using BaSL.CoreUtils;
+using BaSL.FileSystems;
 using BaSL.FileSystems.Extensions;
+using Directory = BaSL.FileSystems.Directory;
+using Path = BaSL.FileSystems.Path;
 
 namespace BaSL.Shell.Console;
 
@@ -30,6 +33,9 @@ public static class Setup
         var user = system.CreateUser(Username).Unwrap();
         await system.SudoAsync(async (operatingSystem, context) =>
         {
+            operatingSystem.FileSystem.Root.ResolveDirectory(Path.Binaries).Unwrap()
+                .CreateFile(context, "zipfs", Directory.DefaultFileModes with {Others = Mode.Rx})
+                .MakeExecutable(context, ctx => new ZipFs(ctx));
             await AutoMount.Mount(args, operatingSystem, context, err);
             var userHome = operatingSystem.FileSystem.ResolveDirectory(user.Home).Unwrap();
             var assembly = typeof(Setup).Assembly;

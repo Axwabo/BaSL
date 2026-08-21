@@ -95,6 +95,8 @@ public static class PathExtensions
 
         public bool IsAbsolute => path.Value.AsSpan().StartsWith(Path.Root.Value);
 
+        public int Length => path.Value.AsSpan().Length;
+
     }
 
     extension(ReadOnlyMemory<string> memory)

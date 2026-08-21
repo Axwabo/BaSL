@@ -9,6 +9,7 @@
 
     <ItemGroup>
         <ProjectReference Include="../BaSL/BaSL.csproj" />
+        <ProjectReference Include="../Generators/BaSL.SourceGenerators/BaSL.SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
 
     <ItemGroup>
