@@ -23,8 +23,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     
     env:
-      CORE: ${{ github.workspace }}/OUT/Core
-      TERMINAL: ${{ github.workspace }}/OUT/Terminal
+      CORE: ${{ github.workspace }}/OUT-Core
+      TERMINAL: ${{ github.workspace }}/OUT-Terminal
       ZIP: BaSL.Terminal-${{ matrix.name }}-x64.zip
 
     steps:
