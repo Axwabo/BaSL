@@ -83,10 +83,7 @@ internal static class StatementParser
             char? next = i < s.Length - 1 ? s[i + 1] : null;
             switch (syntax, c, next)
             {
-                case (SyntaxType.Text or SyntaxType.QuotedString, '\\', '$' or '\\' or '\\'):
-                case (SyntaxType.Text, '\\', ' ' or '\'' or '\"'):
-                case (SyntaxType.VerbatimString, '\\', '\''):
-                case (SyntaxType.QuotedString, '\\', '"'):
+                case (not SyntaxType.VerbatimString, '\\', _):
                     i++;
                     argBuzilder.Append(next);
                     break;
