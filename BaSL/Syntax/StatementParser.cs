@@ -76,7 +76,6 @@ internal static class StatementParser
         var args = new List<string>();
         var syntax = SyntaxType.Text;
         var outerSyntax = SyntaxType.Text;
-        var escaped = false;
         var condition = false;
         for (var i = start; i < s.Length; i++)
         {
@@ -84,7 +83,7 @@ internal static class StatementParser
             char? next = i < s.Length - 1 ? s[i + 1] : null;
             switch (syntax, c, next)
             {
-                case (SyntaxType.Text, '\\', ' ' or '$'):
+                case (SyntaxType.Text, '\\', ' ' or '$' or '\'' or '\"'):
                 case (SyntaxType.VerbatimString, '\\', '\''):
                 case (SyntaxType.QuotedString, '\\', '"'):
                     i++;
