@@ -81,22 +81,15 @@ internal static class StatementParser
         for (var i = start; i < s.Length; i++)
         {
             var c = s[i];
-            if (escaped)
-            {
-                argBuzilder.Append(c);
-                escaped = false;
-                continue;
-            }
-
-            if (c == '\\')
-            {
-                escaped = true;
-                continue;
-            }
-
             char? next = i < s.Length - 1 ? s[i + 1] : null;
             switch (syntax, c, next)
             {
+                case (SyntaxType.Text, '\\', ' ' or '$'):
+                case (SyntaxType.VerbatimString, '\\', '\''):
+                case (SyntaxType.QuotedString, '\\', '"'):
+                    i++;
+                    argBuzilder.Append(next);
+                    break;
                 case (SyntaxType.VerbatimString, '\'', _):
                 case (SyntaxType.QuotedString, '"', _):
                     syntax = outerSyntax = SyntaxType.Text;

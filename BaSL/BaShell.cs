@@ -142,7 +142,7 @@ public sealed class BaShell : App
                 await using var context = ExecutableContext.Sub(Context, this, FileSystem, standaloneStatement.Args);
                 var process = Run.Execute(this, standaloneStatement.Location, context, cancellationToken);
                 if (!process.Success)
-                    return await WriteExecuteErrorAsync(standaloneStatement.Location, process.Error, cancellationToken);
+                    return await ErrorAsync(standaloneStatement.Location, process.Error, cancellationToken);
                 var copy = context.CopyAsync();
                 var code = await process.Value;
                 await copy;
@@ -164,7 +164,7 @@ public sealed class BaShell : App
                 await using var context = ExecutableContext.Stdin(Context, this, FileSystem, fileStdinStatement.Args, stream);
                 var process = Run.Execute(this, fileStdinStatement.Location, context, cancellationToken);
                 if (!process.Success)
-                    return await WriteExecuteErrorAsync(fileStdinStatement.Location, process.Error, cancellationToken);
+                    return await ErrorAsync(fileStdinStatement.Location, process.Error, cancellationToken);
                 var copy = context.CopyAsync();
                 var code = await process.Value;
                 await copy;
@@ -190,7 +190,7 @@ public sealed class BaShell : App
                 await using var context = ExecutableContext.Redirected(Context, Shell, FileSystem, standaloneStatement.Args, new Streams(null, stream, null));
                 var process = Run.Execute(this, standaloneStatement.Location, context, cancellationToken);
                 if (!process.Success)
-                    return await WriteExecuteErrorAsync(standaloneStatement.Location, process.Error, cancellationToken);
+                    return await ErrorAsync(standaloneStatement.Location, process.Error, cancellationToken);
                 var copy = context.CopyAsync();
                 var code = await process.Value;
                 await copy;
@@ -200,10 +200,10 @@ public sealed class BaShell : App
             {
                 var sourceCommand = Run.Locate(this, standaloneStatement.Location);
                 if (!sourceCommand.Success)
-                    return await WriteExecuteErrorAsync(standaloneStatement.Location, sourceCommand.Error, cancellationToken);
+                    return await ErrorAsync(standaloneStatement.Location, sourceCommand.Error, cancellationToken);
                 var targetCommand = Run.Locate(this, pipeStatement.Location);
                 if (!targetCommand.Success)
-                    return await WriteExecuteErrorAsync(pipeStatement.Location, targetCommand.Error, cancellationToken);
+                    return await ErrorAsync(pipeStatement.Location, targetCommand.Error, cancellationToken);
                 await using var source = new ExecutableContext(Shell, standaloneStatement.Args).CreatePipes();
                 await using var target = new ExecutableContext(Shell, pipeStatement.Args);
                 source.SubStderr(Context);
@@ -212,10 +212,10 @@ public sealed class BaShell : App
                 target.CreateStderrPipe().SubStderr(Context);
                 var sourceProcess = sourceCommand.Value(source, cancellationToken);
                 if (!sourceProcess.Success)
-                    return await WriteExecuteErrorAsync(standaloneStatement.Location, sourceProcess.Error, cancellationToken);
+                    return await ErrorAsync(standaloneStatement.Location, sourceProcess.Error, cancellationToken);
                 var targetProcess = targetCommand.Value(target, cancellationToken);
                 if (!targetProcess.Success)
-                    return await WriteExecuteErrorAsync(pipeStatement.Location, targetProcess.Error, cancellationToken);
+                    return await ErrorAsync(pipeStatement.Location, targetProcess.Error, cancellationToken);
                 var copy = Task.WhenAll(source.CopyAsync(), target.CopyAsync());
                 var codes = await Task.WhenAll(sourceProcess.Value, targetProcess.Value);
                 await copy;
@@ -235,7 +235,7 @@ public sealed class BaShell : App
                     };
                     var result = Run.Locate(this, location);
                     if (!result.Success)
-                        return await WriteExecuteErrorAsync(location, result.Error, cancellationToken);
+                        return await ErrorAsync(location, result.Error, cancellationToken);
                     run.Add((location, result.Value, args));
                     statement = (statement as PipeStatement)?.Source;
                     // TODO: ability to redirect last
@@ -272,7 +272,7 @@ public sealed class BaShell : App
                         var (location, func, _) = run[contexts.Count - i - 1];
                         var execute = func(contexts[i], cancellationToken);
                         if (!execute.Success)
-                            return await WriteExecuteErrorAsync(location, execute.Error, cancellationToken);
+                            return await ErrorAsync(location, execute.Error, cancellationToken);
                         codes.Add(execute.Value);
                         copies.Add(contexts[i].CopyAsync());
                     }
@@ -295,7 +295,7 @@ public sealed class BaShell : App
         }
     }
 
-    private async Task<int> WriteExecuteErrorAsync(CommandLocation location, Error error, CancellationToken cancellationToken)
+    private async Task<int> ErrorAsync(CommandLocation location, Error error, CancellationToken cancellationToken)
     {
         await StandardError.WriteAsync("Cannot execute '", cancellationToken);
         await StandardError.WriteAsync(location, cancellationToken);
