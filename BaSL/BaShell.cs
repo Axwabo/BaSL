@@ -22,7 +22,10 @@ public sealed class BaShell : App
 
     internal static readonly Dictionary<string, Executable> BuiltInCommands = new()
     {
-        {"help", context => new Help(context) {Variables = context.Shell._variables, Exported = context.Shell._exported}},
+        {"help", context => new Help(context) {Vars = context.Shell.Vars}},
+        {"set", context => new Set(context) {Vars = context.Shell.Vars}},
+        {"export", context => new Export(context) {Vars = context.Shell.Vars}},
+        {"unset", context => new Unset(context) {Vars = context.Shell.Vars}},
     };
 
     internal static (ExecutableContext, BaShell) CreateRoot(Console console, StreamWriter standardOutput, StreamWriter standardError)
@@ -43,9 +46,9 @@ public sealed class BaShell : App
 
     private readonly Variables _exported = [];
 
-    private readonly ShellStatement? _statement;
+    private readonly Variables _local = [];
 
-    private readonly Variables _variables = [];
+    private readonly ShellStatement? _statement;
 
     private CancellationTokenSource? _cts;
 
@@ -72,7 +75,7 @@ public sealed class BaShell : App
 
     private int LastExitCode
     {
-        set => _variables["?"] = value.ToString();
+        set => _local["?"] = value.ToString();
     }
 
     internal Console Console { get; }
@@ -88,19 +91,21 @@ public sealed class BaShell : App
     private new StreamWriter StandardError => Context.IsRoot ? StandardOutput : base.StandardError;
 
     // ReSharper disable once InconsistentNaming
-    public string[] PATH => _variables.GetValueOrDefault("PATH", "").Split(':');
+    public string[] PATH => _local.GetValueOrDefault("PATH", "").Split(':');
+
+    private (Variables, Variables) Vars => (_local, _exported);
 
     private void ImportEnv(Variables? exported = null)
     {
         LastExitCode = 0;
         for (var i = 0; i < Context.Args.Length; i++)
-            _variables[i.ToString()] = Context.Args[i];
+            _local[i.ToString()] = Context.Args[i];
         foreach (var kvp in User.Environment)
-            _variables[kvp.Key] = kvp.Value;
+            _local[kvp.Key] = kvp.Value;
         if (exported == null)
             return;
         foreach (var kvp in exported)
-            _exported[kvp.Key] = _variables[kvp.Key] = kvp.Value;
+            _exported[kvp.Key] = _local[kvp.Key] = kvp.Value;
     }
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
@@ -372,7 +377,7 @@ public sealed class BaShell : App
 
     private async Task ExecuteAsync(string line, CancellationToken token)
     {
-        var statements = StatementParser.Parse(line, _variables.TryGetValue, User.Home.Value);
+        var statements = StatementParser.Parse(line, _local.TryGetValue, User.Home.Value);
         int index;
         var start = 0;
         do

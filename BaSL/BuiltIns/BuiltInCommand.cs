@@ -6,9 +6,14 @@ namespace BaSL.BuiltIns;
 internal abstract partial class BuiltInCommand : App
 {
 
-    public required Variables Variables { get; init; }
+    public required (Variables Local, Variables Exported) Vars
+    {
+        init => (Local, Exported) = value;
+    }
 
-    public required Variables Exported { get; init; }
+    protected Variables Local { get; private set; }
+
+    protected Variables Exported { get; private set; }
 
     protected new StreamWriter StandardError => Context.IsRoot ? StandardOutput : base.StandardError;
 
