@@ -24,16 +24,10 @@ public sealed partial class Touch : App
             var path = Path.ToPartialAbsolutePath(arg, WorkingDirectory);
             var directory = FileSystem.ResolveDirectory(path.Parent);
             if (!directory.Success)
-            {
-                await StandardError.WriteLineAsync(directory.Error.Message, cancellationToken);
-                return 1;
-            }
-
+                return await ErrorAsync(directory.Error, cancellationToken);
             var result = directory.Value.CreateFile(UserContext, arg);
-            if (result.Success)
-                continue;
-            await StandardError.WriteLineAsync(result.Error.Message, cancellationToken);
-            return 1;
+            if (!result.Success)
+                return await ErrorAsync(result.Error, cancellationToken);
         }
 
         return 0;

@@ -32,4 +32,16 @@ public abstract class App
 
     public abstract Task<int> ExecuteAsync(CancellationToken cancellationToken);
 
+    protected async Task<int> ErrorAsync(Error error, CancellationToken cancellationToken)
+    {
+        await StandardError.WriteLineAsync(error, cancellationToken);
+        return 1;
+    }
+
+    protected async Task<int> ErrorAsync(string error, CancellationToken cancellationToken)
+    {
+        await StandardError.WriteLineAsync(error, cancellationToken);
+        return 1;
+    }
+
 }

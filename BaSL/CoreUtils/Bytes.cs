@@ -22,25 +22,13 @@ public sealed partial class Bytes : App
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         if (Args.IsEmpty)
-        {
-            await StandardError.WriteLineAsync("Argument required");
-            return 1;
-        }
-
+            return await ErrorAsync("Argument required", cancellationToken);
         var entry = FileSystem.ResolveFile(Args[0]);
         if (!entry.Success)
-        {
-            await StandardError.WriteLineAsync(entry.Error.Message);
-            return 1;
-        }
-
+            return await ErrorAsync(entry.Error, cancellationToken);
         var open = entry.Value.Open(UserContext, OpenMode.Read);
         if (!open.Success)
-        {
-            await StandardError.WriteLineAsync(open.Error.Message);
-            return 1;
-        }
-
+            return await ErrorAsync(open.Error, cancellationToken);
         await using var stream = open.Value;
         var buffer = new byte[32];
         var read = await stream.ReadAsync(buffer, cancellationToken);

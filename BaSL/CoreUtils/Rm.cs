@@ -26,15 +26,11 @@ public sealed partial class Rm : App
     private async Task<int> RemoveAsync(string? path, [Flag] bool recursive, [Flag] bool french, CancellationToken cancellationToken)
     {
         if (path == null)
-        {
-            await StandardOutput.WriteLineAsync("File must be specified", cancellationToken);
-            return 1;
-        }
-
+            return await ErrorAsync("File must be specified", cancellationToken);
         var entry = WorkingDirectory.Resolve(path);
         if (!entry.Success)
         {
-            await StandardOutput.WriteLineAsync(entry.Error.Message, cancellationToken);
+            await StandardOutput.WriteLineAsync(entry.Error, cancellationToken);
             return french ? 0 : 1;
         }
 

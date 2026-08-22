@@ -50,11 +50,7 @@ public sealed partial class Ls : App
     {
         var result = path == null ? WorkingDirectory : WorkingDirectory.ResolveDirectory(path);
         if (!result.Success)
-        {
-            await StandardError.WriteLineAsync(result.Error.Message, cancellationToken);
-            return 1;
-        }
-
+            return await ErrorAsync(result.Error, cancellationToken);
         var directory = result.Value;
         await using var writer = StandardOutput;
         foreach (var entry in directory.EnumerateEntries().OrderBy(e => e.Name.Value))

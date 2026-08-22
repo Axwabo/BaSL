@@ -23,10 +23,9 @@ public sealed partial class Mkdir : App
         }
 
         var result = WorkingDirectory.CreateDirectories(UserContext, Args[0]);
-        if (result.Success)
-            return 0;
-        await StandardError.WriteLineAsync(result.Error.Message, cancellationToken);
-        return 1;
+        return result.Success
+            ? 0
+            : await ErrorAsync(result.Error, cancellationToken);
     }
 
 }

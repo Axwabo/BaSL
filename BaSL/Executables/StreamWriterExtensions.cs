@@ -17,6 +17,9 @@ public static class StreamWriterExtensions
         public Task WriteLineAsync(string line, CancellationToken cancellationToken)
             => writer.WriteLineAsync(line.AsMemory(), cancellationToken);
 
+        public Task WriteLineAsync(Error error, CancellationToken cancellationToken)
+            => writer.WriteLineAsync(error.Message, cancellationToken);
+
     }
 
 }

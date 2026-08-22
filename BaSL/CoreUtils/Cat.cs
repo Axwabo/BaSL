@@ -28,18 +28,10 @@ public sealed partial class Cat : App
                 break;
             var entry = WorkingDirectory.ResolveFile(arg);
             if (!entry.Success)
-            {
-                await StandardError.WriteLineAsync(entry.Error.Message, cancellationToken);
-                return 1;
-            }
-
+                return await ErrorAsync(entry.Error, cancellationToken);
             var open = entry.Value.Open(UserContext, OpenMode.Read);
             if (!open.Success)
-            {
-                await StandardError.WriteLineAsync(open.Error.Message, cancellationToken);
-                return 1;
-            }
-
+                return await ErrorAsync(open.Error, cancellationToken);
             await using var stream = open.Value;
             await stream.CopyToAsync(StandardOutput.BaseStream, cancellationToken);
         }

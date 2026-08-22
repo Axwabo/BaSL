@@ -25,11 +25,7 @@ public sealed partial class Chmod : App
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         if (Args.Length < 2)
-        {
-            await StandardOutput.WriteLineAsync("Not enough arguments", cancellationToken);
-            return 1;
-        }
-
+            return await ErrorAsync("Not enough arguments", cancellationToken);
         var tuple = ParseModeChange(Args[0]);
         var recursive = Args[1] is "-R";
         foreach (var arg in Args[(recursive ? 2 : 1)..])

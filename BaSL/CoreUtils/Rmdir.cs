@@ -18,28 +18,15 @@ public sealed partial class Rmdir : App
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         if (Args.Length == 0)
-        {
-            await StandardOutput.WriteLineAsync("Directory must be specified", cancellationToken);
-            return 1;
-        }
-
+            return await ErrorAsync("Directory must be specified", cancellationToken);
         var entry = WorkingDirectory.ResolveDirectory(Args[0]);
-        if (!entry.Success)
-        {
-            await StandardOutput.WriteLineAsync(RemoveChildError.NothingToRemove.Message, cancellationToken);
-            return 1;
-        }
-
-        if (WorkingDirectory.FullPath.Value.StartsWith(entry.Value.FullPath.Value))
-        {
-            await StandardError.WriteLineAsync("Refusing to remove current directory (or parent)", cancellationToken);
-            return 1;
-        }
-
-        if (entry.Value.RemoveSelf(UserContext) is not { } error)
-            return 0;
-        await StandardError.WriteLineAsync(error.Message, cancellationToken);
-        return 1;
+        return !entry.Success
+            ? await ErrorAsync(RemoveChildError.NothingToRemove, cancellationToken)
+            : WorkingDirectory.FullPath.Value.StartsWith(entry.Value.FullPath.Value)
+                ? await ErrorAsync("Refusing to remove current directory (or parent)", cancellationToken)
+                : entry.Value.RemoveSelf(UserContext) is { } error
+                    ? await ErrorAsync(error, cancellationToken)
+                    : 0;
     }
 
 }
