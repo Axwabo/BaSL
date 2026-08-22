@@ -1,0 +1,57 @@
+name: Build
+
+on:
+  workflow_dispatch:
+  release:
+    types: [ published ]
+
+permissions:
+  contents: write
+
+jobs: 
+  
+  build:
+    
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: linux
+          - os: windows-latest
+            name: lose
+    
+    runs-on: ${{ matrix.os }}
+    
+    env:
+      CORE: ${{ github.workspace }}/OUT/Core
+      TERMINAL: ${{ github.workspace }}/OUT/Terminal
+      ZIP: BaSL.Terminal-${{ matrix.name }}-x64.zip
+
+    steps:
+
+      - uses: actions/checkout@v7.0.1
+
+      - run: dotnet pack -o ${{ env.CORE }}
+        working-directory: BaSL
+        
+      - run: dotnet publish -o ${{ env.TERMINAL }}
+        working-directory: BaSL.Terminal
+        
+      - run: dotnet run ${{ github.workspace }}/bundle.cs -- ${{ env.ZIP }}
+        working-directory: ${{ env.TERMINAL }}
+
+      - name: Package artifact
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          path: ${{ env.CORE }}/BaSL*.nupkg
+          name: ${{ matrix.name }}.nupkg
+          if-no-files-found: error
+
+      - name: Zip artifact
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          path: ${{ TERMINAL }}/${{ env.ZIP }}
+          name: ${{ matrix.name }}.zip
+          if-no-files-found: error
+          
+#          TODO: release assets

@@ -10,18 +10,18 @@ Library authors still have access to all of the BCL (Base Class Library).
 
 # Console Version
 
-You can run the `BaSL.Shell.Console` executable in your terminal.
+You can run the `BaSL.Terminal` executable in your terminal.
 
 The experience is comparable to a Linux terminal, albeit limited (see features below).
 
 ## Setup 
 
 1. Download the appropriate archive from the [releases page](https://github.com/Axwabo/BaSL/releases)
-    - Linux: `BaSL.Console-linux-x64.zip`
-    - Windows: `BaSL.Console-win-x64.zip`
+    - Linux: `BaSL.Terminal-linux-x64.zip`
+    - windows: `BaSL.Terminal-lose-x64.zip`
 2. Extract the archive to a folder of your choosing
-3. Run `BaSL.Shell.Console` from your terminal
-    - `BaSL.Shell.Console.exe` on Windows
+3. Run `BaSL.Terminal` from your terminal
+    - `BaSL.Terminal.exe` on windows
 
 ## Mounts
 
@@ -30,7 +30,7 @@ Directly mounting "real" devices to a BaSL filesystem is not supported (yet).
 You can specify "physical" directories to be copied into virtual filesystems in `/media`
 by passing arguments to the program where the mounted folder's name and the directory location are separated by `=`
 
-Example: `./BaSL.Shell.Console amogus=~/Documents sus=/home/user/Desktop`
+Example: `./BaSL.Terminal amogus=~/Documents sus=/home/user/Desktop`
 
 # Standard Pipes
 
