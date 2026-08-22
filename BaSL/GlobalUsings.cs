@@ -6,3 +6,4 @@ global using GetFileResult = BaSL.Result<BaSL.FileSystems.File, BaSL.FileSystems
 global using OpenFileResult = BaSL.Result<System.IO.Stream, BaSL.FileSystems.Errors.OpenFileError>;
 global using ExecuteFileResult = BaSL.Result<BaSL.Executables.Process, BaSL.FileSystems.Errors.OpenFileError>;
 global using CreateUserResult = BaSL.Result<BaSL.Users.User, BaSL.Users.CreateUserError>;
+global using Variables = System.Collections.Generic.Dictionary<string, string>;

@@ -53,8 +53,7 @@ public sealed class BaShell : App
             {
                 if (context.Args.IsEmpty)
                 {
-                    var path = shell._variables.GetValueOrDefault("PATH", "").Split(':');
-                    foreach (var directoryPath in path)
+                    foreach (var directoryPath in shell.PATH)
                     {
                         var directory = shell.FileSystem.ResolveDirectory(directoryPath);
                         if (!directory.Success)
@@ -138,11 +137,11 @@ public sealed class BaShell : App
 
     private readonly Stack<(KeywordSegment Segment, bool Skip)> _blocks = [];
 
-    private readonly Dictionary<string, string> _exported = [];
+    private readonly Variables _exported = [];
 
     private readonly ShellStatement? _statement;
 
-    private readonly Dictionary<string, string> _variables = [];
+    private readonly Variables _variables = [];
 
     private CancellationTokenSource? _cts;
 
@@ -191,7 +190,10 @@ public sealed class BaShell : App
 
     private new StreamWriter StandardError => Context.IsRoot ? StandardOutput : base.StandardError;
 
-    private void ImportEnv(Dictionary<string, string>? exported = null)
+    // ReSharper disable once InconsistentNaming
+    public string[] PATH => _variables.GetValueOrDefault("PATH", "").Split(':');
+
+    private void ImportEnv(Variables? exported = null)
     {
         LastExitCode = 0;
         for (var i = 0; i < Context.Args.Length; i++)
@@ -587,7 +589,7 @@ public sealed class BaShell : App
 
     private GetFileResult ResolveFromPath(FileSystemEntryName arg)
     {
-        var path = _variables.GetValueOrDefault("PATH", "").Split(':');
+        var path = PATH;
         foreach (var directoryPath in path)
         {
             var directory = FileSystem.ResolveDirectory(directoryPath);
