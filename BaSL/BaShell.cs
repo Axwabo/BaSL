@@ -13,13 +13,9 @@ using BaSL.Interpreter;
 using BaSL.Syntax;
 using BaSL.Users;
 using Directory = BaSL.FileSystems.Directory;
-using File = BaSL.FileSystems.File;
 using Path = BaSL.FileSystems.Path;
-using RunCommand = System.Func<BaSL.Executables.ExecutableContext, System.Threading.CancellationToken, BaSL.Result<System.Threading.Tasks.Task<int>, BaSL.Error>>;
 
 namespace BaSL;
-
-using LocateCommandResult = Result<RunCommand, Error>;
 
 public sealed class BaShell : App
 {
@@ -28,21 +24,6 @@ public sealed class BaShell : App
     {
         {"help", context => new Help(context) {Variables = context.Shell._variables, Exported = context.Shell._exported}},
     };
-
-    private static RunCommand Execute(File file) => (context, token) =>
-    {
-        var execute = file.Execute(context, token);
-        return !execute.Success
-            ? execute.Error
-            : Result<Task<int>, Error>.CreateSuccess(RunAndComplete(context, execute.Value));
-    };
-
-    private static async Task<int> RunAndComplete(ExecutableContext context, Process process)
-    {
-        var code = await process.WaitForExitAsync();
-        await context.CompletePipesAsync();
-        return code;
-    }
 
     internal static (ExecutableContext, BaShell) CreateRoot(Console console, StreamWriter standardOutput, StreamWriter standardError)
     {
@@ -159,7 +140,7 @@ public sealed class BaShell : App
             {
                 // TODO: this sucks
                 await using var context = ExecutableContext.Sub(Context, this, FileSystem, standaloneStatement.Args);
-                var process = Execute(standaloneStatement.Location, context, cancellationToken);
+                var process = Run.Execute(this, standaloneStatement.Location, context, cancellationToken);
                 if (!process.Success)
                     return await WriteExecuteErrorAsync(standaloneStatement.Location, process.Error, cancellationToken);
                 var copy = context.CopyAsync();
@@ -181,7 +162,7 @@ public sealed class BaShell : App
 
                 await using var stream = file.Value;
                 await using var context = ExecutableContext.Stdin(Context, this, FileSystem, fileStdinStatement.Args, stream);
-                var process = Execute(fileStdinStatement.Location, context, cancellationToken);
+                var process = Run.Execute(this, fileStdinStatement.Location, context, cancellationToken);
                 if (!process.Success)
                     return await WriteExecuteErrorAsync(fileStdinStatement.Location, process.Error, cancellationToken);
                 var copy = context.CopyAsync();
@@ -207,7 +188,7 @@ public sealed class BaShell : App
                 else
                     stream.Seek(0, SeekOrigin.End);
                 await using var context = ExecutableContext.Redirected(Context, Shell, FileSystem, standaloneStatement.Args, new Streams(null, stream, null));
-                var process = Execute(standaloneStatement.Location, context, cancellationToken);
+                var process = Run.Execute(this, standaloneStatement.Location, context, cancellationToken);
                 if (!process.Success)
                     return await WriteExecuteErrorAsync(standaloneStatement.Location, process.Error, cancellationToken);
                 var copy = context.CopyAsync();
@@ -217,10 +198,10 @@ public sealed class BaShell : App
             }
             case PipeStatement {Source: StandaloneStatement standaloneStatement} pipeStatement:
             {
-                var sourceCommand = Locate(standaloneStatement.Location);
+                var sourceCommand = Run.Locate(this, standaloneStatement.Location);
                 if (!sourceCommand.Success)
                     return await WriteExecuteErrorAsync(standaloneStatement.Location, sourceCommand.Error, cancellationToken);
-                var targetCommand = Locate(pipeStatement.Location);
+                var targetCommand = Run.Locate(this, pipeStatement.Location);
                 if (!targetCommand.Success)
                     return await WriteExecuteErrorAsync(pipeStatement.Location, targetCommand.Error, cancellationToken);
                 await using var source = new ExecutableContext(Shell, standaloneStatement.Args).CreatePipes();
@@ -252,7 +233,7 @@ public sealed class BaShell : App
                         StandaloneStatement {Location: var standaloneLocation, Args: var standaloneArgs} => (standaloneLocation, standaloneArgs),
                         _ => throw new ArgumentOutOfRangeException(nameof(statement))
                     };
-                    var result = Locate(location);
+                    var result = Run.Locate(this, location);
                     if (!result.Success)
                         return await WriteExecuteErrorAsync(location, result.Error, cancellationToken);
                     run.Add((location, result.Value, args));
@@ -466,36 +447,9 @@ public sealed class BaShell : App
         }
     }
 
-    private LocateCommandResult Locate(CommandLocation location) => location switch
-    {
-        PathCommandLocation {FullPath: var path} => Execute(path),
-        AutoCommandLocation {Phrase: var path} when Path.IsExplicitRelativeOrAbsolute(path) => Execute(path),
-        AutoCommandLocation {Phrase: var name} when BuiltInCommands.TryGetValue(name, out var action) => LocateCommandResult.CreateSuccess((context, token) => RunAndComplete(context, Process.Start(action, context, token))),
-        AutoCommandLocation {Phrase: var name} => ResolveFromPath(name) switch
-        {
-            {Success: true, Value: var file} => Execute(file),
-            {Success: false, Error: NotFoundError} => CommandError.NotFound,
-            {Error: var error} => error
-        },
-        _ => CommandError.NotFound
-    };
-
-    private LocateCommandResult Execute(Path path)
-    {
-        var file = WorkingDirectory.ResolveFile(path);
-        return file.Success ? Execute(file.Value) : file.Error;
-    }
-
-    private Result<Task<int>, Error> Execute(CommandLocation location, ExecutableContext context, CancellationToken cancellationToken)
-    {
-        var locate = Locate(location);
-        return locate.Success ? locate.Value(context, cancellationToken) : locate.Error;
-    }
-
     internal GetFileResult ResolveFromPath(FileSystemEntryName arg)
     {
-        var path = PATH;
-        foreach (var directoryPath in path)
+        foreach (var directoryPath in PATH)
         {
             var directory = FileSystem.ResolveDirectory(directoryPath);
             if (!directory.Success)
@@ -514,14 +468,6 @@ public sealed class BaShell : App
             return false;
         _cts.Cancel();
         return true;
-    }
-
-// TODO
-    private sealed record CommandError() : Error("Command not found")
-    {
-
-        public static Error NotFound { get; } = new CommandError();
-
     }
 
 }
