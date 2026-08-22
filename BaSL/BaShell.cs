@@ -19,87 +19,14 @@ using RunCommand = System.Func<BaSL.Executables.ExecutableContext, System.Thread
 
 namespace BaSL;
 
-using BulitInCommand = Func<BaShell, ExecutableContext, Task<int>>;
 using LocateCommandResult = Result<RunCommand, Error>;
 
 public sealed class BaShell : App
 {
 
-    private static readonly Dictionary<string, BulitInCommand> BuiltInCommands = new()
+    internal static readonly Dictionary<string, Executable> BuiltInCommands = new()
     {
-        {
-            "set", Sync((shell, context) =>
-            {
-                if (context.Args.Length == 2)
-                    shell._variables[context.Args[0]] = context.Args[1];
-            })
-        },
-        {
-            "unset", Sync((shell, context) =>
-            {
-                if (context.Args.Length == 1)
-                    shell._variables.Remove(context.Args[0]);
-            })
-        },
-        {
-            "export", Sync((shell, context) =>
-            {
-                if (context.Args.Length == 2)
-                    shell._exported[context.Args[0]] = shell._variables[context.Args[0]] = context.Args[1];
-            })
-        },
-        {
-            "help", async (shell, context) =>
-            {
-                if (context.Args.IsEmpty)
-                {
-                    foreach (var directoryPath in shell.PATH)
-                    {
-                        var directory = shell.FileSystem.ResolveDirectory(directoryPath);
-                        if (!directory.Success)
-                            continue;
-                        foreach (var file in directory.Value.EnumerateFiles())
-                            if (file.Executable != null && file.Metadata.CanExecute(shell.User))
-                                await shell.StandardOutput.WriteLineAsync(file.Name);
-                    }
-
-                    await shell.StandardOutput.WriteLineAsync("clear");
-                    await shell.StandardOutput.WriteLineAsync("set");
-                    await shell.StandardOutput.WriteLineAsync("unset");
-                    await shell.StandardOutput.WriteLineAsync("export");
-                    await shell.StandardOutput.WriteLineAsync("exit");
-                    await shell.StandardOutput.WriteLineAsync("help");
-                    return 0;
-                }
-
-                var result = shell.ResolveFromPath(context.Args[0]);
-                if (!result.Success)
-                {
-                    await shell.StandardError.WriteLineAsync(result.Error.Message);
-                    return 1;
-                }
-
-                if (result.Value.Executable is not { } executable)
-                {
-                    await shell.StandardError.WriteLineAsync("Not an executable");
-                    return 1;
-                }
-
-                await shell.StandardOutput.WriteLineAsync(result.Value.FullPath.Value);
-                var app = executable(context);
-                if (app is IHelpProvider provider)
-                    await provider.DisplayHelpAsync(CancellationToken.None);
-                else
-                    await shell.StandardOutput.WriteLineAsync("No help available :(");
-                return 0;
-            }
-        }
-    };
-
-    private static BulitInCommand Sync(Action<BaShell, ExecutableContext> execute) => (shell, context) =>
-    {
-        execute(shell, context);
-        return Task.FromResult(0);
+        {"help", context => new Help(context) {Variables = context.Shell._variables, Exported = context.Shell._exported}},
     };
 
     private static RunCommand Execute(File file) => (context, token) =>
@@ -107,15 +34,15 @@ public sealed class BaShell : App
         var execute = file.Execute(context, token);
         return !execute.Success
             ? execute.Error
-            : Result<Task<int>, Error>.CreateSuccess(RunAndComplete(execute.Value));
-
-        async Task<int> RunAndComplete(Process process)
-        {
-            var code = await process.WaitForExitAsync();
-            await context.CompletePipesAsync();
-            return code;
-        }
+            : Result<Task<int>, Error>.CreateSuccess(RunAndComplete(context, execute.Value));
     };
+
+    private static async Task<int> RunAndComplete(ExecutableContext context, Process process)
+    {
+        var code = await process.WaitForExitAsync();
+        await context.CompletePipesAsync();
+        return code;
+    }
 
     internal static (ExecutableContext, BaShell) CreateRoot(Console console, StreamWriter standardOutput, StreamWriter standardError)
     {
@@ -141,11 +68,7 @@ public sealed class BaShell : App
 
     private CancellationTokenSource? _cts;
 
-    static BaShell()
-    {
-        Initialize<DefaultArgumentParsers>();
-        Initialize<BuiltInCommand>();
-    }
+    static BaShell() => Initialize<DefaultArgumentParsers>();
 
     private BaShell(ExecutableContext context, ShellStatement? statement, UserContext? user = null) : base(null!)
     {
@@ -547,18 +470,7 @@ public sealed class BaShell : App
     {
         PathCommandLocation {FullPath: var path} => Execute(path),
         AutoCommandLocation {Phrase: var path} when Path.IsExplicitRelativeOrAbsolute(path) => Execute(path),
-        AutoCommandLocation {Phrase: var name} when BuiltInCommands.TryGetValue(name, out var action) => (RunCommand) ((context, _) =>
-        {
-            var task = action(this, context);
-            return Complete();
-
-            async Task<int> Complete()
-            {
-                var code = await task;
-                await context.CompletePipesAsync();
-                return code;
-            }
-        }),
+        AutoCommandLocation {Phrase: var name} when BuiltInCommands.TryGetValue(name, out var action) => LocateCommandResult.CreateSuccess((context, token) => RunAndComplete(context, Process.Start(action, context, token))),
         AutoCommandLocation {Phrase: var name} => ResolveFromPath(name) switch
         {
             {Success: true, Value: var file} => Execute(file),
@@ -580,7 +492,7 @@ public sealed class BaShell : App
         return locate.Success ? locate.Value(context, cancellationToken) : locate.Error;
     }
 
-    private GetFileResult ResolveFromPath(FileSystemEntryName arg)
+    internal GetFileResult ResolveFromPath(FileSystemEntryName arg)
     {
         var path = PATH;
         foreach (var directoryPath in path)
