@@ -51,7 +51,7 @@ jobs:
         uses: actions/upload-artifact@v7.0.1
         with:
           path: ${{ env.TERMINAL }}/${{ env.ZIP }}
-          name: ${{ env.ZIP }}
+          name: ${{ matrix.name }}.zip
           if-no-files-found: error
   
   release:
