@@ -6,7 +6,7 @@ using BaSL.FileSystems.Extensions;
 using Directory = BaSL.FileSystems.Directory;
 using File = BaSL.FileSystems.File;
 
-namespace BaSL.Shell.Console;
+namespace BaSL.Terminal;
 
 [Help("Zips the directory at the given path, and saves it in the physical directory BaSL is running in.")]
 public sealed partial class ZipFs : App

@@ -5,7 +5,7 @@ using Directory = System.IO.Directory;
 using File = System.IO.File;
 using Path = System.IO.Path;
 
-namespace BaSL.Shell.Console;
+namespace BaSL.Terminal;
 
 public static class AutoMount
 {

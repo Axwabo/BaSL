@@ -3,7 +3,7 @@
         <Project Path="Generators/BaSL.SourceGenerators.Tests/BaSL.SourceGenerators.Tests.csproj" />
         <Project Path="Generators/BaSL.SourceGenerators/BaSL.SourceGenerators.csproj" />
     </Folder>
-    <Project Path="BaSL.Shell.Console/BaSL.Shell.Console.csproj" />
+    <Project Path="BaSL.Terminal\BaSL.Terminal.csproj" />
     <Project Path="BaSL.Tests\BaSL.Tests.csproj" />
     <Project Path="BaSL\BaSL.csproj" />
     <Project Path="Experiments/Experiments.csproj" />

@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace BaSL.Shell.Console;
+namespace BaSL.Terminal;
 
 using Console = System.Console; // why...
 

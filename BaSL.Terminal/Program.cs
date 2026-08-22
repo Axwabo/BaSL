@@ -1,4 +1,4 @@
-﻿using BaSL.Shell.Console;
+﻿using BaSL.Terminal;
 using Console = System.Console;
 
 await using var stdin = Console.OpenStandardInput();

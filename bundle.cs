@@ -8,7 +8,7 @@ const string readme = "README.md";
 using var zipFile = File.Create(args[0]);
 using var archive = new ZipArchive(zipFile, ZipArchiveMode.Create);
 
-var executable = Directory.EnumerateFiles(".", "BaSL.Shell.Console*").First();
+var executable = Directory.EnumerateFiles(".", "BaSL.Terminal*").First();
 archive.CreateEntryFromFile(executable, $"bin/{Path.GetFileName(executable)}");
 archive.CreateEntryFromFile($"../{readme}", readme);
 

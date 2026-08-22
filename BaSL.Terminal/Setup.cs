@@ -4,7 +4,7 @@ using BaSL.FileSystems.Extensions;
 using Directory = BaSL.FileSystems.Directory;
 using Path = BaSL.FileSystems.Path;
 
-namespace BaSL.Shell.Console;
+namespace BaSL.Terminal;
 
 public static class Setup
 {
@@ -24,7 +24,7 @@ public static class Setup
                                   ./shebang.sh
                                   """;
 
-    private const string Prefix = "BaSL.Shell.Console.Home.";
+    private const string Prefix = "BaSL.Terminal.Home.";
 
     private static async Task<OperatingSystem> CreateSystemAsync(StreamWriter err, string[] args)
     {
@@ -55,11 +55,11 @@ public static class Setup
         return system;
     }
 
-    public static async Task<BaSL.Console> CreateConsoleAsync(string[] args, StreamWriter stdout, StreamWriter stderr)
+    public static async Task<Console> CreateConsoleAsync(string[] args, StreamWriter stdout, StreamWriter stderr)
     {
         var system = await CreateSystemAsync(stderr, args);
         await stdout.WriteLineAsync(Banner);
-        return new BaSL.Console(system, Username, stdout, stderr);
+        return new Console(system, Username, stdout, stderr);
     }
 
 }
