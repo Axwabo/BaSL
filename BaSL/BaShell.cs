@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using BaSL.BuiltIns;
 using BaSL.Executables;
 using BaSL.Executables.Pipes;
 using BaSL.FileSystems;
@@ -26,7 +27,6 @@ public sealed class BaShell : App
 
     private static readonly Dictionary<string, BulitInCommand> BuiltInCommands = new()
     {
-        {"clear", Sync(System.Console.Clear)},
         {
             "set", Sync((shell, context) =>
             {
@@ -102,12 +102,6 @@ public sealed class BaShell : App
         return Task.FromResult(0);
     };
 
-    private static BulitInCommand Sync(Action execute) => (_, _) =>
-    {
-        execute();
-        return Task.FromResult(0);
-    };
-
     private static RunCommand Execute(File file) => (context, token) =>
     {
         var execute = file.Execute(context, token);
@@ -135,6 +129,8 @@ public sealed class BaShell : App
         return (shell.Context, shell);
     }
 
+    private static void Initialize<T>() => _ = typeof(T);
+
     private readonly Stack<(KeywordSegment Segment, bool Skip)> _blocks = [];
 
     private readonly Variables _exported = [];
@@ -147,11 +143,8 @@ public sealed class BaShell : App
 
     static BaShell()
     {
-        ArgumentParser<bool>.Delegate = bool.TryParse;
-        ArgumentParser<float>.Delegate = float.TryParse;
-        ArgumentParser<double>.Delegate = double.TryParse;
-        ArgumentParser<int>.Delegate = int.TryParse;
-        ArgumentParser<byte>.Delegate = byte.TryParse;
+        Initialize<DefaultArgumentParsers>();
+        Initialize<BuiltInCommand>();
     }
 
     private BaShell(ExecutableContext context, ShellStatement? statement, UserContext? user = null) : base(null!)

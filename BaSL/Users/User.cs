@@ -19,7 +19,7 @@ public sealed class User
 
     public Path Home => Environment.GetValueOrDefault("HOME", "");
 
-    internal Dictionary<string, string> Environment { get; } = [];
+    internal Variables Environment { get; } = [];
 
     public IReadOnlyDictionary<string, string> EnvironmentVariables { get; }
 
