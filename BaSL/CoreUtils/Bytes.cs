@@ -15,10 +15,6 @@ namespace BaSL.CoreUtils;
 public sealed partial class Bytes : App
 {
 
-    public Bytes(ExecutableContext context) : base(context)
-    {
-    }
-
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         if (Args.IsEmpty)

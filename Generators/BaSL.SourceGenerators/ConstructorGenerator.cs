@@ -33,9 +33,10 @@ public sealed class ConstructorGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var provider = context.SyntaxProvider.CreateSyntaxProvider(
-            (node, _) => node is ClassDeclarationSyntax,
+            (node, _) => node is ClassDeclarationSyntax {BaseList.Types.Count: not 0},
             (ctx, token)
-                => ctx.SemanticModel.GetDeclaredSymbol(ctx.Node, token) is INamedTypeSymbol {BaseType: { } baseType, Constructors.Length: 0}
+                => ctx.SemanticModel.GetDeclaredSymbol(ctx.Node, token) is INamedTypeSymbol {BaseType: { } baseType, InstanceConstructors: var constructors}
+                   && (constructors.Length == 0 || constructors[0].IsImplicitlyDeclared)
                    && baseType.ToString() == "BaSL.Executables.App"
                    && Helpers.GetParent(ctx.Node) is var (ns, name)
                     ? new ConstructorToGenerate(ns, name)
