@@ -19,10 +19,6 @@ public sealed partial class Echo : App
         _ => char.MinValue
     };
 
-    public Echo(ExecutableContext context) : base(context)
-    {
-    }
-
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         var args = Args;

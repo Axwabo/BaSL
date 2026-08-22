@@ -10,10 +10,6 @@ namespace BaSL.CoreUtils;
 public sealed partial class Mkdir : App
 {
 
-    public Mkdir(ExecutableContext context) : base(context)
-    {
-    }
-
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         if (Args.Length == 0)

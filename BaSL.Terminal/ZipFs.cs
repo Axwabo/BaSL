@@ -12,10 +12,6 @@ namespace BaSL.Terminal;
 public sealed partial class ZipFs : App
 {
 
-    public ZipFs(ExecutableContext context) : base(context)
-    {
-    }
-
     [Execute]
     private async Task<int> Zip([DefaultTo(DefaultDirectory.Current)] Directory directory, CancellationToken cancellationToken = default)
     {

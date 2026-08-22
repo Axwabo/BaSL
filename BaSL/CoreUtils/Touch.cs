@@ -11,10 +11,6 @@ namespace BaSL.CoreUtils;
 public sealed partial class Touch : App
 {
 
-    public Touch(ExecutableContext context) : base(context)
-    {
-    }
-
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         foreach (var arg in Args)

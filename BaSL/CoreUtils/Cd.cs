@@ -12,10 +12,6 @@ namespace BaSL.CoreUtils;
 public sealed partial class Cd : App
 {
 
-    public Cd(ExecutableContext context) : base(context)
-    {
-    }
-
     [Execute]
     public Task<int> ChangeAsync([DefaultTo(DefaultDirectory.UserHome)] Directory directory)
     {

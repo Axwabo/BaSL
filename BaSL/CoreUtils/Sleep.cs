@@ -21,9 +21,3 @@ public sealed partial class Sleep : App
 
     // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global
     public static Func<int, CancellationToken, Task> SleepMs { get; set; } = Task.Delay;
-
-    public Sleep(ExecutableContext context) : base(context)
-    {
-    }
-
-}

@@ -11,10 +11,6 @@ namespace BaSL.CoreUtils;
 public sealed partial class Sudo : App
 {
 
-    public Sudo(ExecutableContext context) : base(context)
-    {
-    }
-
     // TODO: no freaking clue on how to solve auth
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
         => Args.IsEmpty

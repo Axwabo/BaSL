@@ -18,10 +18,6 @@ namespace BaSL.CoreUtils;
 public sealed partial class Rm : App
 {
 
-    public Rm(ExecutableContext context) : base(context)
-    {
-    }
-
     [Execute]
     private async Task<int> RemoveAsync(string? path, [Flag] bool recursive, [Flag] bool french, CancellationToken cancellationToken)
     {

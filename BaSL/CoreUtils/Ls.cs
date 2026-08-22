@@ -41,10 +41,6 @@ public sealed partial class Ls : App
             await writer.WriteAsync('\'');
     }
 
-    public Ls(ExecutableContext context) : base(context)
-    {
-    }
-
     [Execute]
     public async Task<int> MogusAsync(string? path = null, [Flag] bool longFormat = false, CancellationToken cancellationToken = default)
     {

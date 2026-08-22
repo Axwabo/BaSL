@@ -18,10 +18,6 @@ using ModeDeltas = (Mode AddOwner, Mode AddOthers, Mode RemoveOwner, Mode Remove
 public sealed partial class Chmod : App
 {
 
-    public Chmod(ExecutableContext context) : base(context)
-    {
-    }
-
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         if (Args.Length < 2)

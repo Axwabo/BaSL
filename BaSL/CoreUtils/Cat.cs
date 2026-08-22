@@ -14,10 +14,6 @@ namespace BaSL.CoreUtils;
 public sealed partial class Cat : App
 {
 
-    public Cat(ExecutableContext context) : base(context)
-    {
-    }
-
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         if (Args.Length == 0)
