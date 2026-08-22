@@ -50,7 +50,7 @@ jobs:
       - name: Zip artifact
         uses: actions/upload-artifact@v7.0.1
         with:
-          path: ${{ TERMINAL }}/${{ env.ZIP }}
+          path: ${{ env.TERMINAL }}/${{ env.ZIP }}
           name: ${{ matrix.name }}.zip
           if-no-files-found: error
           
