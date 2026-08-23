@@ -114,6 +114,13 @@ public sealed class BaShell : App
             return await ExecuteSingleAsync(_statement, cancellationToken);
         if (Context.Args.IsEmpty)
             return await ExecuteInteractiveAsync(cancellationToken);
+        if (Context.Args is ["-c", var command])
+        {
+            await ExecuteAsync(command, cancellationToken);
+            int.TryParse(_local.GetValueOrDefault("?", "0"), out var exitCode);
+            return exitCode;
+        }
+
         var copy = Context.CopyAsync();
         var code = await ExecuteFileAsync(Context.Args[0], cancellationToken);
         await Context.CompletePipesAsync();
