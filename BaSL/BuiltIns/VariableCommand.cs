@@ -9,7 +9,9 @@ internal abstract class VariableCommand : SyncCommand
     {
     }
 
-    protected sealed override void Execute()
+    protected int ExitCode { get; set; }
+
+    protected sealed override int Execute()
     {
         foreach (var arg in Args)
         {
@@ -18,6 +20,8 @@ internal abstract class VariableCommand : SyncCommand
             if (equals > 1 && arg[0] is >= 'A' and <= 'Z' or >= 'a' and <= 'z')
                 Process(arg[..equals], arg[(equals + 1)..]);
         }
+        
+        return ExitCode;
     }
 
     protected abstract void Process(string name, string value);

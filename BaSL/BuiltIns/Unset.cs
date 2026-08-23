@@ -11,13 +11,15 @@ internal sealed partial class Unset : SyncCommand
     {
     }
 
-    protected override void Execute()
+    protected override int Execute()
     {
         foreach (var arg in Args)
         {
             Local.Remove(arg);
             Exported.Remove(arg);
         }
+
+        return 0;
     }
 
 }

@@ -11,12 +11,8 @@ internal abstract class SyncCommand : BuiltInCommand
     {
     }
 
-    public sealed override Task<int> ExecuteAsync(CancellationToken cancellationToken)
-    {
-        Execute();
-        return Task.FromResult(0);
-    }
+    public sealed override Task<int> ExecuteAsync(CancellationToken cancellationToken) => Task.FromResult(Execute());
 
-    protected abstract void Execute();
+    protected abstract int Execute();
 
 }

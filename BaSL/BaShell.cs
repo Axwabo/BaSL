@@ -23,9 +23,10 @@ public sealed class BaShell : App
     internal static readonly Dictionary<string, Executable> BuiltInCommands = new()
     {
         {"help", context => new Help(context) {Vars = context.Shell.Vars}},
-        {"set", context => new Set(context) {Vars = context.Shell.Vars}},
+        {"let", context => new Let(context){Vars = context.Shell.Vars}},
         {"export", context => new Export(context) {Vars = context.Shell.Vars}},
-        {"unset", context => new Unset(context) {Vars = context.Shell.Vars}},
+        {"set", context => new Set(context) {Vars = context.Shell.Vars}},
+        {"unset", context => new Unset(context) {Vars = context.Shell.Vars}}
     };
 
     internal static (ExecutableContext, BaShell) CreateRoot(Console console, StreamWriter standardOutput, StreamWriter standardError)

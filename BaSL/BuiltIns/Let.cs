@@ -1,0 +1,53 @@
+using System;
+using BaSL.Executables;
+using BaSL.Executables.Attributes;
+
+namespace BaSL.BuiltIns;
+
+[Help("""
+      Evaluates a simple integer arithmetic expression (constant or two operands), and sets a variable to that value.
+      Exits with code 1 if the last argument evaluates to 0.
+      Examples:
+      let a=1+2
+      let 'b = 5 * 10'
+      let sus=4+20 "c = $b * 20"
+      """)]
+internal sealed partial class Let : VariableCommand
+{
+
+    public Let(ExecutableContext context) : base(context)
+    {
+    }
+
+    protected override void Process(string name, string value)
+    {
+        var span = value.AsSpan();
+        var index = span.IndexOfAny("+=*/%");
+        if (index == -1)
+        {
+            if (int.TryParse(span.Trim(), out var single))
+                Store(name, single);
+            return;
+        }
+
+        int.TryParse(span[..index].Trim(), out var x);
+        int.TryParse(span[(index + 1)..].Trim(), out var y);
+        var result = span[index] switch
+        {
+            '+' => x + y,
+            '-' => x - y,
+            '*' => x * y,
+            '/' => x / y,
+            '%' => x % y,
+            _ => 0
+        };
+        Store(name, result);
+    }
+
+    private void Store(string name, int result)
+    {
+        Local[name] = result.ToString();
+        ExitCode = result == 0 ? 1 : 0;
+    }
+
+}
