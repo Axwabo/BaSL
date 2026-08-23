@@ -19,11 +19,10 @@ internal static class BlocksExtensions
 
         private void Skip(KeywordSegment to) => blocks.Push((to, true));
 
-        public bool Transition(KeywordSegment segment, bool skip)
+        public void Transition(KeywordSegment segment, bool skip)
         {
             blocks.Pop();
             blocks.Push((segment, skip));
-            return !skip;
         }
 
     }

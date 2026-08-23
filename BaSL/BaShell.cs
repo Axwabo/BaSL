@@ -454,13 +454,16 @@ public sealed class BaShell : App
                 return _blocks.Skip(false);
             }
             case (Keyword.Then, Keyword.Then, true):
-                return _blocks.Transition(KeywordSegment.Then, false);
+                _blocks.Transition(KeywordSegment.Then, false);
+                return false;
             case (Keyword.Then, Keyword.Else, true):
                 return false;
             case (Keyword.Else, Keyword.Then, false):
-                return _blocks.Transition(KeywordSegment.EndIf, true);
+                 _blocks.Transition(KeywordSegment.EndIf, true);
+                 return true;
             case (Keyword.Else, Keyword.Else, true):
-                return _blocks.Transition(KeywordSegment.Else, false);
+                _blocks.Transition(KeywordSegment.Else, false);
+                return false;
             // TODO: what should the keyword check be
             case (Keyword.EndIf, Keyword.Then or Keyword.Else or Keyword.EndIf, _):
                 _blocks.Pop();
