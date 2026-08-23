@@ -6,7 +6,7 @@ public abstract record ShellStatement;
 
 public abstract record ExtendableStatement(CommandLocation Location, Args Args) : ShellStatement;
 
-public sealed record StandaloneStatement(CommandLocation Location, Args Args = default) : ExtendableStatement(Location, Args);
+public sealed record StandaloneStatement(CommandLocation Location, Args Args = default, Variables? Variables = null) : ExtendableStatement(Location, Args);
 
 public sealed record FileStdinStatement(CommandLocation Location, Args Args, Path SourcePath) : ExtendableStatement(Location, Args);
 

@@ -15,6 +15,8 @@ internal abstract record Segment
 
 internal sealed record ArgsSegment(Args Args) : Segment;
 
+internal sealed record VariablesSegment(Variables? Variables) : Segment; 
+
 internal sealed record PipeSegment : Segment;
 
 internal sealed record StdinFileSegment : Segment;

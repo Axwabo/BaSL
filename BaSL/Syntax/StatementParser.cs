@@ -33,23 +33,34 @@ internal static class StatementParser
         return array;
     }
 
-    public static ShellStatement? CreateStatement(ReadOnlySpan<Segment> syntax)
-        => syntax is not [ArgsSegment {Args: var firstArgs}, ..]
-            ? null
-            : syntax[1..] switch // TODO: procedural?
-            {
-                [] => StandaloneStatement.FromArgs(firstArgs),
-                [StdinFileSegment, ArgsSegment {Args: [var source, ..]}] => firstArgs < source,
-                [RedirectOverwriteSegment, ArgsSegment {Args: [var target, ..]}] => firstArgs > target,
-                [RedirectAppendSegment, ArgsSegment {Args: [var target, ..]}] => firstArgs >> target,
-                [StdinFileSegment, ArgsSegment {Args: [var source, ..]}, RedirectOverwriteSegment, ArgsSegment {Args: [var target, ..]}] => firstArgs < source > target,
-                [StdinFileSegment, ArgsSegment {Args: [var source, ..]}, RedirectAppendSegment, ArgsSegment {Args: [var target, ..]}] => (firstArgs < source) >> target,
-                [PipeSegment, ArgsSegment {Args: var targetArgs}] => firstArgs | targetArgs,
-                [StdinFileSegment, ArgsSegment {Args: [var source, ..]}, PipeSegment, ArgsSegment {Args: var targetArgs}] => firstArgs < source | targetArgs,
-                [StdinFileSegment, ArgsSegment {Args: [var source, ..]}, PipeSegment, ..] => ExpandPipes(StandaloneStatement.FromArgs(firstArgs) < source, syntax, 4),
-                [PipeSegment, ..] => ExpandPipes(StandaloneStatement.FromArgs(firstArgs), syntax),
-                _ => null
-            };
+    public static ShellStatement? CreateStatement(ReadOnlySpan<Segment> syntax) => syntax switch
+    {
+        [VariablesSegment {Variables: {Count: not 0} variables}, ArgsSegment {Args: var firstArgs}, .. var rest] => CreateStatement(rest, firstArgs, variables),
+        [ArgsSegment {Args: var firstArgs}, .. var rest] => CreateStatement(rest, firstArgs),
+        _ => null
+    };
+
+    private static ShellStatement? CreateStatement(ReadOnlySpan<Segment> syntax, Args firstArgs, Variables? variables = null)
+    {
+        if (StandaloneStatement.FromArgs(firstArgs) is not { } first)
+            return null;
+        if (variables is not null)
+            first = first with {Variables = variables};
+        return syntax switch // TODO: procedural?
+        {
+            [] => first,
+            [StdinFileSegment, ArgsSegment {Args: [var source, ..]}] => first < source,
+            [RedirectOverwriteSegment, ArgsSegment {Args: [var target, ..]}] => first > target,
+            [RedirectAppendSegment, ArgsSegment {Args: [var target, ..]}] => first >> target,
+            [StdinFileSegment, ArgsSegment {Args: [var source, ..]}, RedirectOverwriteSegment, ArgsSegment {Args: [var target, ..]}] => first < source > target,
+            [StdinFileSegment, ArgsSegment {Args: [var source, ..]}, RedirectAppendSegment, ArgsSegment {Args: [var target, ..]}] => (first < source) >> target,
+            [PipeSegment, ArgsSegment {Args: var targetArgs}] => first | targetArgs,
+            [StdinFileSegment, ArgsSegment {Args: [var source, ..]}, PipeSegment, ArgsSegment {Args: var targetArgs}] => first < source | targetArgs,
+            [StdinFileSegment, ArgsSegment {Args: [var source, ..]}, PipeSegment, ..] => ExpandPipes(first < source, syntax, 4),
+            [PipeSegment, ..] => ExpandPipes((first), syntax),
+            _ => null
+        };
+    }
 
     private static ShellStatement? ExpandPipes(ShellStatement? statement, ReadOnlySpan<Segment> syntax, int stardIndex = 2)
     {
@@ -208,7 +219,7 @@ internal static class StatementParser
                 else
                 {
                     var separator = variables("IFS", out var ifs) ? ifs : DefaultIfs;
-                    foreach (var memory in result.AsMemory().Split(separator.AsMemory())) 
+                    foreach (var memory in result.AsMemory().Split(separator.AsMemory()))
                         args.Add(memory.Span.ToString());
                 }
             }
