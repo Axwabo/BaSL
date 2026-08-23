@@ -23,6 +23,8 @@ internal static class StatementParser
         }
         while (index != -1);
 
+        if (_segments is [.., ContinueSegment {On: Continue.Always}])
+            _segments.RemoveAt(_segments.Count - 1);
         var array = _segments.ToArray();
         _segments.Clear();
         return array;
