@@ -95,6 +95,8 @@ internal static class StatementParser
         var condition = false;
         Variables? vars = null;
         var potentialVar = true;
+        var raw = true;
+        string? varName = null;
         for (var i = start; i < s.Length; i++)
         {
             var c = s[i];
@@ -104,20 +106,20 @@ internal static class StatementParser
                 case (not SyntaxType.VerbatimString, '\\', _):
                     i++;
                     argBuzilder.Append(next);
-                    potentialVar = false;
+                    raw = potentialVar = false;
                     break;
                 case (SyntaxType.VerbatimString, '\'', _):
                 case (SyntaxType.QuotedString, '"', _):
                     syntax = outerSyntax = SyntaxType.Text;
-                    potentialVar = false;
+                    raw = potentialVar = false;
                     break;
                 case (SyntaxType.Text, '\'', _):
                     syntax = SyntaxType.VerbatimString;
-                    potentialVar = false;
+                    raw = potentialVar = false;
                     break;
                 case (SyntaxType.Text, '"', _):
                     syntax = SyntaxType.QuotedString;
-                    potentialVar = false;
+                    raw = potentialVar = false;
                     break;
                 case (SyntaxType.Text, '|', '|') when !condition:
                     Complete(Continue.OnFailure);
@@ -153,6 +155,7 @@ internal static class StatementParser
                     break;
                 case (SyntaxType.Text or SyntaxType.QuotedString, '$', _):
                     syntax = SyntaxType.Variable;
+                    raw = false;
                     break;
                 case (SyntaxType.Variable, ';', _) when outerSyntax == SyntaxType.Text:
                     AppendVariable();
@@ -160,22 +163,27 @@ internal static class StatementParser
                     return i;
                 case (SyntaxType.Variable, ' ', _) when outerSyntax == SyntaxType.QuotedString:
                 case (SyntaxType.Variable, '.', _):
-                    AddArg();
+                    AddArg(space: c == ' ');
                     argBuzilder.Append(c);
                     break;
                 case (SyntaxType.Variable, '"', _) when outerSyntax == SyntaxType.QuotedString:
                 case (SyntaxType.Variable, ' ', _):
                     AppendVariable();
-                    AddArg();
+                    AddArg(space: c == ' ');
                     break;
                 case (SyntaxType.Variable, _, _):
                     variableBuilder.Append(c);
                     break;
+                case (SyntaxType.Text, '=', _) when raw && potentialVar && outerSyntax == SyntaxType.Text:
+                    varName = argBuzilder.ToString();
+                    argBuzilder.Clear();
+                    break;
                 case (SyntaxType.Text, '~', _) when !string.IsNullOrEmpty(home) && argBuzilder.Length == 0:
                     argBuzilder.Append(home);
+                    raw = false;
                     break;
                 case (SyntaxType.Text, _, _) when char.IsWhiteSpace(c):
-                    AddArg(space: true);
+                    AddArg();
                     break;
                 case (SyntaxType.Text or SyntaxType.QuotedString or SyntaxType.VerbatimString, _, _):
                     argBuzilder.Append(c);
@@ -190,7 +198,13 @@ internal static class StatementParser
         {
             if (syntax == SyntaxType.Variable)
                 AppendVariable();
-            if (argBuzilder.Length != 0)
+            if (varName != null)
+            {
+                vars ??= [];
+                vars[varName] = argBuzilder.ToString();
+                raw = potentialVar = true;
+            }
+            else if (argBuzilder.Length != 0)
             {
                 var arg = argBuzilder.ToString();
                 if (space && args.Count == 0 && KeywordSegment.Get(arg) is { } keyword)
@@ -201,11 +215,15 @@ internal static class StatementParser
 
             argBuzilder.Clear();
             syntax = next;
+            varName = null;
         }
 
         void AddStatement(Segment? segment = null)
         {
             AddArg();
+            raw = potentialVar = false;
+            if (vars is {Count: not 0})
+                statements.Add(new VariablesSegment(vars));
             if (args.Count != 0)
                 statements.Add(new ArgsSegment(args.ToArray()));
             if (segment is not null)
