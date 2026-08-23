@@ -466,7 +466,7 @@ public sealed class BaShell : App
             var directory = FileSystem.ResolveDirectory(directoryPath);
             if (!directory.Success)
                 continue;
-            var file = directory.Value.GetFile(arg);
+            var file = directory.Value.ResolveFile(arg);
             if (file.Success)
                 return file;
         }
