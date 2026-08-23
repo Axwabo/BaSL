@@ -11,24 +11,19 @@ internal abstract class VariableCommand : BuiltInCommand
     {
     }
 
-    protected string Arg { get; set; } = "";
-
-    protected int ExitCode { get; set; }
-
-    public sealed override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
+    public sealed override Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         foreach (var arg in Args)
         {
-            Arg = arg;
             var equals = arg.IndexOf('=');
             // TODO: proper variable name validation
             if (equals >= 1 && arg[0] is >= 'A' and <= 'Z' or >= 'a' and <= 'z')
-                await Process(arg[..equals], arg[(equals + 1)..], cancellationToken);
+                Process(arg[..equals], arg[(equals + 1)..]);
         }
 
-        return ExitCode;
+        return Task.FromResult(0);
     }
 
-    protected abstract Task Process(string name, string value, CancellationToken cancellationToken);
+    protected abstract void Process(string name, string value);
 
 }

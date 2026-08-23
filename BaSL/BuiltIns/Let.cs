@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
@@ -15,18 +14,41 @@ namespace BaSL.BuiltIns;
       let 'b = 5 * 10'
       let sus=4+20 "c = $b * 20"
       """)]
-internal sealed partial class Let : VariableCommand
+internal sealed partial class Let : BuiltInCommand
 {
 
     private const string Operators = "+=*/%";
 
     private static readonly Error DivideByZero = new DivideByZeroError();
 
+    private int _lastResult;
+
     public Let(ExecutableContext context) : base(context)
     {
     }
 
-    protected override async Task Process(string name, string value, CancellationToken cancellationToken)
+    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
+    {
+        foreach (var arg in Args)
+        {
+            var equals = arg.IndexOf('=');
+            // TODO: proper variable name validation
+            if (equals < 1 || arg[0] is not (>= 'A' and <= 'Z' or >= 'a' and <= 'z'))
+                continue;
+            var name = arg[..equals];
+            switch (arg.AsSpan(equals + 1))
+            {
+                case [.. var name, '=']:
+                    if (int.TryParse(value, out))
+                        break;
+            }
+        }
+
+        return _lastResult == 0 ? 1 : 0;
+    }
+
+    /*
+    protected  async void Process(string name, string value, CancellationToken cancellationToken)
     {
         var span = value.AsSpan();
         var index = span.IndexOfAny(Operators);
@@ -79,7 +101,7 @@ internal sealed partial class Let : VariableCommand
         {
             ['+', '+'] => "",
              _=>"a"
-        };*/
+        };#1#
         if (value.EndsWith("++"))
             await EvaluateSelf('+', 1, name, cancellationToken);
         else if (int.TryParse(value.AsSpan().Trim(), out var single))
@@ -89,8 +111,9 @@ internal sealed partial class Let : VariableCommand
     private void Store(string name, int result)
     {
         Local[name] = result.ToString();
-        ExitCode = result == 0 ? 1 : 0;
+        _lastResult = result;
     }
+    */
 
 }
 
