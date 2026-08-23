@@ -108,21 +108,34 @@ public sealed class BaShell : App
             _exported[kvp.Key] = _local[kvp.Key] = kvp.Value;
     }
 
-    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
-    {
-        if (_statement is not null)
-            return await ExecuteSingleAsync(_statement, cancellationToken);
-        if (Context.Args.IsEmpty)
-            return await ExecuteInteractiveAsync(cancellationToken);
-        if (Context.Args is ["-c", var command])
+    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken) => _statement is not null
+        ? await ExecuteSingleAsync(_statement, cancellationToken)
+        : Context.Args switch
         {
-            await ExecuteAsync(command, cancellationToken);
-            int.TryParse(_local.GetValueOrDefault("?", "0"), out var exitCode);
-            return exitCode;
-        }
+            [] or ["-i"] => await ExecuteInteractiveAsync(cancellationToken),
+            [var file] => await RunAsSubshellAsync(() => ExecuteFileAsync(file, cancellationToken)),
+            ["-c", var command] => await RunAsSubshellAsync(async () =>
+            {
+                await ExecuteAsync(command, cancellationToken);
+                int.TryParse(_local.GetValueOrDefault("?", "0"), out var exitCode);
+                return exitCode;
+            }),
+            _ => await ErrorAsync(
+                """
+                Invalid usage. Use either:
+                basl
+                basl -i
+                basl -c 'command'
+                basl /path/to/script
+                """,
+                cancellationToken
+            )
+        };
 
+    private async Task<int> RunAsSubshellAsync(Func<Task<int>> execute)
+    {
         var copy = Context.CopyAsync();
-        var code = await ExecuteFileAsync(Context.Args[0], cancellationToken);
+        var code = await execute();
         await Context.CompletePipesAsync();
         await copy;
         return code;
