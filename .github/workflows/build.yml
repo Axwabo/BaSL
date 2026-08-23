@@ -30,7 +30,7 @@ jobs:
       - uses: actions/upload-artifact@v7.0.1
         with:
           path: ${{ env.CORE }}/BaSL*.nupkg
-          name: ${{ matrix.name }}.nupkg
+          name: 'NuGet Packages'
           if-no-files-found: error
   
   build-native:
@@ -62,7 +62,7 @@ jobs:
       - uses: actions/upload-artifact@v7.0.1
         with:
           path: ${{ env.TERMINAL }}/${{ env.ZIP }}
-          name: ${{ matrix.name }}.zip
+          name: ${{ matrix.name }}
           if-no-files-found: error
   
   release:
