@@ -1,3 +1,5 @@
+using System.Threading;
+using System.Threading.Tasks;
 using BaSL.Executables;
 using BaSL.Executables.Attributes;
 
@@ -11,6 +13,10 @@ internal sealed partial class Set : VariableCommand
     {
     }
 
-    protected override void Process(string name, string value) => Local[name] = value;
+    protected override Task Process(string name, string value, CancellationToken cancellationToken)
+    {
+         Local[name] = value;
+         return Task.CompletedTask;
+    }
 
 }

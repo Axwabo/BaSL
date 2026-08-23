@@ -1,4 +1,6 @@
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using BaSL.Executables;
 using BaSL.Executables.Attributes;
 
@@ -15,11 +17,13 @@ namespace BaSL.BuiltIns;
 internal sealed partial class Let : VariableCommand
 {
 
+    private static readonly Error DivideByZero = new DivideByZeroError();
+
     public Let(ExecutableContext context) : base(context)
     {
     }
 
-    protected override void Process(string name, string value)
+    protected override async Task Process(string name, string value, CancellationToken cancellationToken)
     {
         var span = value.AsSpan();
         var index = span.IndexOfAny("+=*/%");
@@ -32,16 +36,25 @@ internal sealed partial class Let : VariableCommand
 
         int.TryParse(span[..index].Trim(), out var x);
         int.TryParse(span[(index + 1)..].Trim(), out var y);
-        var result = span[index] switch
+        Result<int, Error> result = span[index] switch
         {
             '+' => x + y,
             '-' => x - y,
             '*' => x * y,
+            '/' when y == 0 => DivideByZero,
             '/' => x / y,
             '%' => x % y,
             _ => 0
         };
-        Store(name, result);
+        if (result.Success)
+        {
+            Store(name, result.Value);
+            return;
+        }
+
+        await StandardError.WriteAsync(Arg, cancellationToken);
+        await StandardError.WriteAsync(": ", cancellationToken);
+        await StandardError.WriteLineAsync(result.Error, cancellationToken);
     }
 
     private void Store(string name, int result)
@@ -51,3 +64,5 @@ internal sealed partial class Let : VariableCommand
     }
 
 }
+
+file sealed record DivideByZeroError() : Error("division by 0");

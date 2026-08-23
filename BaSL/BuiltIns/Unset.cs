@@ -1,17 +1,19 @@
+using System.Threading;
+using System.Threading.Tasks;
 using BaSL.Executables;
 using BaSL.Executables.Attributes;
 
 namespace BaSL.BuiltIns;
 
 [Help("Unsets the given variables.")]
-internal sealed partial class Unset : SyncCommand
+internal sealed partial class Unset : BuiltInCommand
 {
 
     public Unset(ExecutableContext context) : base(context)
     {
     }
 
-    protected override int Execute()
+    public override Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         foreach (var arg in Args)
         {
@@ -19,7 +21,7 @@ internal sealed partial class Unset : SyncCommand
             Exported.Remove(arg);
         }
 
-        return 0;
+        return Task.FromResult(0);
     }
 
 }

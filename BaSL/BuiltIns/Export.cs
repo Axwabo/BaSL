@@ -1,3 +1,5 @@
+using System.Threading;
+using System.Threading.Tasks;
 using BaSL.Executables;
 using BaSL.Executables.Attributes;
 
@@ -11,6 +13,10 @@ internal sealed partial class Export : VariableCommand
     {
     }
 
-    protected override void Process(string name, string value) => Exported[name] = Local[name] = value;
+    protected override Task Process(string name, string value, CancellationToken cancellationToken)
+    {
+        Exported[name] = Local[name] = value;
+        return Task.CompletedTask;
+    }
 
 }
