@@ -79,4 +79,7 @@ jobs:
 
       - uses: softprops/action-gh-release@v3.0.2
         with:
-          files: '*'
+          files: |
+            *.zip
+            *.nupkg
+            *.dll
