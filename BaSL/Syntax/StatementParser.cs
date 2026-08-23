@@ -202,7 +202,7 @@ internal static class StatementParser
             {
                 vars ??= [];
                 vars[varName] = argBuzilder.ToString();
-                raw = potentialVar = true;
+                raw = true;
             }
             else if (argBuzilder.Length != 0)
             {
@@ -223,7 +223,10 @@ internal static class StatementParser
             AddArg();
             raw = potentialVar = false;
             if (vars is {Count: not 0})
+            {
                 statements.Add(new VariablesSegment(vars));
+                vars = null;
+            }
             if (args.Count != 0)
                 statements.Add(new ArgsSegment(args.ToArray()));
             if (segment is not null)
@@ -256,6 +259,8 @@ internal static class StatementParser
         {
             if (argBuzilder.Length != 0)
                 AddArg();
+            if (vars is {Count: not 0}) 
+                statements.Add(new VariablesSegment(vars));
             if (args.Count != 0)
                 AddStatement();
             statements.Add(new ContinueSegment(@continue));
