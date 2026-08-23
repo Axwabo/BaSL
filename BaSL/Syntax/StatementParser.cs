@@ -94,6 +94,7 @@ internal static class StatementParser
         var outerSyntax = SyntaxType.Text;
         var condition = false;
         Variables? vars = null;
+        var potentialVar = true;
         for (var i = start; i < s.Length; i++)
         {
             var c = s[i];
@@ -103,16 +104,20 @@ internal static class StatementParser
                 case (not SyntaxType.VerbatimString, '\\', _):
                     i++;
                     argBuzilder.Append(next);
+                    potentialVar = false;
                     break;
                 case (SyntaxType.VerbatimString, '\'', _):
                 case (SyntaxType.QuotedString, '"', _):
                     syntax = outerSyntax = SyntaxType.Text;
+                    potentialVar = false;
                     break;
                 case (SyntaxType.Text, '\'', _):
                     syntax = SyntaxType.VerbatimString;
+                    potentialVar = false;
                     break;
                 case (SyntaxType.Text, '"', _):
                     syntax = SyntaxType.QuotedString;
+                    potentialVar = false;
                     break;
                 case (SyntaxType.Text, '|', '|') when !condition:
                     Complete(Continue.OnFailure);
