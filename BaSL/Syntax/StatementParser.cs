@@ -203,7 +203,7 @@ internal static class StatementParser
                 argBuzilder.Append('$');
             else if (variables(variableBuilder.ToString(), out var result))
             {
-                if (outerSyntax == SyntaxType.Text)
+                if (outerSyntax != SyntaxType.Text)
                     argBuzilder.Append(result);
                 else
                 {
