@@ -23,7 +23,7 @@ public sealed class BaShell : App
     internal static readonly Dictionary<string, Executable> BuiltInCommands = new()
     {
         {"help", context => new Help(context) {Vars = context.Shell.Vars}},
-        {"let", context => new Let(context){Vars = context.Shell.Vars}},
+        {"let", context => new Let(context) {Vars = context.Shell.Vars}},
         {"export", context => new Export(context) {Vars = context.Shell.Vars}},
         {"set", context => new Set(context) {Vars = context.Shell.Vars}},
         {"unset", context => new Unset(context) {Vars = context.Shell.Vars}}
@@ -428,7 +428,7 @@ public sealed class BaShell : App
             var span = statements.Span[range];
             var statement = StatementParser.CreateStatement(controlled ? span[1..] : span);
             var code = LastExitCode = await ExecuteAsync(statement, token);
-            if (statements.Span[range.End] is ContinueSegment @continue && @continue.Exit(code))
+            if (!end && statements.Span[range.End] is ContinueSegment @continue && @continue.Exit(code))
                 break;
         }
         while (index != -1);
@@ -459,8 +459,8 @@ public sealed class BaShell : App
             case (Keyword.Then, Keyword.Else, true):
                 return false;
             case (Keyword.Else, Keyword.Then, false):
-                 _blocks.Transition(KeywordSegment.EndIf, true);
-                 return true;
+                _blocks.Transition(KeywordSegment.EndIf, true);
+                return true;
             case (Keyword.Else, Keyword.Else, true):
                 _blocks.Transition(KeywordSegment.Else, false);
                 return false;
