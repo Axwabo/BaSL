@@ -9,7 +9,7 @@ const string terminal = "BaSL.Terminal";
 using var zipFile = File.Create(args[0]);
 using var archive = new ZipArchive(zipFile, ZipArchiveMode.Create);
 
-var executable = Directory.EnumerateFiles(".", $"{terminal}*").First(e => Path.GetFileNameWithoutExtension(e) == terminal);
+var executable = OperatingSystem.IsWindows() ? $"{terminal}.exe" : terminal;
 archive.CreateEntryFromFile(executable, $"bin/{Path.GetFileName(executable)}");
 archive.CreateEntryFromFile($"../{readme}", readme);
 
