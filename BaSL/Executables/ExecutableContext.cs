@@ -100,6 +100,7 @@ public sealed class ExecutableContext
     }
 
     private static T ThrowIfNull<T>(T? returnValue) => returnValue ?? throw new InvalidOperationException("Context has not yet been initialized, this should not happen!");
+
     private readonly HashSet<IAsyncDisposable> _completables = [];
 
     private readonly List<(StreamReader, StreamWriter, PipeWrapper, bool, string)> _copy = [];
@@ -121,6 +122,7 @@ public sealed class ExecutableContext
         WorkingDirectory = shell.CurrentDirectory;
         Args = args;
         Console = console;
+        Environment = shell.Exported;
     }
 
     internal ExecutableContext(BaShell shell, Args args) : this(shell.Console, shell, args)
@@ -132,6 +134,7 @@ public sealed class ExecutableContext
     internal FileSystem FileSystem => Console.FileSystem;
     internal Directory WorkingDirectory { get; }
     internal Args Args { get; }
+    internal IReadOnlyDictionary<string, string> Environment { get; set; }
 
     internal PipeWrapper? StandardInput { get; private set; }
     internal PipeWrapper? StandardOutput { get; private set; }

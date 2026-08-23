@@ -45,8 +45,6 @@ public sealed class BaShell : App
 
     private readonly Stack<(KeywordSegment Segment, bool Skip)> _blocks = [];
 
-    private readonly Variables _exported = [];
-
     private readonly Variables _local = [];
 
     private readonly ShellStatement? _statement;
@@ -62,7 +60,7 @@ public sealed class BaShell : App
         UserContext = user ?? context.Shell.UserContext;
         CurrentDirectory = context.WorkingDirectory;
         Context = ExecutableContext.Sub(context, this, context.FileSystem, context.Args);
-        ImportEnv(context.Shell._exported);
+        ImportEnv(context.Shell.Exported);
     }
 
     private BaShell(Console console, StreamWriter standardOutput, StreamWriter standardError) : base(null!)
@@ -73,6 +71,8 @@ public sealed class BaShell : App
         Context = ExecutableContext.Root(this, console, default, standardOutput, standardError);
         ImportEnv();
     }
+
+    internal Variables Exported { get; } = [];
 
     private int LastExitCode
     {
@@ -94,7 +94,7 @@ public sealed class BaShell : App
     // ReSharper disable once InconsistentNaming
     public string[] PATH => _local.GetValueOrDefault("PATH", "").Split(':');
 
-    private (Variables, Variables) Vars => (_local, _exported);
+    private (Variables, Variables) Vars => (_local, Exported);
 
     private void ImportEnv(Variables? exported = null)
     {
@@ -106,7 +106,7 @@ public sealed class BaShell : App
         if (exported == null)
             return;
         foreach (var kvp in exported)
-            _exported[kvp.Key] = _local[kvp.Key] = kvp.Value;
+            Exported[kvp.Key] = _local[kvp.Key] = kvp.Value;
     }
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken) => _statement is not null

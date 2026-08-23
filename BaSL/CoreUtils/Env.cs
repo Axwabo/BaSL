@@ -7,7 +7,7 @@ using BaSL.Executables.Attributes;
 namespace BaSL.CoreUtils;
 
 [Help("""
-      Prints the user's envionment variables.
+      Prints the shell's exported variables.
       Launching executables is not yet supported.
       """)]
 public sealed partial class Env : App
@@ -17,7 +17,7 @@ public sealed partial class Env : App
     {
         if (Args.Length != 0)
             throw new NotImplementedException();
-        foreach (var kvp in UserContext.User.Environment)
+        foreach (var kvp in Environment)
         {
             await StandardOutput.WriteAsync(kvp.Key, cancellationToken);
             await StandardOutput.WriteAsync('=');

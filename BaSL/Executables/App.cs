@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -29,6 +30,8 @@ public abstract class App
     protected internal StreamWriter StandardError => Context.SourceError;
 
     protected Args Args => Context.Args;
+
+    protected IReadOnlyDictionary<string, string> Environment => Context.Environment;
 
     public abstract Task<int> ExecuteAsync(CancellationToken cancellationToken);
 
