@@ -59,7 +59,7 @@ public sealed class BaShell : App
         UserContext = user ?? context.Shell.UserContext;
         CurrentDirectory = context.WorkingDirectory;
         Context = ExecutableContext.Sub(context, this, context.FileSystem, context.Args);
-        ImportEnv(context.Shell.Exported);
+        ImportEnv(context.Environment);
     }
 
     private BaShell(Console console, StreamWriter standardOutput, StreamWriter standardError) : base(null!)

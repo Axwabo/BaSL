@@ -134,7 +134,7 @@ public sealed class ExecutableContext
     internal FileSystem FileSystem => Console.FileSystem;
     internal Directory WorkingDirectory { get; }
     internal Args Args { get; }
-    internal IReadOnlyDictionary<string, string> Environment { get; set; }
+    internal Variables Environment { get; set; }
 
     internal PipeWrapper? StandardInput { get; private set; }
     internal PipeWrapper? StandardOutput { get; private set; }
