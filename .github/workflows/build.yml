@@ -35,7 +35,7 @@ jobs:
         working-directory: BaSL
 
       - run: dotnet pack -o ${{ env.CORE }}
-        working-directory: BaSL/Generators/BaSL.SourceGenerator
+        working-directory: Generators/BaSL.SourceGenerator
         
       - run: dotnet publish -o ${{ env.TERMINAL }}
         working-directory: BaSL.Terminal
