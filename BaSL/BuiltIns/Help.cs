@@ -19,6 +19,13 @@ internal sealed partial class Help : BuiltInCommand
     {
         if (Args.IsEmpty)
             return await ListAsync(cancellationToken);
+        if (BaShell.BuiltInCommands.TryGetValue(Args[0], out var command))
+        {
+            await StandardOutput.WriteAsync(Args[0], cancellationToken);
+            await StandardOutput.WriteLineAsync(" is a shell builtin", cancellationToken);
+            return await HelpAsync(command, cancellationToken);
+        }
+
         var result = Shell.ResolveFromPath(Args[0]);
         if (!result.Success)
         {
@@ -33,12 +40,7 @@ internal sealed partial class Help : BuiltInCommand
         }
 
         await Shell.StandardOutput.WriteLineAsync(result.Value.FullPath.Value);
-        var app = executable(Context);
-        if (app is IHelpProvider provider)
-            await provider.DisplayHelpAsync(cancellationToken);
-        else
-            await StandardOutput.WriteLineAsync("No help available :(", cancellationToken);
-        return 0;
+        return await HelpAsync(executable, cancellationToken);
     }
 
     private async Task<int> ListAsync(CancellationToken cancellationToken)
@@ -57,6 +59,16 @@ internal sealed partial class Help : BuiltInCommand
         commands.Sort(string.Compare);
         foreach (var command in commands)
             await StandardOutput.WriteLineAsync(command, cancellationToken);
+        return 0;
+    }
+
+    private async Task<int> HelpAsync(Executable executable, CancellationToken cancellationToken)
+    {
+        var app = executable(Context);
+        if (app is IHelpProvider provider)
+            await provider.DisplayHelpAsync(cancellationToken);
+        else
+            await StandardOutput.WriteLineAsync("No help available :(", cancellationToken);
         return 0;
     }
 
