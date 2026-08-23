@@ -17,12 +17,18 @@ internal abstract class VariableCommand : BuiltInCommand
         {
             var equals = arg.IndexOf('=');
             // TODO: proper variable name validation
-            if (equals >= 1 && arg[0] is >= 'A' and <= 'Z' or >= 'a' and <= 'z')
+            if (arg is not [>= 'A' and <= 'Z' or >= 'a' and <= 'z', ..]) 
+                continue;
+            if (equals >= 1)
                 Process(arg[..equals], arg[(equals + 1)..]);
+            else
+                Process(arg);
         }
 
         return Task.FromResult(0);
     }
+
+    protected abstract void Process(string name);
 
     protected abstract void Process(string name, string value);
 

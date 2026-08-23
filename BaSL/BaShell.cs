@@ -25,7 +25,6 @@ public sealed class BaShell : App
         {"help", context => new Help(context) {Vars = context.Shell.Vars}},
         {"let", context => new Let(context) {Vars = context.Shell.Vars}},
         {"export", context => new Export(context) {Vars = context.Shell.Vars}},
-        {"set", context => new Set(context) {Vars = context.Shell.Vars}},
         {"unset", context => new Unset(context) {Vars = context.Shell.Vars}}
     };
 
