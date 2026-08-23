@@ -16,6 +16,9 @@ using Result = Result<int, Error>;
       let a=1+2
       let 'b = 5 * 10'
       let sus=4+20 "c = $b * 20"
+      let x++
+      let x--
+      let y=$a y+=10
       """)]
 internal sealed partial class Let : BuiltInCommand
 {
