@@ -35,6 +35,7 @@ internal static class StatementParser
 
     public static ShellStatement? CreateStatement(ReadOnlySpan<Segment> syntax) => syntax switch
     {
+        [VariablesSegment {Variables: {Count: not 0} variables}] => new DeclareStatement(variables),
         [VariablesSegment {Variables: {Count: not 0} variables}, ArgsSegment {Args: var firstArgs}, .. var rest] => CreateStatement(rest, firstArgs, variables),
         [ArgsSegment {Args: var firstArgs}, .. var rest] => CreateStatement(rest, firstArgs),
         _ => null
@@ -227,6 +228,7 @@ internal static class StatementParser
                 statements.Add(new VariablesSegment(vars));
                 vars = null;
             }
+
             if (args.Count != 0)
                 statements.Add(new ArgsSegment(args.ToArray()));
             if (segment is not null)
@@ -259,7 +261,7 @@ internal static class StatementParser
         {
             if (argBuzilder.Length != 0)
                 AddArg();
-            if (vars is {Count: not 0}) 
+            if (vars is {Count: not 0})
                 statements.Add(new VariablesSegment(vars));
             if (args.Count != 0)
                 AddStatement();
