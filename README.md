@@ -67,8 +67,7 @@ Other features that are yet to be implemented:
 - `elif`
 - More conditional operators and command support for if statements
 - Arrays
-- Proper variable expansion and separation
-- `$IFS`
+- "Unlimited" pipelines
 - `for` and `while` loops
 - `case` statements
 - Proper input handling
