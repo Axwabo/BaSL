@@ -4,6 +4,11 @@
         <TargetFramework>netstandard2.1</TargetFramework>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     </PropertyGroup>
+    
+    <PropertyGroup>
+        <Product>BaSL</Product>
+        <PackageId>BaSL</PackageId>
+    </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="System.IO.Pipelines" Version="10.0.10" />
@@ -11,6 +16,10 @@
 
     <ItemGroup>
         <ProjectReference Include="../Generators/BaSL.SourceGenerators/BaSL.SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="../README.md" Pack="true" PackagePath="/" />
     </ItemGroup>
 
 </Project>
