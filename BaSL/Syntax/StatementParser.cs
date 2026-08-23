@@ -85,7 +85,7 @@ internal static class StatementParser
         return statement;
     }
 
-    private static int ParseStatements(ReadOnlySpan<char> s, int start, List<Segment> statements, TryParse variables, string home)
+    private static int ParseStatements(ReadOnlySpan<char> s, int start, List<Segment> statements, TryParse local, string home)
     {
         var argBuzilder = new StringBuilder();
         var variableBuilder = new StringBuilder();
@@ -93,6 +93,7 @@ internal static class StatementParser
         var syntax = SyntaxType.Text;
         var outerSyntax = SyntaxType.Text;
         var condition = false;
+        Variables? vars = null;
         for (var i = start; i < s.Length; i++)
         {
             var c = s[i];
@@ -212,13 +213,13 @@ internal static class StatementParser
         {
             if (variableBuilder.Length == 0)
                 argBuzilder.Append('$');
-            else if (variables(variableBuilder.ToString(), out var result))
+            else if (local(variableBuilder.ToString(), out var result))
             {
                 if (outerSyntax != SyntaxType.Text)
                     argBuzilder.Append(result);
                 else
                 {
-                    var separator = variables("IFS", out var ifs) ? ifs : DefaultIfs;
+                    var separator = local("IFS", out var ifs) ? ifs : DefaultIfs;
                     foreach (var memory in result.AsMemory().Split(separator.AsMemory()))
                         args.Add(memory.Span.ToString());
                 }

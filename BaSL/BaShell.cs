@@ -162,10 +162,17 @@ public sealed class BaShell : App
                 return 0;
             case StandaloneStatement {Location: AutoCommandLocation {Phrase: "false"}}:
                 return 1;
+            case DeclareStatement declareStatement:
+            {
+                foreach (var kvp in declareStatement.Variables)
+                    _local[kvp.Key] = kvp.Value;
+                return 0;
+            }
             case StandaloneStatement standaloneStatement:
             {
                 // TODO: this sucks
                 await using var context = ExecutableContext.Sub(Context, this, FileSystem, standaloneStatement.Args);
+                Var(context, standaloneStatement.Variables);
                 var process = Run.Execute(this, standaloneStatement.Location, context, cancellationToken);
                 if (!process.Success)
                     return await ErrorAsync(standaloneStatement.Location, process.Error, cancellationToken);
@@ -214,6 +221,7 @@ public sealed class BaShell : App
                 else
                     stream.Seek(0, SeekOrigin.End);
                 await using var context = ExecutableContext.Redirected(Context, Shell, FileSystem, standaloneStatement.Args, new Streams(null, stream, null));
+                Var(context, standaloneStatement.Variables);
                 var process = Run.Execute(this, standaloneStatement.Location, context, cancellationToken);
                 if (!process.Success)
                     return await ErrorAsync(standaloneStatement.Location, process.Error, cancellationToken);
@@ -232,6 +240,7 @@ public sealed class BaShell : App
                     return await ErrorAsync(pipeStatement.Location, targetCommand.Error, cancellationToken);
                 await using var source = new ExecutableContext(Shell, standaloneStatement.Args).CreatePipes();
                 await using var target = new ExecutableContext(Shell, pipeStatement.Args);
+                Var(source, standaloneStatement.Variables);
                 source.SubStderr(Context);
                 target.PipeStdin(source);
                 target.CreateStdoutPipe().SubStdout(Context);
@@ -249,20 +258,20 @@ public sealed class BaShell : App
             }
             case PipeStatement pipeStatement:
             {
-                var run = new List<(CommandLocation, RunCommand, Args)>();
+                var run = new List<(CommandLocation, RunCommand, Args, Variables?)>();
                 ExtendableStatement? statement = pipeStatement;
                 do
                 {
-                    var (location, args) = statement switch
+                    var (location, args, vars) = statement switch
                     {
-                        PipeStatement {Location: var targetLocation, Args: var targetArgs} => (targetLocation, targetArgs),
-                        StandaloneStatement {Location: var standaloneLocation, Args: var standaloneArgs} => (standaloneLocation, standaloneArgs),
+                        PipeStatement pipe => (pipe.Location, pipe.Args, null),
+                        StandaloneStatement standalone => (standalone.Location, standalone.Args, standalone.Variables),
                         _ => throw new ArgumentOutOfRangeException(nameof(statement))
                     };
                     var result = Run.Locate(this, location);
                     if (!result.Success)
                         return await ErrorAsync(location, result.Error, cancellationToken);
-                    run.Add((location, result.Value, args));
+                    run.Add((location, result.Value, args, vars));
                     statement = (statement as PipeStatement)?.Source;
                     // TODO: ability to redirect last
                 }
@@ -272,6 +281,7 @@ public sealed class BaShell : App
                 try
                 {
                     var source = new ExecutableContext(Shell, run[^1].Item3).CreatePipes();
+                    Var(source, run[^1].Item4);
                     source.SubStderr(Context);
                     contexts.Add(source);
                     for (var i = run.Count - 2; i >= 1; i--)
@@ -295,7 +305,7 @@ public sealed class BaShell : App
 
                     for (var i = 0; i < contexts.Count; i++)
                     {
-                        var (location, func, _) = run[contexts.Count - i - 1];
+                        var (location, func, _, _) = run[contexts.Count - i - 1];
                         var execute = func(contexts[i], cancellationToken);
                         if (!execute.Success)
                             return await ErrorAsync(location, execute.Error, cancellationToken);
@@ -319,6 +329,16 @@ public sealed class BaShell : App
                 await StandardError.WriteLineAsync(shellStatement.ToString(), cancellationToken);
                 return 1;
         }
+    }
+
+    private void Var(ExecutableContext context, Variables? variables)
+    {
+        if (variables == null)
+            return;
+        var env = new Variables(Exported);
+        foreach (var kvp in variables)
+            env[kvp.Key] = kvp.Value;
+        context.Environment = env;
     }
 
     private async Task<int> ErrorAsync(CommandLocation location, Error error, CancellationToken cancellationToken)
