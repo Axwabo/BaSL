@@ -10,6 +10,8 @@ internal delegate bool TryParse(string variable, [NotNullWhen(true)] out string?
 internal static class StatementParser
 {
 
+    private static readonly char[] DefaultIfs = [' ', '\t', '\n'];
+
     [ThreadStatic]
     private static List<Segment>? _segments;
 
@@ -199,7 +201,13 @@ internal static class StatementParser
             if (variableBuilder.Length == 0)
                 argBuzilder.Append('$');
             else if (variables(variableBuilder.ToString(), out var result))
-                argBuzilder.Append(result);
+            {
+                if (outerSyntax == SyntaxType.Text)
+                    argBuzilder.Append(result);
+                else
+                    args.AddRange(result.Split(DefaultIfs));
+            }
+
             variableBuilder.Clear();
             syntax = outerSyntax;
         }
