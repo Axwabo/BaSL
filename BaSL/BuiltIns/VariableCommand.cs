@@ -17,7 +17,7 @@ internal abstract class VariableCommand : SyncCommand
         {
             var equals = arg.IndexOf('=');
             // TODO: proper variable name validation
-            if (equals > 1 && arg[0] is >= 'A' and <= 'Z' or >= 'a' and <= 'z')
+            if (equals >= 1 && arg[0] is >= 'A' and <= 'Z' or >= 'a' and <= 'z')
                 Process(arg[..equals], arg[(equals + 1)..]);
         }
         
