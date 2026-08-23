@@ -57,8 +57,8 @@ internal static class StatementParser
             [StdinFileSegment, ArgsSegment {Args: [var source, ..]}, RedirectAppendSegment, ArgsSegment {Args: [var target, ..]}] => (first < source) >> target,
             [PipeSegment, ArgsSegment {Args: var targetArgs}] => first | targetArgs,
             [StdinFileSegment, ArgsSegment {Args: [var source, ..]}, PipeSegment, ArgsSegment {Args: var targetArgs}] => first < source | targetArgs,
-            [StdinFileSegment, ArgsSegment {Args: [var source, ..]}, PipeSegment, ..] => ExpandPipes(first < source, syntax, 4),
-            [PipeSegment, ..] => ExpandPipes((first), syntax),
+            [StdinFileSegment, ArgsSegment {Args: [var source, ..]}, PipeSegment, ..] => ExpandPipes(first < source, syntax, 3),
+            [PipeSegment, ..] => ExpandPipes(first, syntax, 1),
             _ => null
         };
     }
@@ -219,6 +219,7 @@ internal static class StatementParser
                         args.Add(arg);
                 }
             }
+
             argBuzilder.Clear();
             syntax = next;
             varName = null;
