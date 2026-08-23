@@ -101,7 +101,7 @@ public sealed class BaShell : App
         for (var i = 0; i < Context.Args.Length; i++)
             _local[i.ToString()] = Context.Args[i];
         foreach (var kvp in User.Environment)
-            _local[kvp.Key] = kvp.Value;
+            Exported[kvp.Key]=_local[kvp.Key] = kvp.Value;
         if (exported == null)
             return;
         foreach (var kvp in exported)
