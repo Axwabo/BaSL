@@ -56,7 +56,7 @@ using BaSL.Executables.Attributes;
 public partial sealed class MyApp : App
 {
 
-    public async Task<int> ExecuteAsync(CancellationToken token)
+    public override async Task<int> ExecuteAsync(CancellationToken token)
     {
         // app implementation
     }
@@ -83,9 +83,15 @@ using Directory = BaSL.FileSystems.Directory;
 public partial sealed class MyApp : App
 {
 
+    // usages:
+    // myapp 1
+    // myapp -s 1 /home
+    // myapp 2 /home sus mogus
+    // myapp 2 /home -- sus mogus
+    [Execute]
     public async Task<int> MogusAsync(
-        [DefaultTo(DefaultDirectory.UserHome)] Directory directory,
         int? amount,
+        [DefaultTo(DefaultDirectory.UserHome)] Directory directory,
         Args rest,
         [Flag] bool sus = false,
         CancellationToken token = default
@@ -102,5 +108,20 @@ public partial sealed class MyApp : App
 > [!NOTE]
 > Parameter parsing is limited for now. Value type parameters (except for flags) must be declared nullable.
 
-### Parameter Attributes
+### Parameters
 
+If `--` is an argument, parsing is stopped and, all arguments after it are passed as the `rest` argument (if any).
+The rest argument must be of type `BaSL.Args`
+
+The cancellation token is passed to parameters of type `System.Threading.CancellationToken`
+
+The `FlagAttribute` marks a bool that is true if any arg starting with `-` contains it.
+
+Parameters that don't match any of the above will be parsed as positional arguments.
+
+Arguments of type `BaSL.FileSystems.Directory` resolve a directory, and quit if the directory was not found.
+If the argument is not specified, the default value can be specified by adding the `DefaultToAttribute`
+
+Other arguments are parsed using `BaSL.Executables.ArgumentParser` that quit if parsing is unsuccessful.
+Strings are passed as-is.
+Built-in parsers exist for the following types: `bool` `float` `double` `int` `byte`
