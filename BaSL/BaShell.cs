@@ -230,6 +230,7 @@ public sealed class BaShell : App
                 var targetCommand = Run.Locate(this, pipeStatement.Location);
                 if (!targetCommand.Success)
                     return await ErrorAsync(pipeStatement.Location, targetCommand.Error, cancellationToken);
+                var (vars,)
                 await using var source = new ExecutableContext(Shell, standaloneStatement.Args).CreatePipes();
                 await using var target = new ExecutableContext(Shell, pipeStatement.Args);
                 source.SubStderr(Context);
@@ -250,6 +251,7 @@ public sealed class BaShell : App
             case PipeStatement pipeStatement:
             {
                 var run = new List<(CommandLocation, RunCommand, Args)>();
+                var vars = Exported;
                 ExtendableStatement? statement = pipeStatement;
                 do
                 {
@@ -265,6 +267,7 @@ public sealed class BaShell : App
                     run.Add((location, result.Value, args));
                     statement = (statement as PipeStatement)?.Source;
                     // TODO: ability to redirect last
+                    
                 }
                 while (statement is not null);
 
@@ -497,6 +500,14 @@ public sealed class BaShell : App
             return false;
         _cts.Cancel();
         return true;
+    }
+
+    private (Variables Vars, Args Args) Var(Args args)
+    {
+        foreach (var arg in args)
+        {
+            if(arg)
+        }
     }
 
 }
