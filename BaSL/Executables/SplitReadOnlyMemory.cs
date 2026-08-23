@@ -33,8 +33,8 @@ public struct SplitReadOnlyMemoryEnumerator<T> : IEnumerator<ReadOnlyMemory<T>> 
             return false;
         var next = _memory.Memory.FindIndexAny(_memory.Split.Span, startIndex);
         Current = next == -1
-            ? _memory.Memory[Math.Max(0, _index)..]
-            : _memory.Memory[Math.Max(0, _index)..next];
+            ? _memory.Memory[startIndex..]
+            : _memory.Memory[startIndex..next];
         _index = next == -1 ? _memory.Memory.Length : next;
         return true;
     }
