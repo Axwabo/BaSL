@@ -205,15 +205,20 @@ internal static class StatementParser
                 vars[varName] = argBuzilder.ToString();
                 raw = true;
             }
-            else if (argBuzilder.Length != 0)
+            else
             {
-                var arg = argBuzilder.ToString();
-                if (space && args.Count == 0 && KeywordSegment.Get(arg) is { } keyword)
-                    statements.Add(keyword);
-                else
-                    args.Add(arg);
+                if (vars is {Count: not 0})
+                    statements.Add(new VariablesSegment(vars));
+                vars = null;
+                if (argBuzilder.Length != 0)
+                {
+                    var arg = argBuzilder.ToString();
+                    if (space && args.Count == 0 && KeywordSegment.Get(arg) is { } keyword)
+                        statements.Add(keyword);
+                    else
+                        args.Add(arg);
+                }
             }
-
             argBuzilder.Clear();
             syntax = next;
             varName = null;
@@ -261,8 +266,6 @@ internal static class StatementParser
         {
             if (argBuzilder.Length != 0)
                 AddArg();
-            if (vars is {Count: not 0})
-                statements.Add(new VariablesSegment(vars));
             if (args.Count != 0)
                 AddStatement();
             statements.Add(new ContinueSegment(@continue));

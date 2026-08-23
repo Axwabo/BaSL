@@ -3,7 +3,7 @@
 This project is a not-very/very-not accurate, high-level recreation of the bash shell in .NET.
 
 The project simulates file systems and executables without restricting the developer too much.
-Library authors still have access to all of the BCL (Base Class Library).
+Library authors still have full access to the BCL (Base Class Library).
 
 > [!IMPORTANT]
 > This project is not meant for production use!
@@ -56,7 +56,7 @@ Piping `|` means "send stdout to the stdin of another process"
 
 ## Syntax
 
-BaSL currently features simple variable expansion, quoted and "verbatim" strings.
+BaSL currently features basic branching, simple variable expansion, quoted and "verbatim" strings.
 
 ### Variables
 
@@ -66,7 +66,7 @@ If you specify a command after the variable declaration(s), the variables will o
 
 Use `$sus` to expand variable named "sus"
 
-Variable expansion is not performed in [verbatim strings](#verbatim-string)
+Variable expansion is not performed in [verbatim strings](#verbatim-strings)
 
 If the variable is in "quotes," word splitting will not be performed.
 
@@ -121,6 +121,35 @@ Result: `a ong us amongamong us\nin real life`
 
 Notice that the unquoted variable was split at `m` while the quoted variable was left intact. 
 
+### Branching
+
+`if-then-else-fi` are supported.
+
+If statements' conditions can be commands (0 exit code = true, other exit code = false), or [double-bracket conditions](#conditions)
+
+The condition must be followed by `;` and the `then` keyword.
+
+The if statement is terminated using the keyword `fi`
+
+<details>
+<summary>Example</summary>
+
+```bash
+echo "So wake me up when it's all over"
+
+if [[ "$USER" == "root" ]]; then
+    echo Hai superuser :3 
+else
+    echo Who are you???
+fi
+
+echo Wakey wakey
+```
+
+</details>
+
+### Conditions
+
 ## Limitations
 
 For now, pattern matching is used to parse and execute statements:
@@ -134,7 +163,9 @@ For now, pattern matching is used to parse and execute statements:
 
 Other features that are yet to be implemented:
 
-- `elif`
+- `elif` (I hate this keyword so much)
+- Physical mounts (scary)
+- Virtual file system quotas (maybe configurable)
 - More conditional operators and command support for if statements
 - Arrays
 - "Unlimited" pipelines
@@ -172,3 +203,41 @@ As a developer, you'll need to call `operatingSystem.InstallCoreUtilsAsync()` to
 - `sudo` runs the arguments as a command with superuser privileges
 - `touch` creates an empty file
 - `whoami` prints the current user's username
+
+# Library
+
+Create a `BaSL.OperatingSystem`, add user(s), then create a `BaSL.Console` for interactions.
+You can write to the console's `StandardInput` writer.
+
+> [!IMPORTANT]
+> Exposing the `OperatingSystem` instance allows for any library to run commands as the virtual root user.
+
+You can access the file system through the OS's `FileSystem` property.
+
+Apps have access to the current shell, file system, but not to the `OperatingSystem`
+
+The `UserContext` needs to be passed to methods interacting with the file system.
+
+> [!TIP]
+> See the [source generator project](Generators/BaSL.SourceGenerators) to assist with creating `App`s.
+
+## Installation
+
+Since the package isn't published to a NuGet host, installation requires a local source.
+
+For development:
+
+1. Create a directory to store the NuGet package in
+2. Download the `BaSL.*.*.*.nupkg` file from the [releases page](https://github.com/Axwabo/BaSL/releases)
+3. Place the NuGet package in your chosen directory
+4. Copy the **fully qualified path** of the directory
+5. Run `dotnet nuget add source "$DIR" --name BaSL` in your terminal
+    - Replace `$DIR` with the fully qualified path
+6. Reference the package
+    - Add the following into an `ItemGroup` in your .csproj: `<PackageReference Include="BaSL.SourceGenerators" Version="*.*.*" PrivateAssets="all" />`
+    - Replace `*.*.*` with the version you downloaded
+
+As a dependency:
+
+1. Download the `BaSL.*.*.*.dll` file from the [releases page](https://github.com/Axwabo/BaSL/releases)
+2. Place the DLL into the adequate directory

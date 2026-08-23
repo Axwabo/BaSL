@@ -16,7 +16,7 @@ The following generators are available:
 Since the package isn't published to a NuGet host, installation requires a local source.
 
 1. Create a directory to store the NuGet package in
-2. Download the `BaSL.*.*.*.nupkg` file from the [releases page](https://github.com/Axwabo/BaSL/releases)
+2. Download the `BaSL.SourceGenerators.*.*.*.nupkg` file from the [releases page](https://github.com/Axwabo/BaSL/releases)
 3. Place the NuGet package in your chosen directory
 4. Copy the **fully qualified path** of the directory
 5. Run `dotnet nuget add source "$DIR" --name BaSL` in your terminal
