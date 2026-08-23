@@ -24,6 +24,8 @@ public static class MemoryExtensions
 
         public SplitReadOnlyMemory<T> Split(params T[] split) => new(memory, split);
 
+        public SplitReadOnlyMemory<T> Split(ReadOnlyMemory<T> split) => new(memory, split);
+
     }
 
     extension<T>(ReadOnlyMemory<T> memory) where T : notnull

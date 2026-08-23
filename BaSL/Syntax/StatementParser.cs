@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using BaSL.Executables;
 
 namespace BaSL.Syntax;
 
@@ -10,7 +11,7 @@ internal delegate bool TryParse(string variable, [NotNullWhen(true)] out string?
 internal static class StatementParser
 {
 
-    private static readonly char[] DefaultIfs = [' ', '\t', '\n'];
+    private const string DefaultIfs = " \t\n";
 
     [ThreadStatic]
     private static List<Segment>? _segments;
@@ -205,7 +206,11 @@ internal static class StatementParser
                 if (outerSyntax == SyntaxType.Text)
                     argBuzilder.Append(result);
                 else
-                    args.AddRange(result.Split(DefaultIfs));
+                {
+                    var separator = variables("IFS", out var ifs) ? ifs : DefaultIfs;
+                    foreach (var memory in result.AsMemory().Split(separator.AsMemory())) 
+                        args.Add(memory.Span.ToString());
+                }
             }
 
             variableBuilder.Clear();
