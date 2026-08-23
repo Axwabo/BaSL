@@ -273,5 +273,5 @@ For development:
 
 As a dependency:
 
-1. Download the `BaSL.*.*.*.dll` file from the [releases page](https://github.com/Axwabo/BaSL/releases)
+1. Download the `BaSL.dll` file from the [releases page](https://github.com/Axwabo/BaSL/releases)
 2. Place the DLL into the adequate directory
