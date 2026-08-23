@@ -150,6 +150,40 @@ echo Wakey wakey
 
 ### Conditions
 
+Boolean conditions are limited, with some operator precedence.
+Parentheses `()` are not supported yet.
+
+Logical operators:
+
+- `&&` or `-a` is logical and (stop and return false if any condition fails)
+- `||` or `-o` is logical or (stop and return true if any condition succeeds)
+- `&&` takes precedence over `||`
+- Arguments between the aforementioned operators are considered conditions
+
+You can prefix a condition with `! ` (space required) to invert the result.
+
+Supported condition operators:
+
+- `true` or `1`
+- `false` or `0`
+- `x == y` or `x = y` or `x -eq y` checks if x and y are equal
+- `x != y` or `x -ne y` checks if x and y are **not** equal
+- `x < y` or `x -lt y`
+- `x > y` or `x -gt y`
+- `x <= y` or `x -le y`
+- `x >= y` or `x -ge y`
+- `-z str` checks if a string is null or empty (true if length = 0)
+- `-n str` checks if a string is not null and not empty (true if length != 0)
+- `-e entry` checks if `entry` exists on the file system
+- `-f entry` checks if `entry` is a file
+- `-d entry` checks if `entry` is a directory
+- `-h entry` or `-L entry` checks if `entry` is a symbolic link
+- Unsupported conditions evaluate to `false`
+
+> [!IMPORTANT]
+> Conditions evaluate to true if the number is 1.
+> Commands evaluate to true if the process returns exit code 0.
+
 ## Limitations
 
 For now, pattern matching is used to parse and execute statements:
