@@ -76,7 +76,9 @@ jobs:
       - uses: actions/download-artifact@v8.0.1
         with:
           pattern: '*'
-
+          
+      - run: ls -R
+  
       - uses: softprops/action-gh-release@v3.0.2
         with:
           files: |
