@@ -1,5 +1,3 @@
-#:property TargetFramework=net10.0
-
 using System.IO.Compression;
 
 const string licenses = "THIRD_PARTY_LICENSES";
