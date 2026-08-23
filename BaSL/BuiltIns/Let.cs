@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BaSL.Executables;
@@ -17,6 +18,8 @@ namespace BaSL.BuiltIns;
 internal sealed partial class Let : VariableCommand
 {
 
+    private const string Operators = "+=*/%";
+
     private static readonly Error DivideByZero = new DivideByZeroError();
 
     public Let(ExecutableContext context) : base(context)
@@ -26,17 +29,24 @@ internal sealed partial class Let : VariableCommand
     protected override async Task Process(string name, string value, CancellationToken cancellationToken)
     {
         var span = value.AsSpan();
-        var index = span.IndexOfAny("+=*/%");
+        var index = span.IndexOfAny(Operators);
         if (index == -1)
         {
-            if (int.TryParse(span.Trim(), out var single))
-                Store(name, single);
+            await SingleOperand(name, value, cancellationToken);
             return;
         }
 
+        if (index == span.Length - 1)
+            return;
+
         int.TryParse(span[..index].Trim(), out var x);
         int.TryParse(span[(index + 1)..].Trim(), out var y);
-        Result<int, Error> result = span[index] switch
+        await Evaluate(x, span[index], y, name, cancellationToken);
+    }
+
+    private async Task Evaluate(int x, char @operator, int y, string name, CancellationToken cancellationToken)
+    {
+        Result<int, Error> result = @operator switch
         {
             '+' => x + y,
             '-' => x - y,
@@ -55,6 +65,25 @@ internal sealed partial class Let : VariableCommand
         await StandardError.WriteAsync(Arg, cancellationToken);
         await StandardError.WriteAsync(": ", cancellationToken);
         await StandardError.WriteLineAsync(result.Error, cancellationToken);
+    }
+
+    private async Task EvaluateSelf(char @operator, int y, string name, CancellationToken cancellationToken)
+    {
+        int.TryParse(Local.GetValueOrDefault(name, "0"), out var value);
+        await Evaluate(value, @operator, y, name, cancellationToken);
+    }
+
+    private async Task SingleOperand(string name, string value, CancellationToken cancellationToken)
+    {
+        /*var x = name switch
+        {
+            ['+', '+'] => "",
+             _=>"a"
+        };*/
+        if (value.EndsWith("++"))
+            await EvaluateSelf('+', 1, name, cancellationToken);
+        else if (int.TryParse(value.AsSpan().Trim(), out var single))
+            Store(name, single);
     }
 
     private void Store(string name, int result)
